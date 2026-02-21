@@ -41,86 +41,129 @@ struct SummaryView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Group {
+            HStack(alignment: .top) {
                 Text("Name")
                     .font(.headline)
+                    .frame(width: 100, alignment: .leading)
                 Text(character?.name ?? "—")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Group {
+            HStack(alignment: .top) {
                 Text("Worships")
                     .font(.headline)
+                    .frame(width: 100, alignment: .leading)
                 Text(character?.worships ?? "—")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Group {
-                Text("Attributes")
-                    .font(.headline)
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading) {
+            
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("STR")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         Text("\(character?.str ?? 0)")
+                            .font(.body)
                     }
-                    VStack(alignment: .leading) {
-                        Text("CON")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("\(character?.con ?? 0)")
-                    }
-                    VStack(alignment: .leading) {
-                        Text("DEX")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("\(character?.dex ?? 0)")
-                    }
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("INT")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         Text("\(character?.int ?? 0)")
+                            .font(.body)
                     }
-                    VStack(alignment: .leading) {
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("CON")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text("\(character?.con ?? 0)")
+                            .font(.body)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("POW")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        Text("\(character?.pow ?? 0)")
+                        HStack(spacing: 4) {
+                            Text("\(character?.pow ?? 0)")
+                                .font(.body)
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                                .font(.body)
+                                .padding(.leading, 4)
+                        }
                     }
-                    VStack(alignment: .leading) {
+                }
+                Spacer()
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DEX")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text("\(character?.dex ?? 0)")
+                            .font(.body)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("CHA")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         Text("\(character?.cha ?? 0)")
+                            .font(.body)
                     }
                 }
             }
-            Group {
+            
+            HStack(alignment: .top) {
                 Text("Reputation")
                     .font(.headline)
+                    .frame(width: 100, alignment: .leading)
                 Text(character?.reputation ?? "—")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Group {
+            HStack(alignment: .top) {
                 Text("Occupation")
                     .font(.headline)
+                    .frame(width: 100, alignment: .leading)
                 Text(character?.occupation ?? "—")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Group {
+            HStack(alignment: .top) {
                 Text("SoL")
                     .font(.headline)
+                    .frame(width: 100, alignment: .leading)
                 Text(character?.sol ?? "—")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Group {
-                Text("Income")
-                    .font(.headline)
-                Text("\(character?.income ?? 0)")
-            }
-            Group {
-                Text("Ransom")
-                    .font(.headline)
-                Text("\(character?.ransom ?? 0)")
+            HStack(alignment: .top) {
+                HStack(spacing: 4) {
+                    Text("Income")
+                        .font(.headline)
+                    Text("\(character?.income ?? 0) L")
+                        .font(.body)
+                }
+                .frame(minWidth: 0, maxWidth: .none, alignment: .leading)
+                
+                Spacer()
+                    .frame(width: 24)
+                
+                HStack(spacing: 4) {
+                    Text("Ransom")
+                        .font(.headline)
+                    Text("\(character?.ransom ?? 0) L")
+                        .font(.body)
+                }
+                .frame(minWidth: 0, maxWidth: .none, alignment: .leading)
             }
             Spacer()
         }
-        .padding()
+        .padding(16)
     }
 }
 
@@ -145,3 +188,4 @@ struct EquipmentView: View {
 #Preview {
     ContentView().modelContainer(for: RQCharacter.self, inMemory: true)
 }
+
