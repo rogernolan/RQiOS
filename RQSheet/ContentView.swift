@@ -520,10 +520,10 @@ struct PairedRunesSectionView: View {
                     RunicAffinityNodeView(rune: character.manAffinity)
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    PairRuneRowView(leftRune: character.fertilityAffinity, rightRune: character.harmonyAffinity)
-                    PairRuneRowView(leftRune: character.truthAffinity, rightRune: character.stasisAffinity)
-                    PairRuneRowView(leftRune: character.deathAffinity, rightRune: character.disorderAffinity)
-                    PairRuneRowView(leftRune: character.IllusionAffinity, rightRune: character.movementAffinity)
+                    PairRuneRowView(leftRune: character.fertilityAffinity, rightRune: character.deathAffinity)
+                    PairRuneRowView(leftRune: character.harmonyAffinity, rightRune: character.disorderAffinity)
+                    PairRuneRowView(leftRune: character.truthAffinity, rightRune: character.IllusionAffinity)
+                    PairRuneRowView(leftRune: character.stasisAffinity, rightRune: character.movementAffinity)
 
                     RunicAffinityNodeView(rune: character.beastAffinity)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -555,11 +555,6 @@ struct PairRuneRowView: View {
 
 struct RunicAffinityNodeView: View {
     @Bindable var rune: RuneAffinity
-    private static let percentageFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .none
-        return formatter
-    }()
 
     var body: some View {
         VStack(spacing: 2) {
@@ -581,11 +576,17 @@ struct RunicAffinityNodeView: View {
             HStack(spacing: 2) {
                 TextField(
                     "",
-                    value: Binding<Int>(
-                        get: { rune.percentage },
-                        set: { rune.percentage = min(100, max(0, $0)) }
-                    ),
-                    formatter: Self.percentageFormatter
+                    text: Binding<String>(
+                        get: { String(rune.percentage) },
+                        set: { newValue in
+                            let digitsOnly = newValue.filter(\.isNumber)
+                            if digitsOnly.isEmpty {
+                                rune.setPercentage(0)
+                            } else if let value = Int(digitsOnly) {
+                                rune.setPercentage(value)
+                            }
+                        }
+                    )
                 )
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)

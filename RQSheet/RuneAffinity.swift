@@ -10,14 +10,34 @@ import SwiftData
 @Model
 final class RuneAffinity {
     var name: String
-    var percentage: Int  // 0-100
+    private(set) var percentage: Int  // 0-100
     var experienceCheck: Bool
     var relatedRune: RuneAffinity?
 
     init(name: String, percentage: Int = 0, experienceCheck: Bool = false) {
         self.name = name
-        self.percentage = percentage
+        self.percentage = min(100, max(0, percentage))
         self.experienceCheck = experienceCheck
+    }
+
+    func setPercentage(_ newValue: Int) {
+        applyPercentage(newValue, syncPair: true)
+    }
+
+    private func applyPercentage(_ newValue: Int, syncPair: Bool) {
+        let clampedValue = min(100, max(0, newValue))
+        if percentage == clampedValue {
+            return
+        }
+
+        percentage = clampedValue
+
+        guard syncPair, let relatedRune else { return }
+
+        let pairedValue = 100 - clampedValue
+        if relatedRune.percentage != pairedValue {
+            relatedRune.applyPercentage(pairedValue, syncPair: false)
+        }
     }
     
     class func relatedPair(lhName:String ,rhName:String) -> (RuneAffinity,RuneAffinity) {
