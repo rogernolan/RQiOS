@@ -18,8 +18,7 @@ struct SummaryView: View {
         VStack(alignment: .leading, spacing: 16) {
             if character == nil {
                 Button("New Character") {
-                    let newCharacter = RQCharacter()
-                    modelContext.insert(newCharacter)
+                    _ = SkillSeeder.createCharacter(in: modelContext)
                 }
             }
 

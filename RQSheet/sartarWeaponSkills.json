@@ -1,0 +1,45 @@
+{
+  "weaponBaseValues": {
+    "meleeWeapons": [
+      { "name": "1H Axe", "base": "10" },
+      { "name": "2H Axe", "base": "05" },
+      { "name": "Broadsword", "base": "10" },
+      { "name": "Dagger", "base": "15" },
+      { "name": "1H Hammer", "base": "10" },
+      { "name": "2H Hammer", "base": "05" },
+      { "name": "Kopis", "base": "10" },
+      { "name": "1H Mace", "base": "15" },
+      { "name": "2H Mace", "base": "10" },
+      { "name": "Pike", "base": "15" },
+      { "name": "Quarterstaff", "base": "15" },
+      { "name": "Rapier", "base": "05" },
+      { "name": "Shortsword", "base": "10" },
+      { "name": "1H Spear", "base": "05", "notes": "includes Lance" },
+      { "name": "2H Spear", "base": "15" }
+    ],
+    "naturalWeapons": [
+      { "name": "Fist", "base": "25" },
+      { "name": "Grapple", "base": "25" },
+      { "name": "Kick", "base": "15" }
+    ],
+    "missileWeapons": [
+      { "name": "Arbalest", "base": "10" },
+      { "name": "Axe, Throwing", "base": "10" },
+      { "name": "Composite Bow", "base": "05" },
+      { "name": "Crossbow, All Types", "base": "25" },
+      { "name": "Dagger, Throwing", "base": "05" },
+      { "name": "Elf Bow", "base": "05" },
+      { "name": "Javelin", "base": "10" },
+      { "name": "Pole Lasso", "base": "05" },
+      { "name": "Rock", "base": "15" },
+      { "name": "Self Bow", "base": "05" },
+      { "name": "Sling", "base": "05" },
+      { "name": "Staff Sling", "base": "10" }
+    ],
+    "shields": [
+      { "name": "Large Shield", "base": "15" },
+      { "name": "Medium Shield", "base": "15" },
+      { "name": "Small Shield", "base": "15" }
+    ]
+  }
+}

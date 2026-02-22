@@ -25,6 +25,7 @@ final class RQCharacter {
     var income: Int
     var ransom: Int
     var powExperienceCheck: Bool
+    var skills: [CharacterSkill] = []
     
 
     var fireAffinity: RuneAffinity = RuneAffinity(name: "Fire", percentage: 0)
@@ -303,6 +304,23 @@ final class RQCharacter {
             }()
 
             return total + base + stepBonus
+        }
+    }
+
+    func bonus(for group: SkillGroup) -> Int {
+        switch group {
+        case .agility:
+            return agilityBonus()
+        case .communication:
+            return communicationsBonus()
+        case .knowledge:
+            return knoledgeBonus()
+        case .manipulation:
+            return manipulationBonus()
+        case .perception:
+            return perceptionBonus()
+        case .stealth:
+            return stealthBonus()
         }
     }
     
