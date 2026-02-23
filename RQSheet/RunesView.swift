@@ -8,6 +8,7 @@ import SwiftData
 
 struct RunesView: View {
     @Query private var characters: [RQCharacter]
+    @State private var isEditing = false
 
     var character: RQCharacter? {
         characters.first
@@ -16,7 +17,7 @@ struct RunesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let character = character {
-                RunicAffinitiesPentagramView(character: character)
+                RunicAffinitiesPentagramView(character: character, isEditing: $isEditing)
             } else {
                 Text("Create a character in Summary to view runic affinities.")
                     .foregroundColor(.secondary)
@@ -29,12 +30,32 @@ struct RunesView: View {
 
 struct RunicAffinitiesPentagramView: View {
     @Bindable var character: RQCharacter
+    @Binding var isEditing: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Elemental affinities")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .center)
+        VStack(alignment: .leading, spacing: 6) {
+            if isEditing {
+                Spacer()
+                    .frame(height: 10)
+            }
+
+            HStack(alignment: .center) {
+                Text("Elemental affinities")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.1)) {
+                        isEditing.toggle()
+                    }
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.headline)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isEditing ? "Finish editing runes" : "Edit runes")
+            }
 
             GeometryReader { geometry in
                 let width = geometry.size.width
@@ -70,29 +91,30 @@ struct RunicAffinitiesPentagramView: View {
                     }
                     .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
 
-                    RunicAffinityNodeView(rune: character.fireAffinity)
+                    RunicAffinityNodeView(rune: character.fireAffinity, isEditing: isEditing)
                         .position(top)
 
-                    RunicAffinityNodeView(rune: character.darknessAffinity)
+                    RunicAffinityNodeView(rune: character.darknessAffinity, isEditing: isEditing)
                         .position(upperRight)
 
-                    RunicAffinityNodeView(rune: character.earthAffinity)
+                    RunicAffinityNodeView(rune: character.earthAffinity, isEditing: isEditing)
                         .position(lowerRight)
 
-                    RunicAffinityNodeView(rune: character.waterAffinity)
+                    RunicAffinityNodeView(rune: character.waterAffinity, isEditing: isEditing)
                         .position(lowerLeft)
 
-                    RunicAffinityNodeView(rune: character.airAffinity)
+                    RunicAffinityNodeView(rune: character.airAffinity, isEditing: isEditing)
                         .position(upperLeft)
 
-                    RunicAffinityNodeView(rune: character.moonAffinity)
+                    RunicAffinityNodeView(rune: character.moonAffinity, isEditing: isEditing)
                         .position(center)
                 }
             }
             .frame(height: 280)
 
-            PairedRunesSectionView(character: character)
+            PairedRunesSectionView(character: character, isEditing: isEditing)
         }
+        .animation(.easeInOut(duration: 0.1), value: isEditing)
     }
 
     private func point(center: CGPoint, radius: CGFloat, angleDegrees: Double) -> CGPoint {
@@ -106,28 +128,30 @@ struct RunicAffinitiesPentagramView: View {
 
 struct PairedRunesSectionView: View {
     @Bindable var character: RQCharacter
+    let isEditing: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Power Affinities")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             ZStack {
                 Rectangle()
                     .fill(Color.secondary.opacity(0.35))
                     .frame(width: 1, height: 246)
 
-                VStack(spacing: 10) {
-                    RunicAffinityNodeView(rune: character.manAffinity)
+                VStack(spacing: 8) {
+                    RunicAffinityNodeView(rune: character.manAffinity, isEditing: isEditing)
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    PairRuneRowView(leftRune: character.fertilityAffinity, rightRune: character.deathAffinity)
-                    PairRuneRowView(leftRune: character.harmonyAffinity, rightRune: character.disorderAffinity)
-                    PairRuneRowView(leftRune: character.truthAffinity, rightRune: character.IllusionAffinity)
-                    PairRuneRowView(leftRune: character.stasisAffinity, rightRune: character.movementAffinity)
+                    PairRuneRowView(leftRune: character.fertilityAffinity, rightRune: character.deathAffinity, isEditing: isEditing)
+                    PairRuneRowView(leftRune: character.harmonyAffinity, rightRune: character.disorderAffinity, isEditing: isEditing)
+                    PairRuneRowView(leftRune: character.truthAffinity, rightRune: character.IllusionAffinity, isEditing: isEditing)
+                    PairRuneRowView(leftRune: character.stasisAffinity, rightRune: character.movementAffinity, isEditing: isEditing)
 
-                    RunicAffinityNodeView(rune: character.beastAffinity)
+                    RunicAffinityNodeView(rune: character.beastAffinity, isEditing: isEditing)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
@@ -138,17 +162,18 @@ struct PairedRunesSectionView: View {
 struct PairRuneRowView: View {
     @Bindable var leftRune: RuneAffinity
     @Bindable var rightRune: RuneAffinity
+    let isEditing: Bool
 
     var body: some View {
         HStack(spacing: 8) {
-            RunicAffinityNodeView(rune: leftRune)
+            RunicAffinityNodeView(rune: leftRune, isEditing: isEditing)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Rectangle()
                 .fill(Color.secondary.opacity(0.5))
                 .frame(width: 52, height: 1)
 
-            RunicAffinityNodeView(rune: rightRune)
+            RunicAffinityNodeView(rune: rightRune, isEditing: isEditing)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .center)
@@ -157,25 +182,61 @@ struct PairRuneRowView: View {
 
 struct RunicAffinityNodeView: View {
     @Bindable var rune: RuneAffinity
+    let isEditing: Bool
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 4) {
             HStack(spacing: 4) {
                 Text(rune.name.rawValue)
-                    .font(.subheadline)
+                    .font(.footnote)
                     .fontWeight(.semibold)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 Button {
                     rune.experienceCheck.toggle()
                 } label: {
                     Image(systemName: rune.experienceCheck ? "checkmark.circle.fill" : "circle")
-                        .font(.caption)
+                        .font(.caption2)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Toggle \(rune.name.rawValue) experience check")
             }
+            .frame(maxWidth: .infinity)
 
+            HStack(alignment: .center, spacing: 6) {
+                Image(runeAssetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 22, height: 22, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                percentageView
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 5)
+        .frame(width: 97, alignment: .leading)
+        .background(Color(.systemGray6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    @ViewBuilder
+    private var percentageView: some View {
+        if isEditing {
             HStack(spacing: 2) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(.systemBackground))
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+
                 TextField(
                     "",
                     text: Binding<String>(
@@ -192,14 +253,24 @@ struct RunicAffinityNodeView: View {
                 )
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 48)
+                .font(.callout.monospacedDigit())
+                .padding(.horizontal, 6)
+                }
+                .frame(width: 52, height: 28)
 
                 Text("%")
-                    .font(.caption)
+                    .font(.footnote.monospacedDigit())
                     .foregroundColor(.secondary)
             }
+        } else {
+            Text("\(rune.percentage)%")
+                .font(.callout.monospacedDigit())
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 2)
         }
-        .frame(minWidth: 82)
+    }
+
+    private var runeAssetName: String {
+        "Rune\(rune.name.rawValue)"
     }
 }
