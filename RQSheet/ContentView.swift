@@ -11,7 +11,7 @@ import SwiftData
 struct ContentView: View {
     var body: some View {
         TabView {
-            SummaryView()
+            StatsOverviewView()
                 .tabItem {
                     Label("Summary", systemImage: "person")
                 }

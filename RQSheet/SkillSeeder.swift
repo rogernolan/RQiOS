@@ -44,7 +44,7 @@ enum SkillSeeder {
     private static func seedSkills(for character: RQCharacter, in context: ModelContext) {
         let definitions = (try? context.fetch(FetchDescriptor<SkillDefinition>())) ?? []
         for definition in definitions {
-            let effective = min(100, max(0, definition.baseValue(for: character) + character.bonus(for: definition.group)))
+            let effective = (definition.baseValue(for: character) + character.bonus(for: definition.group)).clampedPercentage
             if effective > 0 {
                 let characterSkill = CharacterSkill(character: character, definition: definition, successPercentage: 0)
                 context.insert(characterSkill)

@@ -24,19 +24,19 @@ final class CharacterSkill {
 
     func effectiveValue() -> Int {
         guard let character, let definition else {
-            return min(100, max(0, successPercentage))
+            return successPercentage.clampedPercentage
         }
         let base = definition.baseValue(for: character)
         let categoryBonus = character.bonus(for: definition.group)
-        return min(100, max(0, base + categoryBonus + successPercentage))
+        return (base + categoryBonus + successPercentage).clampedPercentage
     }
 
     func setEffectiveValue(_ newValue: Int) {
         guard let character, let definition else {
-            successPercentage = min(100, max(0, newValue))
+            successPercentage = newValue.clampedPercentage
             return
         }
-        let clampedTarget = min(100, max(0, newValue))
+        let clampedTarget = newValue.clampedPercentage
         let dynamicPart = definition.baseValue(for: character) + character.bonus(for: definition.group)
         successPercentage = clampedTarget - dynamicPart
     }

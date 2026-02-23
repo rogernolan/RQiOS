@@ -7,16 +7,35 @@
 import Foundation
 import SwiftData
 
+enum RuneName: String, Codable, CaseIterable {
+    case fire = "Fire"
+    case darkness = "Darkness"
+    case earth = "Earth"
+    case water = "Water"
+    case air = "Air"
+    case moon = "Moon"
+    case man = "Man"
+    case beast = "Beast"
+    case fertility = "Fertility"
+    case death = "Death"
+    case harmony = "Harmony"
+    case disorder = "Disorder"
+    case truth = "Truth"
+    case illusion = "Illusion"
+    case stasis = "Stasis"
+    case movement = "Movement"
+}
+
 @Model
 final class RuneAffinity {
-    var name: String
+    var name: RuneName
     private(set) var percentage: Int  // 0-100
     var experienceCheck: Bool
     var relatedRune: RuneAffinity?
 
-    init(name: String, percentage: Int = 0, experienceCheck: Bool = false) {
+    init(name: RuneName, percentage: Int = 0, experienceCheck: Bool = false) {
         self.name = name
-        self.percentage = min(100, max(0, percentage))
+        self.percentage = percentage.clampedPercentage
         self.experienceCheck = experienceCheck
     }
 
@@ -25,7 +44,7 @@ final class RuneAffinity {
     }
 
     private func applyPercentage(_ newValue: Int, syncPair: Bool) {
-        let clampedValue = min(100, max(0, newValue))
+        let clampedValue = newValue.clampedPercentage
         if percentage == clampedValue {
             return
         }
@@ -40,7 +59,7 @@ final class RuneAffinity {
         }
     }
     
-    class func relatedPair(lhName:String ,rhName:String) -> (RuneAffinity,RuneAffinity) {
+    class func relatedPair(lhName: RuneName, rhName: RuneName) -> (RuneAffinity, RuneAffinity) {
         let left = RuneAffinity(name: lhName, percentage: 50)
         let right = RuneAffinity(name: rhName, percentage: 50)
         left.relatedRune = right

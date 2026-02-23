@@ -161,7 +161,7 @@ struct RunicAffinityNodeView: View {
     var body: some View {
         VStack(spacing: 2) {
             HStack(spacing: 4) {
-                Text(rune.name)
+                Text(rune.name.rawValue)
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
@@ -172,7 +172,7 @@ struct RunicAffinityNodeView: View {
                         .font(.caption)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Toggle \(rune.name) experience check")
+                .accessibilityLabel("Toggle \(rune.name.rawValue) experience check")
             }
 
             HStack(spacing: 2) {

@@ -19,7 +19,14 @@ final class RQCharacter {
     var cha: Int
     
     var worships: String
-    var reputation: String
+    var reputation: Int {
+        didSet {
+            let clamped = reputation.clampedPercentage
+            if reputation != clamped {
+                reputation = clamped
+            }
+        }
+    }
     var occupation: String
     var sol: String
     var income: Int
@@ -28,20 +35,20 @@ final class RQCharacter {
     var skills: [CharacterSkill] = []
     
 
-    var fireAffinity: RuneAffinity = RuneAffinity(name: "Fire", percentage: 0)
-    var darknessAffinity = RuneAffinity(name: "Darkness", percentage: 0)
-    var earthAffinity = RuneAffinity(name: "Earth", percentage: 0)
-    var waterAffinity = RuneAffinity(name: "Water", percentage: 0)
-    var airAffinity = RuneAffinity(name: "Air", percentage: 0)
-    var moonAffinity = RuneAffinity(name: "Moon", percentage: 0)
+    var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)
+    var darknessAffinity = RuneAffinity(name: .darkness, percentage: 0)
+    var earthAffinity = RuneAffinity(name: .earth, percentage: 0)
+    var waterAffinity = RuneAffinity(name: .water, percentage: 0)
+    var airAffinity = RuneAffinity(name: .air, percentage: 0)
+    var moonAffinity = RuneAffinity(name: .moon, percentage: 0)
     
     // Related pairs with 50% each and relatedRune set
     
-    var (manAffinity,beastAffinity) = RuneAffinity.relatedPair(lhName: "Man", rhName: "Beast")
-    var (fertilityAffinity, deathAffinity) = RuneAffinity.relatedPair(lhName: "Fertility", rhName: "Death")
-    var (harmonyAffinity, disorderAffinity) = RuneAffinity.relatedPair(lhName: "Harmony", rhName: "Disorder")
-    var (truthAffinity, IllusionAffinity) = RuneAffinity.relatedPair(lhName: "Truth", rhName: "Illusion")
-    var (stasisAffinity, movementAffinity) = RuneAffinity.relatedPair(lhName: "Stasis", rhName: "Movement")
+    var (manAffinity, beastAffinity) = RuneAffinity.relatedPair(lhName: .man, rhName: .beast)
+    var (fertilityAffinity, deathAffinity) = RuneAffinity.relatedPair(lhName: .fertility, rhName: .death)
+    var (harmonyAffinity, disorderAffinity) = RuneAffinity.relatedPair(lhName: .harmony, rhName: .disorder)
+    var (truthAffinity, IllusionAffinity) = RuneAffinity.relatedPair(lhName: .truth, rhName: .illusion)
+    var (stasisAffinity, movementAffinity) = RuneAffinity.relatedPair(lhName: .stasis, rhName: .movement)
 
     func agilityBonus() -> Int {
         let values: [(String, Int)] = [("STR", str), ("SIZ", siz), ("DEX", dex)]
@@ -325,7 +332,7 @@ final class RQCharacter {
     }
     
     init(name: String = "",
-         worships: String = "", reputation: String = "", occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false,
+         worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false,
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -339,7 +346,7 @@ final class RQCharacter {
         self.siz = Int.random(in: 8...18) // 2d6+6
         
         self.worships = worships
-        self.reputation = reputation
+        self.reputation = reputation.clampedPercentage
         self.occupation = occupation
         self.sol = sol
         self.income = income
