@@ -65,17 +65,29 @@ private struct SummaryReadOnlyView: View {
         VStack(alignment: .leading, spacing: 12) {
             summaryRow("Worships", display(character.worships))
 
-            HStack(spacing: 16) {
-                statValue("STR", character.str)
-                statValue("CON", character.con)
-                statValue("SIZ", character.siz)
-                statValue("DEX", character.dex)
-                statValue("INT", character.int)
-                powStatValue
-                statValue("CHA", character.cha)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 16) {
+                    statValue("STR", character.str)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    statValue("CON", character.con)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    statValue("SIZ", character.siz)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                HStack(spacing: 16) {
+                    statValue("DEX", character.dex)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    statValue("INT", character.int)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    powStatValue
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                HStack(spacing: 16) {
+                    statValue("CHA", character.cha)
+                }
             }
 
-            summaryRow("Reputation", "\(character.reputation)")
+            summaryRow("Reputation", "\(character.reputation)%")
             summaryRow("Occupation", display(character.occupation))
             summaryRow("SoL", display(character.sol))
             summaryRow("Income", "\(character.income) L")
@@ -105,10 +117,12 @@ private struct SummaryReadOnlyView: View {
 
     private var powStatValue: some View {
         VStack(alignment: .leading, spacing: 2) {
+            Text("POW")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
             HStack(spacing: 4) {
-                Text("POW")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                Text("\(character.pow)")
+                    .font(.body)
                 Button {
                     character.powExperienceCheck.toggle()
                 } label: {
@@ -117,8 +131,6 @@ private struct SummaryReadOnlyView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Toggle POW experience check")
             }
-            Text("\(character.pow)")
-                .font(.body)
         }
     }
 
