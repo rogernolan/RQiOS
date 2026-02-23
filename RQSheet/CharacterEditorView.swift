@@ -88,6 +88,23 @@ struct CharacterEditorView: View {
             }
 
             HStack(alignment: .top) {
+                Text("Move")
+                    .font(.headline)
+                    .frame(width: 100, alignment: .leading)
+                TextField(
+                    "Move",
+                    value: Binding<Int>(
+                        get: { character.move },
+                        set: { character.move = $0 }
+                    ),
+                    formatter: NumberFormatter()
+                )
+                .keyboardType(.numberPad)
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack(alignment: .top) {
                 Text("Reputation")
                     .font(.headline)
                     .frame(width: 100, alignment: .leading)

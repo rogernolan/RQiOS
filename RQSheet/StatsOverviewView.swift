@@ -62,28 +62,26 @@ private struct SummaryReadOnlyView: View {
     @Bindable var character: RQCharacter
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             summaryRow("Worships", display(character.worships))
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
                     statValue("STR", character.str)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     statValue("CON", character.con)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     statValue("SIZ", character.siz)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                HStack(spacing: 16) {
+                HStack(spacing: 10) {
                     statValue("DEX", character.dex)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     statValue("INT", character.int)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     powStatValue
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                HStack(spacing: 16) {
+                HStack(spacing: 10) {
                     statValue("CHA", character.cha)
+                    Spacer(minLength: 0)
+                        .frame(maxWidth: .infinity)
+                    summaryRow("Move", "\(character.move)")
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
 
@@ -113,6 +111,15 @@ private struct SummaryReadOnlyView: View {
             Text("\(value)")
                 .font(.body)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var powStatValue: some View {
@@ -132,6 +139,15 @@ private struct SummaryReadOnlyView: View {
                 .accessibilityLabel("Toggle POW experience check")
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color(.systemGray6))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private func display(_ value: String) -> String {

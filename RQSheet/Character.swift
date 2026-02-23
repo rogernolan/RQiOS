@@ -10,6 +10,8 @@ import SwiftData
 @Model
 final class RQCharacter {
     var name: String
+    var worships: String
+
     var str: Int
     var con: Int
     var siz: Int
@@ -17,8 +19,14 @@ final class RQCharacter {
     var int: Int
     var pow: Int
     var cha: Int
+    var move: Int {
+        didSet {
+            if move < 1 {
+                move = 1
+            }
+        }
+    }
     
-    var worships: String
     var reputation: Int {
         didSet {
             let clamped = reputation.clampedPercentage
@@ -332,7 +340,7 @@ final class RQCharacter {
     }
     
     init(name: String = "",
-         worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false,
+         worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -344,6 +352,7 @@ final class RQCharacter {
         self.cha = Int.random(in: 3...18) // 3d6
         self.int = Int.random(in: 8...18) // 2d6+6
         self.siz = Int.random(in: 8...18) // 2d6+6
+        self.move = max(1, move)
         
         self.worships = worships
         self.reputation = reputation.clampedPercentage
