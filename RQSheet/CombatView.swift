@@ -18,16 +18,31 @@ struct CombatView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(alignment: .leading, spacing: 12) {
+                let panelHeight = max(360, geometry.size.width )
+
                 ZStack {
                     Image("RuneMan")
                         .resizable()
                         .renderingMode(.template)
                         .scaledToFit()
                         .foregroundStyle(Color(.systemGray3))
-                        .frame(width: geometry.size.width * 0.95)
+                        .frame(maxWidth: .infinity)
+
+                    if let character {
+                        hitLocationOverlay(for: character)
+                    }
                 }
                 .frame(maxWidth: .infinity)
-                    .frame(height: max(180, geometry.size.height * 0.45))
+                .frame(height: panelHeight)
+
+                if let character {
+                    Text("Total Hitpoints: \(character.currentHitpoints)/\(character.maxHitpoints)")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 4)
+                }
+
+                Divider()
 
                 headerRow
 
@@ -40,6 +55,7 @@ struct CombatView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .frame(minHeight: 120)
 
                     Button("Add weapon") {
                         isPresentingAddWeapon = true
@@ -118,6 +134,126 @@ struct CombatView: View {
                 .frame(width: 32, alignment: .trailing)
         }
         .font(.footnote)
+    }
+
+    private func hitLocationOverlay(for character: RQCharacter) -> some View {
+        GeometryReader { geo in
+            let locationsByType = Dictionary(uniqueKeysWithValues: character.hitLocations.map { ($0.location, $0) })
+            let yOffset: CGFloat = 20
+            ZStack {
+                hitLocationCard(locationsByType[.head])
+                    .position(x: geo.size.width * 0.50, y: (geo.size.height * 0.15) + yOffset)
+                hitLocationCard(locationsByType[.chest])
+                    .position(x: geo.size.width * 0.50, y: (geo.size.height * 0.40) + yOffset )
+                hitLocationCard(locationsByType[.abdomen])
+                    .position(x: geo.size.width * 0.50, y: (geo.size.height * 0.65) + yOffset )
+                hitLocationCard(locationsByType[.leftArm])
+                    .position(x: (geo.size.width * 0.20) , y: (geo.size.height * 0.40) + yOffset )
+                hitLocationCard(locationsByType[.rightArm])
+                    .position(x: (geo.size.width * 0.80) , y: (geo.size.height * 0.40) + yOffset )
+                hitLocationCard(locationsByType[.leftLeg])
+                    .position(x: (geo.size.width * 0.25) , y: (geo.size.height * 0.80) + yOffset )
+                hitLocationCard(locationsByType[.rightLeg])
+                    .position(x: (geo.size.width * 0.75) , y: (geo.size.height * 0.80) + yOffset )
+            }
+        }
+    }
+
+    private func hitLocationCard(_ location: CharacterHitLocation?) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(shortName(for: location?.location))
+                .font(.footnote)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack(spacing: 4) {
+                Text("AP")
+                    .font(.footnote)
+                    .frame(width: 18, alignment: .leading)
+                TextField(
+                    "",
+                    text: Binding<String>(
+                        get: { armourText(for: location) },
+                        set: { newValue in
+                            guard let location else { return }
+                            let digits = newValue.filter(\.isNumber)
+                            if digits.isEmpty {
+                                location.armour = 0
+                            } else if let value = Int(digits) {
+                                location.armour = value
+                            }
+                        }
+                    )
+                )
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .font(.footnote.monospacedDigit())
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 34)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 2)
+
+            HStack(spacing: 4) {
+                Text("HP")
+                    .font(.footnote)
+                    .frame(width: 18, alignment: .leading)
+                TextField(
+                    "",
+                    text: Binding<String>(
+                        get: { currentHPText(for: location) },
+                        set: { newValue in
+                            guard let location else { return }
+                            let digits = newValue.filter(\.isNumber)
+                            if digits.isEmpty {
+                                location.currentHP = 0
+                            } else if let value = Int(digits) {
+                                location.currentHP = value
+                            }
+                        }
+                    )
+                )
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .font(.footnote.monospacedDigit())
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 34)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 2)
+        }
+        .padding(.horizontal, 2)
+        .padding(.vertical, 2)
+        .frame(width: 85, alignment: .leading)
+        .background(Color(.systemBackground).opacity(0.9))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func shortName(for location: HitLocation?) -> String {
+        switch location {
+        case .head: return "Head"
+        case .chest: return "Chest"
+        case .abdomen: return "Abd"
+        case .leftArm: return "L Arm"
+        case .rightArm: return "R Arm"
+        case .leftLeg: return "L Leg"
+        case .rightLeg: return "R Leg"
+        case .none: return "-"
+        }
+    }
+
+    private func currentHPText(for location: CharacterHitLocation?) -> String {
+        guard let location else { return "" }
+        return String(location.currentHP)
+    }
+
+    private func armourText(for location: CharacterHitLocation?) -> String {
+        guard let location else { return "" }
+        return String(location.armour)
     }
 
     private func addWeapon(
