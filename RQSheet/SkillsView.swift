@@ -30,15 +30,22 @@ struct SkillsView: View {
                             Section(groupTitle(for: group)) {
                                 ForEach(groupSkills) { skill in
                                     SkillRowView(skill: skill)
+                                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                                        .listRowBackground(Color.clear)
                                 }
                                 if searchText.isEmpty == false && groupSkills.isEmpty {
                                     Text("No matches")
                                         .foregroundColor(.secondary)
+                                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                                        .listRowBackground(Color.clear)
                                 }
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .contentMargins(.horizontal, 16, for: .scrollContent)
 
                     HStack(spacing: 8) {
                         Image(systemName: "magnifyingglass")
@@ -47,6 +54,15 @@ struct SkillsView: View {
                             .textInputAutocapitalization(.never)
                             .disableAutocorrection(true)
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.45), lineWidth: 0.7)
+                    )
+                    .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
+                    .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                 }
@@ -56,6 +72,7 @@ struct SkillsView: View {
                     .padding()
             }
         }
+        .mainRuneBackground(runeName: "RuneMastery")
     }
 
     private func skills(for character: RQCharacter, group: SkillGroup) -> [CharacterSkill] {

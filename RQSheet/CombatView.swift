@@ -81,6 +81,7 @@ struct CombatView: View {
                 }
             }
         }
+        .mainRuneBackground(runeName: "RuneDeath")
     }
 
     private var headerRow: some View {

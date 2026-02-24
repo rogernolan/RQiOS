@@ -9,5 +9,6 @@ struct MagicView: View {
     var body: some View {
         Text("Magic placeholder")
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .mainRuneBackground(runeName: "RuneMagic")
     }
 }

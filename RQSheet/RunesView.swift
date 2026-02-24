@@ -25,6 +25,7 @@ struct RunesView: View {
             Spacer()
         }
         .padding(16)
+        .mainRuneBackground(runeName: "RuneInfinity", fixedRotation: 50)
     }
 }
 

@@ -48,6 +48,7 @@ struct StatsOverviewView: View {
                 Spacer()
             }
             .padding(16)
+            .mainRuneBackground(runeName: "RuneMan")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
