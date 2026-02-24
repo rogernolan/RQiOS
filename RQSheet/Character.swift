@@ -41,6 +41,7 @@ final class RQCharacter {
     var ransom: Int
     var powExperienceCheck: Bool
     var skills: [CharacterSkill] = []
+    var weaponSkills: [WeaponSkill] = []
     
 
     var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)

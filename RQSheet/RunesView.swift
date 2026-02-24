@@ -89,7 +89,7 @@ struct RunicAffinitiesPentagramView: View {
                             )
                         }
                     }
-                    .stroke(Color.secondary.opacity(0.35), lineWidth: 1)
+                    .stroke(Color.secondary.opacity(0.25), lineWidth: 3)
 
                     RunicAffinityNodeView(rune: character.fireAffinity, isEditing: isEditing)
                         .position(top)
@@ -139,8 +139,8 @@ struct PairedRunesSectionView: View {
 
             ZStack {
                 Rectangle()
-                    .fill(Color.secondary.opacity(0.35))
-                    .frame(width: 1, height: 246)
+                    .fill(Color.secondary.opacity(0.25))
+                    .frame(width: 3, height: 246)
 
                 VStack(spacing: 8) {
                     RunicAffinityNodeView(rune: character.manAffinity, isEditing: isEditing)
@@ -165,16 +165,15 @@ struct PairRuneRowView: View {
     let isEditing: Bool
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 0) {
             RunicAffinityNodeView(rune: leftRune, isEditing: isEditing)
-                .frame(maxWidth: .infinity, alignment: .leading)
 
             Rectangle()
-                .fill(Color.secondary.opacity(0.5))
-                .frame(width: 52, height: 1)
+                .fill(Color.secondary.opacity(0.25))
+                .frame(maxWidth: .infinity)
+                .frame(height: 3)
 
             RunicAffinityNodeView(rune: rightRune, isEditing: isEditing)
-                .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -208,7 +207,8 @@ struct RunicAffinityNodeView: View {
                 Image(runeAssetName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 22, height: 22, alignment: .leading)
+                    .padding(1)
+                    .frame(width: 26, height: 26, alignment: .leading)
 
                 Spacer(minLength: 0)
 

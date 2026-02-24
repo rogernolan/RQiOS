@@ -15,9 +15,9 @@ struct ContentView: View {
                 .tabItem {
                     Label("Summary", systemImage: "person")
                 }
-            AttributesView()
+            CombatView()
                 .tabItem {
-                    Label("Attributes", systemImage: "chart.bar")
+                    Label("Combat", systemImage: "chart.bar")
                 }
             SkillsView()
                 .tabItem {
@@ -36,5 +36,8 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView().modelContainer(for: RQCharacter.self, inMemory: true)
+    ContentView().modelContainer(
+        for: [RQCharacter.self, RuneAffinity.self, SkillDefinition.self, CharacterSkill.self, WeaponSkill.self],
+        inMemory: true
+    )
 }

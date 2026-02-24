@@ -16,6 +16,7 @@ struct RQSheetApp: App {
             RuneAffinity.self,
             SkillDefinition.self,
             CharacterSkill.self,
+            WeaponSkill.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
