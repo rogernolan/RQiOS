@@ -7,6 +7,38 @@
 import Foundation
 import SwiftData
 
+private enum HitPointCharacteristic {
+    case siz
+    case pow
+}
+
+private func hitPointModifier(for value: Int, characteristic: HitPointCharacteristic) -> Int {
+    switch characteristic {
+    case .siz:
+        switch value {
+        case ...4: return -2
+        case 5...8: return -1
+        case 9...12: return 0
+        case 13...16: return 1
+        case 17...20: return 2
+        case 21...24: return 3
+        case 25...28: return 4
+        default:
+            return 4 + ((value - 25) / 4)
+        }
+    case .pow:
+        switch value {
+        case ...4: return -1
+        case 5...16: return 0
+        case 17...20: return 1
+        case 21...24: return 2
+        case 25...28: return 3
+        default:
+            return 3 + ((value - 25) / 4)
+        }
+    }
+}
+
 @Model
 final class RQCharacter {
     var name: String
@@ -19,6 +51,34 @@ final class RQCharacter {
     var int: Int
     var pow: Int
     var cha: Int
+    var maxHitpoints: Int {
+        didSet {
+            if maxHitpoints < 1 {
+                maxHitpoints = 1
+            }
+            if currentHitpoints > maxHitpoints {
+                currentHitpoints = maxHitpoints
+            }
+            syncHitLocationMaximums(preserveDamage: true)
+        }
+    }
+    var currentHitpoints: Int {
+        didSet {
+            if currentHitpoints < 1 {
+                currentHitpoints = 1
+            }
+            if currentHitpoints > maxHitpoints {
+                currentHitpoints = maxHitpoints
+            }
+        }
+    }
+    var healingRate: Int {
+        didSet {
+            if healingRate < 1 {
+                healingRate = 1
+            }
+        }
+    }
     var move: Int {
         didSet {
             if move < 1 {
@@ -42,6 +102,7 @@ final class RQCharacter {
     var powExperienceCheck: Bool
     var skills: [CharacterSkill] = []
     var weaponSkills: [WeaponSkill] = []
+    var hitLocations: [CharacterHitLocation] = []
     
 
     var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)
@@ -339,20 +400,99 @@ final class RQCharacter {
             return stealthBonus()
         }
     }
-    
+
+    private static func hitLocationTemplate(for totalHitPoints: Int) -> (leg: Int, abdomen: Int, chest: Int, arm: Int, head: Int) {
+        let total = max(1, totalHitPoints)
+        switch total {
+        case ...6:
+            return (2, 2, 3, 1, 2)
+        case 7...9:
+            return (3, 3, 4, 2, 3)
+        case 10...12:
+            return (4, 4, 5, 3, 4)
+        case 13...15:
+            return (5, 5, 6, 4, 5)
+        case 16...18:
+            return (6, 6, 7, 5, 6)
+        default:
+            let bonus = max(0, (total - 19) / 3)
+            return (7 + bonus, 7 + bonus, 8 + bonus, 6 + bonus, 7 + bonus)
+        }
+    }
+
+    private static func hitLocationMaximum(for location: HitLocation, totalHitPoints: Int) -> Int {
+        let template = hitLocationTemplate(for: totalHitPoints)
+        switch location {
+        case .leftLeg, .rightLeg:
+            return template.leg
+        case .abdomen:
+            return template.abdomen
+        case .chest:
+            return template.chest
+        case .leftArm, .rightArm:
+            return template.arm
+        case .head:
+            return template.head
+        }
+    }
+
+    private func syncHitLocationMaximums(preserveDamage: Bool) {
+        for location in HitLocation.allCases {
+            let targetMax = Self.hitLocationMaximum(for: location, totalHitPoints: maxHitpoints)
+            if let existing = hitLocations.first(where: { $0.location == location }) {
+                let damage = preserveDamage ? max(0, existing.maxHP - existing.currentHP) : 0
+                existing.maxHP = targetMax
+                existing.currentHP = max(0, targetMax - damage)
+            } else {
+                let newLocation = CharacterHitLocation(
+                    character: self,
+                    location: location,
+                    maxHP: targetMax,
+                    currentHP: targetMax,
+                    armour: 0
+                )
+                hitLocations.append(newLocation)
+            }
+        }
+
+        hitLocations.removeAll { location in
+            HitLocation.allCases.contains(location.location) == false
+        }
+    }
+
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
+         maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
         // TODO these are not real rolls.
-        self.str = Int.random(in: 3...18) // 3d6
-        self.con = Int.random(in: 3...18) // 3d6
-        self.pow = Int.random(in: 3...18) // 3d6
-        self.dex = Int.random(in: 3...18) // 3d6
-        self.cha = Int.random(in: 3...18) // 3d6
-        self.int = Int.random(in: 8...18) // 2d6+6
-        self.siz = Int.random(in: 8...18) // 2d6+6
+        let strRoll = Int.random(in: 3...18) // 3d6
+        let conRoll = Int.random(in: 3...18) // 3d6
+        let powRoll = Int.random(in: 3...18) // 3d6
+        let dexRoll = Int.random(in: 3...18) // 3d6
+        let chaRoll = Int.random(in: 3...18) // 3d6
+        let intRoll = Int.random(in: 8...18) // 2d6+6
+        let sizRoll = Int.random(in: 8...18) // 2d6+6
+
+        self.str = strRoll
+        self.con = conRoll
+        self.pow = powRoll
+        self.dex = dexRoll
+        self.cha = chaRoll
+        self.int = intRoll
+        self.siz = sizRoll
+        let generatedMaxHitpoints = max(
+            1,
+            conRoll
+                + hitPointModifier(for: sizRoll, characteristic: .siz)
+                + hitPointModifier(for: powRoll, characteristic: .pow)
+        )
+        let clampedMaxHitpoints = maxHitpoints == 1 ? generatedMaxHitpoints : max(1, maxHitpoints)
+        self.maxHitpoints = clampedMaxHitpoints
+        let defaultCurrent = currentHitpoints == 1 ? clampedMaxHitpoints : currentHitpoints
+        self.currentHitpoints = min(max(1, defaultCurrent), clampedMaxHitpoints)
+        self.healingRate = max(1, healingRate)
         self.move = max(1, move)
         
         self.worships = worships
@@ -362,7 +502,8 @@ final class RQCharacter {
         self.income = income
         self.ransom = ransom
         self.powExperienceCheck = powExperienceCheck
-            
+
+        syncHitLocationMaximums(preserveDamage: false)
     }
 
 }

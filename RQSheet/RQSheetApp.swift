@@ -17,6 +17,7 @@ struct RQSheetApp: App {
             SkillDefinition.self,
             CharacterSkill.self,
             WeaponSkill.self,
+            CharacterHitLocation.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

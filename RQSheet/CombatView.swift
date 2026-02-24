@@ -18,22 +18,15 @@ struct CombatView: View {
     var body: some View {
         GeometryReader { geometry in
             VStack(alignment: .leading, spacing: 12) {
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(Color(.systemGray6))
-                    .overlay(
-                        ZStack {
-                            Image("RuneMan")
-                                .resizable()
-                                .renderingMode(.template)
-                                .scaledToFit()
-                                .foregroundStyle(Color(.systemGray3))
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .padding(5)
-
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color(.systemGray4), lineWidth: 1)
-                        }
-                    )
+                ZStack {
+                    Image("RuneMan")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                        .foregroundStyle(Color(.systemGray3))
+                        .frame(width: geometry.size.width * 0.95)
+                }
+                .frame(maxWidth: .infinity)
                     .frame(height: max(180, geometry.size.height * 0.45))
 
                 headerRow
