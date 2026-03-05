@@ -20,29 +20,32 @@ struct SkillsView: View {
                 ZStack(alignment: .top) {
                     List {
                         Color.clear
-                            .frame(height: 48)
+                            .frame(height: 44)
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
 
                         ForEach(SkillGroup.allCases, id: \.rawValue) { group in
                             let groupSkills = filteredSkills(for: character, group: group)
-                            Section(groupTitle(for: group)) {
+                            Section {
                                 ForEach(groupSkills) { skill in
                                     SkillRowView(skill: skill)
-                                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
                                         .listRowBackground(Color.clear)
                                 }
                                 if searchText.isEmpty == false && groupSkills.isEmpty {
                                     Text("No matches")
                                         .foregroundColor(.secondary)
-                                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
                                         .listRowBackground(Color.clear)
                                 }
+                            } header: {
+                                groupHeader(for: character, group: group)
                             }
                         }
                     }
                     .listStyle(.plain)
+                    .environment(\.defaultMinListRowHeight, 34)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .contentMargins(.horizontal, 16, for: .scrollContent)
@@ -68,7 +71,7 @@ struct SkillsView: View {
                 }
             } else {
                 Text("Create a character in Summary to view skills.")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding()
             }
         }
@@ -89,8 +92,26 @@ struct SkillsView: View {
 
         return groupSkills.filter { skill in
             let name = skill.definition?.name ?? ""
-            return name.localizedCaseInsensitiveContains(searchText)
+            return name.localizedStandardContains(searchText)
         }
+    }
+
+    private func groupHeader(for character: RQCharacter, group: SkillGroup) -> some View {
+        HStack(spacing: 8) {
+            Text(groupTitle(for: group))
+                .font(.headline)
+            Spacer()
+            Text("\(formattedBonus(character.bonus(for: group)))")
+                .font(.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .textCase(nil)
+    }
+
+    private func formattedBonus(_ value: Int) -> String {
+        let sign = value > 0 ? "+" : ""
+        return "\(sign)\(value)%"
     }
 
     private func groupTitle(for group: SkillGroup) -> String {
@@ -117,21 +138,24 @@ private struct SkillRowView: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(skill.definition?.name ?? "Unknown Skill")
+                .font(.subheadline)
 
             Spacer()
 
             Text("\(skill.effectiveValue())%")
+                .font(.subheadline)
                 .monospacedDigit()
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Button {
                 skill.experienceCheck.toggle()
             } label: {
                 Image(systemName: skill.experienceCheck ? "checkmark.square.fill" : "square")
-                    .font(.body)
+                    .font(.callout)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Toggle experience check")
         }
+        .padding(.vertical, 1)
     }
 }
