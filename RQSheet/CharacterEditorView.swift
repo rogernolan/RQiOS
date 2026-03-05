@@ -42,40 +42,40 @@ struct CharacterEditorView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     statField("STR", value: Binding(
                         get: { character.str },
-                        set: { character.str = $0 }
+                        set: { character.setCharacteristic(.str, to: $0) }
                     ))
                     statField("INT", value: Binding(
                         get: { character.int },
-                        set: { character.int = $0 }
+                        set: { character.setCharacteristic(.int, to: $0) }
                     ))
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 8) {
                     statField("CON", value: Binding(
                         get: { character.con },
-                        set: { character.con = $0 }
+                        set: { character.setCharacteristic(.con, to: $0) }
                     ))
                     statField("SIZ", value: Binding(
                         get: { character.siz },
-                        set: { character.siz = $0 }
+                        set: { character.setCharacteristic(.siz, to: $0) }
                     ))
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 8) {
                     statField("DEX", value: Binding(
                         get: { character.dex },
-                        set: { character.dex = $0 }
+                        set: { character.setCharacteristic(.dex, to: $0) }
                     ))
                     statField("POW", value: Binding(
                         get: { character.pow },
-                        set: { character.pow = $0 }
+                        set: { character.setCharacteristic(.pow, to: $0) }
                     ))
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 8) {
                     statField("CHA", value: Binding(
                         get: { character.cha },
-                        set: { character.cha = $0 }
+                        set: { character.setCharacteristic(.cha, to: $0) }
                     ))
                     VStack(alignment: .leading, spacing: 2) {
                         Text(" ")

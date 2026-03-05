@@ -41,6 +41,16 @@ private func hitPointModifier(for value: Int, characteristic: HitPointCharacteri
 
 @Model
 final class RQCharacter {
+    enum Characteristic {
+        case str
+        case con
+        case siz
+        case dex
+        case int
+        case pow
+        case cha
+    }
+
     var name: String
     var worships: String
 
@@ -460,6 +470,47 @@ final class RQCharacter {
         }
     }
 
+    private static func generatedMaxHitpoints(con: Int, siz: Int, pow: Int) -> Int {
+        max(
+            1,
+            con
+                + hitPointModifier(for: siz, characteristic: .siz)
+                + hitPointModifier(for: pow, characteristic: .pow)
+        )
+    }
+
+    private func recalculateDerivedData() {
+        let recalculatedMax = Self.generatedMaxHitpoints(con: con, siz: siz, pow: pow)
+        if recalculatedMax != maxHitpoints {
+            maxHitpoints = recalculatedMax
+            currentHitpoints = recalculatedMax
+            syncHitLocationMaximums(preserveDamage: false)
+        }
+        for skill in skills {
+            skill.refreshForCharacteristicChange()
+        }
+    }
+
+    func setCharacteristic(_ characteristic: Characteristic, to value: Int) {
+        switch characteristic {
+        case .str:
+            str = value
+        case .con:
+            con = value
+        case .siz:
+            siz = value
+        case .dex:
+            dex = value
+        case .int:
+            int = value
+        case .pow:
+            pow = value
+        case .cha:
+            cha = value
+        }
+        recalculateDerivedData()
+    }
+
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
@@ -482,12 +533,7 @@ final class RQCharacter {
         self.cha = chaRoll
         self.int = intRoll
         self.siz = sizRoll
-        let generatedMaxHitpoints = max(
-            1,
-            conRoll
-                + hitPointModifier(for: sizRoll, characteristic: .siz)
-                + hitPointModifier(for: powRoll, characteristic: .pow)
-        )
+        let generatedMaxHitpoints = Self.generatedMaxHitpoints(con: conRoll, siz: sizRoll, pow: powRoll)
         let clampedMaxHitpoints = maxHitpoints == 1 ? generatedMaxHitpoints : max(1, maxHitpoints)
         self.maxHitpoints = clampedMaxHitpoints
         let defaultCurrent = currentHitpoints == 1 ? clampedMaxHitpoints : currentHitpoints
