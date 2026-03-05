@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C8B5BA872F59AB93005A3EE0 /* AGENTS.md in Resources */ = {isa = PBXBuildFile; fileRef = C8B5BA862F59AB93005A3EE0 /* AGENTS.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C80F30C12F49DB0C00714EE9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		C80F30AF2F49DB0B00714EE9 /* RQSheet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RQSheet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80F30C02F49DB0C00714EE9 /* RQSheetTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RQSheetTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80F30CA2F49DB0C00714EE9 /* RQSheetUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RQSheetUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8B5BA862F59AB93005A3EE0 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -92,6 +97,7 @@
 				C80F30C32F49DB0C00714EE9 /* RQSheetTests */,
 				C80F30CD2F49DB0C00714EE9 /* RQSheetUITests */,
 				C80F30B02F49DB0B00714EE9 /* Products */,
+				C8B5BA862F59AB93005A3EE0 /* AGENTS.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -225,6 +231,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8B5BA872F59AB93005A3EE0 /* AGENTS.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
