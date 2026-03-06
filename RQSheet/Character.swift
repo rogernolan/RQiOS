@@ -7,6 +7,12 @@
 import Foundation
 import SwiftData
 
+struct SummaryRuneDisplay: Equatable {
+    let name: RuneName
+    let percentage: Int
+    let isPlaceholder: Bool
+}
+
 private enum HitPointCharacteristic {
     case siz
     case pow
@@ -129,6 +135,71 @@ final class RQCharacter {
     var (harmonyAffinity, disorderAffinity) = RuneAffinity.relatedPair(lhName: .harmony, rhName: .disorder)
     var (truthAffinity, IllusionAffinity) = RuneAffinity.relatedPair(lhName: .truth, rhName: .illusion)
     var (stasisAffinity, movementAffinity) = RuneAffinity.relatedPair(lhName: .stasis, rhName: .movement)
+    var summaryPlaceholderRuneNames: [RuneName]?
+
+    var allRuneAffinities: [RuneAffinity] {
+        [
+            fireAffinity,
+            darknessAffinity,
+            earthAffinity,
+            waterAffinity,
+            airAffinity,
+            moonAffinity,
+            manAffinity,
+            beastAffinity,
+            fertilityAffinity,
+            deathAffinity,
+            harmonyAffinity,
+            disorderAffinity,
+            truthAffinity,
+            IllusionAffinity,
+            stasisAffinity,
+            movementAffinity
+        ]
+    }
+
+    func topSummaryRunes() -> [SummaryRuneDisplay] {
+        let affinities = allRuneAffinities
+        if affinities.contains(where: { summaryAffinityScore(for: $0) > 0 }) {
+            summaryPlaceholderRuneNames = nil
+            return affinities
+                .sorted { lhs, rhs in
+                    let lhsScore = summaryAffinityScore(for: lhs)
+                    let rhsScore = summaryAffinityScore(for: rhs)
+
+                    if lhsScore == rhsScore {
+                        if lhs.percentage == rhs.percentage {
+                            return lhs.name.rawValue < rhs.name.rawValue
+                        }
+                        return lhs.percentage > rhs.percentage
+                    }
+                    return lhsScore > rhsScore
+                }
+                .prefix(4)
+                .map { affinity in
+                    SummaryRuneDisplay(name: affinity.name, percentage: affinity.percentage, isPlaceholder: false)
+                }
+        }
+
+        if summaryPlaceholderRuneNames?.count != 4 {
+            summaryPlaceholderRuneNames = RuneName.allCases.shuffled().prefix(4).map(\.self)
+        }
+
+        return (summaryPlaceholderRuneNames ?? [])
+            .compactMap { runeName in
+                affinities.first(where: { $0.name == runeName })
+            }
+            .map { affinity in
+                SummaryRuneDisplay(name: affinity.name, percentage: affinity.percentage, isPlaceholder: true)
+            }
+    }
+
+    private func summaryAffinityScore(for affinity: RuneAffinity) -> Int {
+        if affinity.relatedRune != nil {
+            return abs(affinity.percentage - 50)
+        }
+        return affinity.percentage
+    }
 
     func agilityBonus() -> Int {
         let values: [(String, Int)] = [("STR", str), ("SIZ", siz), ("DEX", dex)]
