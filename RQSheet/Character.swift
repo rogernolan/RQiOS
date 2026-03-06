@@ -115,7 +115,13 @@ final class RQCharacter {
     var sol: String
     var income: Int
     var ransom: Int
+    var dateOfBirth: String
+    var family: String
+    var patron: String
+    var portraitData: Data?
     var powExperienceCheck: Bool
+    var honor: CharacterHonor?
+    var passions: [CharacterPassion] = []
     var skills: [CharacterSkill] = []
     var weaponSkills: [WeaponSkill] = []
     var hitLocations: [CharacterHitLocation] = []
@@ -582,9 +588,33 @@ final class RQCharacter {
         recalculateDerivedData()
     }
 
+    @discardableResult
+    func ensureHonorExists() -> CharacterHonor {
+        if let honor {
+            return honor
+        }
+
+        let createdHonor = CharacterHonor(character: self)
+        honor = createdHonor
+        return createdHonor
+    }
+
+    func addPassion(description: String, percentage: Int) {
+        let nextSortOrder = (passions.map(\.sortOrder).max() ?? -1) + 1
+        let passion = CharacterPassion(
+            descriptionText: description,
+            percentage: percentage.clampedPercentage,
+            sortOrder: nextSortOrder,
+            character: self
+        )
+        passions.append(passion)
+    }
+
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
+         dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
+         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [],
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -618,7 +648,17 @@ final class RQCharacter {
         self.sol = sol
         self.income = income
         self.ransom = ransom
+        self.dateOfBirth = dateOfBirth
+        self.family = family
+        self.patron = patron
+        self.portraitData = portraitData
         self.powExperienceCheck = powExperienceCheck
+        self.honor = honor
+        self.passions = passions
+        self.honor?.character = self
+        for passion in passions {
+            passion.character = self
+        }
 
         syncHitLocationMaximums(preserveDamage: false)
     }
