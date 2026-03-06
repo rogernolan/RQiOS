@@ -74,12 +74,12 @@ struct CombatView: View {
         }
         .sheet(isPresented: $isPresentingAddWeapon) {
             if let character {
-                AddWeaponView { name, basePercentage, experienceCheck, damage, hpMax, hpCurrent, enc, strikeRank, type in
+                AddWeaponView { name, basePercentage, damage, hpMax, hpCurrent, enc, strikeRank, type in
                     addWeapon(
                         to: character,
                         name: name,
                         basePercentage: basePercentage,
-                        experienceCheck: experienceCheck,
+                        experienceCheck: false,
                         damage: damage,
                         hpMax: hpMax,
                         hpCurrent: hpCurrent,
@@ -290,7 +290,6 @@ private struct AddWeaponView: View {
 
     @State private var name = ""
     @State private var basePercentage = "0"
-    @State private var experienceCheck = false
     @State private var damage = ""
     @State private var hpMax = "1"
     @State private var hpCurrent = "1"
@@ -298,33 +297,53 @@ private struct AddWeaponView: View {
     @State private var strikeRank = "0"
     @State private var type: WeaponType = .slashing
 
-    let onSave: (String, Int, Bool, String, Int, Int, Int, Int, WeaponType) -> Void
+    let onSave: (String, Int, String, Int, Int, Int, Int, WeaponType) -> Void
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Weapon") {
-                    TextField("Name", text: $name)
+                    LabeledContent("Name") {
+                        TextField("Weapon", text: $name)
+                            .multilineTextAlignment(.trailing)
+                    }
                     Picker("Type", selection: $type) {
                         ForEach(WeaponType.allCases, id: \.self) { weaponType in
                             Text(weaponType.rawValue).tag(weaponType)
                         }
                     }
-                    TextField("Damage", text: $damage)
+                    LabeledContent("Damage") {
+                        TextField("e.g. 1d8+1", text: $damage)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
 
                 Section("Stats") {
-                    TextField("Base %", text: $basePercentage)
-                        .keyboardType(.numberPad)
-                    Toggle("Experience Check", isOn: $experienceCheck)
-                    TextField("HP Max", text: $hpMax)
-                        .keyboardType(.numberPad)
-                    TextField("HP Current", text: $hpCurrent)
-                        .keyboardType(.numberPad)
-                    TextField("ENC", text: $enc)
-                        .keyboardType(.numberPad)
-                    TextField("Strike Rank (SR)", text: $strikeRank)
-                        .keyboardType(.numberPad)
+                    LabeledContent("Base %") {
+                        TextField("0", text: $basePercentage)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("HP Max") {
+                        TextField("1", text: $hpMax)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("HP Current") {
+                        TextField("1", text: $hpCurrent)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("ENC") {
+                        TextField("0", text: $enc)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("Strike Rank (SR)") {
+                        TextField("0", text: $strikeRank)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
             }
             .navigationTitle("Add Weapon")
@@ -337,7 +356,6 @@ private struct AddWeaponView: View {
                         onSave(
                             normalizedName,
                             intValue(basePercentage, fallback: 0),
-                            experienceCheck,
                             damage.isEmpty ? "-" : damage,
                             max(1, intValue(hpMax, fallback: 1)),
                             max(1, intValue(hpCurrent, fallback: 1)),
