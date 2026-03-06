@@ -166,20 +166,14 @@ final class RQCharacter {
 
     func topSummaryRunes() -> [SummaryRuneDisplay] {
         let affinities = allRuneAffinities
-        if affinities.contains(where: { summaryAffinityScore(for: $0) > 0 }) {
+        if affinities.contains(where: { isSummaryDefaultAffinity($0) == false }) {
             summaryPlaceholderRuneNames = nil
             return affinities
                 .sorted { lhs, rhs in
-                    let lhsScore = summaryAffinityScore(for: lhs)
-                    let rhsScore = summaryAffinityScore(for: rhs)
-
-                    if lhsScore == rhsScore {
-                        if lhs.percentage == rhs.percentage {
-                            return lhs.name.rawValue < rhs.name.rawValue
-                        }
-                        return lhs.percentage > rhs.percentage
+                    if lhs.percentage == rhs.percentage {
+                        return lhs.name.rawValue < rhs.name.rawValue
                     }
-                    return lhsScore > rhsScore
+                    return lhs.percentage > rhs.percentage
                 }
                 .prefix(4)
                 .map { affinity in
@@ -200,11 +194,11 @@ final class RQCharacter {
             }
     }
 
-    private func summaryAffinityScore(for affinity: RuneAffinity) -> Int {
+    private func isSummaryDefaultAffinity(_ affinity: RuneAffinity) -> Bool {
         if affinity.relatedRune != nil {
-            return abs(affinity.percentage - 50)
+            return affinity.percentage == 50
         }
-        return affinity.percentage
+        return affinity.percentage == 0
     }
 
     func agilityBonus() -> Int {

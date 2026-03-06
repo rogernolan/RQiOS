@@ -14,7 +14,7 @@ struct CharacterSummaryRuneSelectionTests {
         let runes = character.topSummaryRunes()
 
         #expect(runes.count == 4)
-        #expect(runes.map(\.name) == [.fire, .darkness, .air, .moon])
+        #expect(runes.map(\.name) == [.truth, .fire, .darkness, .air])
         #expect(runes.allSatisfy { $0.isPlaceholder == false })
     }
 
