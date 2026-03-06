@@ -76,6 +76,7 @@ struct ContentView: View {
             CharacterHitLocation.self,
             CharacterHonor.self,
             CharacterPassion.self,
+            CharacterEquipmentItem.self,
         ],
         inMemory: true
     )
