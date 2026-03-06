@@ -159,24 +159,29 @@ struct StatsOverviewView: View {
     }
 
     private func characteristicsCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        SummaryCard {
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
-                ],
-                spacing: 8
-            ) {
-                ForEach(viewModel.primaryStats, id: \.label) { stat in
-                    CharacteristicChip(
-                        label: stat.label,
-                        value: stat.value,
-                        isChecked: stat.label == "POW" ? character.powExperienceCheck : nil
-                    ) {
-                        guard stat.label == "POW" else { return }
-                        character.powExperienceCheck.toggle()
+        let rows = chunked(viewModel.primaryStats, size: 4)
+
+        return SummaryCard {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(rows.indices, id: \.self) { rowIndex in
+                    HStack(spacing: 8) {
+                        ForEach(rows[rowIndex], id: \.label) { stat in
+                            CharacteristicChip(
+                                label: stat.label,
+                                value: stat.value,
+                                isChecked: stat.label == "POW" ? character.powExperienceCheck : nil
+                            ) {
+                                guard stat.label == "POW" else { return }
+                                character.powExperienceCheck.toggle()
+                            }
+                        }
+
+                        if rows[rowIndex].count < 4 {
+                            ForEach(rows[rowIndex].count..<4, id: \.self) { _ in
+                                Spacer(minLength: 0)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
                     }
                 }
             }
@@ -274,6 +279,18 @@ struct StatsOverviewView: View {
         let sign = value > 0 ? "+" : ""
         return "\(sign)\(value)%"
     }
+
+    private func chunked(_ stats: [CharacteristicStatDisplay], size: Int) -> [[CharacteristicStatDisplay]] {
+        guard size > 0 else { return [stats] }
+        var result: [[CharacteristicStatDisplay]] = []
+        var index = 0
+        while index < stats.count {
+            let end = min(index + size, stats.count)
+            result.append(Array(stats[index..<end]))
+            index += size
+        }
+        return result
+    }
 }
 
 private struct SummaryValueRow: View {
@@ -364,11 +381,13 @@ private struct CharacteristicChip: View {
             Text(label)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .accessibilityIdentifier("summary.characteristic.\(label).label")
 
             HStack(alignment: .center, spacing: 4) {
                 Text("\(value)")
                     .font(.body)
                     .monospacedDigit()
+                    .accessibilityIdentifier("summary.characteristic.\(label).value")
 
                 Spacer(minLength: 0)
 
@@ -392,5 +411,7 @@ private struct CharacteristicChip: View {
                 .stroke(.quaternary, lineWidth: 1)
         }
         .clipShape(.rect(cornerRadius: 10))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("summary.characteristic.\(label)")
     }
 }

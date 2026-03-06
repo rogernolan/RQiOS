@@ -23,12 +23,39 @@ final class RQSheetUITests: XCTestCase {
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testSummaryCharacteristicsRemainVisibleAfterScrollCycle() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
+            app.buttons["Create New Character"].tap()
+        }
+
+        if app.tabBars.buttons["Summary"].exists {
+            app.tabBars.buttons["Summary"].tap()
+        }
+
+        let strChip = app.otherElements["summary.characteristic.STR"]
+        let conChip = app.otherElements["summary.characteristic.CON"]
+        let sizChip = app.otherElements["summary.characteristic.SIZ"]
+
+        XCTAssertTrue(strChip.waitForExistence(timeout: 12))
+        XCTAssertTrue(conChip.exists)
+        XCTAssertTrue(sizChip.exists)
+
+        let summaryScrollView = app.scrollViews.firstMatch
+        XCTAssertTrue(summaryScrollView.exists)
+
+        for _ in 0..<4 {
+            summaryScrollView.swipeUp()
+        }
+        for _ in 0..<4 {
+            summaryScrollView.swipeDown()
+        }
+
+        XCTAssertTrue(strChip.waitForExistence(timeout: 5))
+        XCTAssertTrue(conChip.exists)
+        XCTAssertTrue(sizChip.exists)
     }
 
     @MainActor
