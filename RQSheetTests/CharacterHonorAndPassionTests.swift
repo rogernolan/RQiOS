@@ -30,4 +30,16 @@ struct CharacterHonorAndPassionTests {
         #expect(character.passions[0].percentage == 100)
         #expect(character.passions[1].percentage == 0)
     }
+
+    @Test
+    func ensureHonorExistsAllowsEditingDescriptionAndPercentage() {
+        let character = RQCharacter()
+        let honor = character.ensureHonorExists()
+
+        honor.descriptionText = "Clan Honor"
+        honor.percentage = 62
+
+        #expect(character.honor?.descriptionText == "Clan Honor")
+        #expect(character.honor?.percentage == 62)
+    }
 }
