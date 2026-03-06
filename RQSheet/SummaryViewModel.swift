@@ -1,6 +1,11 @@
 import Foundation
 import Observation
 
+struct CharacteristicStatDisplay: Equatable {
+    let label: String
+    let value: Int
+}
+
 @MainActor
 @Observable
 final class SummaryViewModel {
@@ -44,6 +49,18 @@ final class SummaryViewModel {
 
     var hasPortrait: Bool {
         character.portraitData?.isEmpty == false
+    }
+
+    var primaryStats: [CharacteristicStatDisplay] {
+        [
+            CharacteristicStatDisplay(label: "STR", value: character.str),
+            CharacteristicStatDisplay(label: "CON", value: character.con),
+            CharacteristicStatDisplay(label: "SIZ", value: character.siz),
+            CharacteristicStatDisplay(label: "DEX", value: character.dex),
+            CharacteristicStatDisplay(label: "INT", value: character.int),
+            CharacteristicStatDisplay(label: "POW", value: character.pow),
+            CharacteristicStatDisplay(label: "CHA", value: character.cha),
+        ]
     }
 
     var groupBonuses: [(name: String, value: Int)] {

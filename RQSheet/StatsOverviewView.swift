@@ -87,6 +87,7 @@ struct StatsOverviewView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 identityCard(character: character, viewModel: viewModel)
+                characteristicsCard(character: character, viewModel: viewModel)
                 topRunesCard(viewModel: viewModel)
                 derivedStatsCard(viewModel: viewModel)
                 honorCard(character: character)
@@ -125,6 +126,31 @@ struct StatsOverviewView: View {
             ) {
                 ForEach(viewModel.topRunes, id: \.name) { rune in
                     SummaryRuneTile(rune: rune)
+                }
+            }
+        }
+    }
+
+    private func characteristicsCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
+        SummaryCard(title: "Characteristics") {
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 8),
+                    GridItem(.flexible(), spacing: 8),
+                    GridItem(.flexible(), spacing: 8),
+                    GridItem(.flexible(), spacing: 8),
+                ],
+                spacing: 8
+            ) {
+                ForEach(viewModel.primaryStats, id: \.label) { stat in
+                    CharacteristicChip(
+                        label: stat.label,
+                        value: stat.value,
+                        isChecked: stat.label == "POW" ? character.powExperienceCheck : nil
+                    ) {
+                        guard stat.label == "POW" else { return }
+                        character.powExperienceCheck.toggle()
+                    }
                 }
             }
         }
@@ -287,6 +313,46 @@ private struct DerivedStatChip: View {
             Text(value)
                 .font(.body)
                 .monospacedDigit()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: .rect(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(.rect(cornerRadius: 10))
+    }
+}
+
+private struct CharacteristicChip: View {
+    let label: String
+    let value: Int
+    let isChecked: Bool?
+    let toggleCheck: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .center, spacing: 4) {
+                Text("\(value)")
+                    .font(.body)
+                    .monospacedDigit()
+
+                if let isChecked {
+                    Button {
+                        toggleCheck()
+                    } label: {
+                        Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Toggle POW experience check")
+                }
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)

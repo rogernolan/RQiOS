@@ -61,4 +61,22 @@ struct SummaryViewModelTests {
         let withPortrait = SummaryViewModel(character: character)
         #expect(withPortrait.hasPortrait)
     }
+
+    @Test
+    @MainActor
+    func primaryStatsExposeCharacteristicsInExpectedOrder() {
+        let character = RQCharacter()
+        character.str = 10
+        character.con = 11
+        character.siz = 12
+        character.dex = 13
+        character.int = 14
+        character.pow = 15
+        character.cha = 16
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.primaryStats.map(\.label) == ["STR", "CON", "SIZ", "DEX", "INT", "POW", "CHA"])
+        #expect(viewModel.primaryStats.map(\.value) == [10, 11, 12, 13, 14, 15, 16])
+    }
 }
