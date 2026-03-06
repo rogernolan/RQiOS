@@ -26,6 +26,26 @@ final class SummaryViewModel {
         "\(character.move)"
     }
 
+    var displayName: String {
+        display(character.name)
+    }
+
+    var dateOfBirthText: String {
+        display(character.dateOfBirth)
+    }
+
+    var familyText: String {
+        display(character.family)
+    }
+
+    var patronText: String {
+        display(character.patron)
+    }
+
+    var hasPortrait: Bool {
+        character.portraitData?.isEmpty == false
+    }
+
     var groupBonuses: [(name: String, value: Int)] {
         SkillGroup.allCases.map { group in
             (name: groupTitle(for: group), value: character.bonus(for: group))
@@ -47,5 +67,9 @@ final class SummaryViewModel {
         case .stealth:
             return "Stealth"
         }
+    }
+
+    private func display(_ value: String) -> String {
+        value.isEmpty ? "-" : value
     }
 }

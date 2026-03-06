@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import RQSheet
 
@@ -31,5 +32,33 @@ struct SummaryViewModelTests {
 
         let realViewModel = SummaryViewModel(character: character)
         #expect(realViewModel.topRunes.allSatisfy { $0.isPlaceholder == false })
+    }
+
+    @Test
+    @MainActor
+    func displayFallbackUsesDashForEmptyIdentityFields() {
+        let character = RQCharacter(name: "")
+        character.dateOfBirth = ""
+        character.family = ""
+        character.patron = ""
+
+        let viewModel = SummaryViewModel(character: character)
+        #expect(viewModel.displayName == "-")
+        #expect(viewModel.dateOfBirthText == "-")
+        #expect(viewModel.familyText == "-")
+        #expect(viewModel.patronText == "-")
+    }
+
+    @Test
+    @MainActor
+    func portraitStateReflectsPresenceOfPortraitData() {
+        let character = RQCharacter()
+        let withoutPortrait = SummaryViewModel(character: character)
+        #expect(withoutPortrait.hasPortrait == false)
+
+        character.portraitData = Data([0x00, 0x01])
+
+        let withPortrait = SummaryViewModel(character: character)
+        #expect(withPortrait.hasPortrait)
     }
 }
