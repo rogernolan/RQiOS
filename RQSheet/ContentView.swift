@@ -67,7 +67,16 @@ struct ContentView: View {
 
 #Preview {
     ContentView().modelContainer(
-        for: [RQCharacter.self, RuneAffinity.self, SkillDefinition.self, CharacterSkill.self, WeaponSkill.self, CharacterHitLocation.self],
+        for: [
+            RQCharacter.self,
+            RuneAffinity.self,
+            SkillDefinition.self,
+            CharacterSkill.self,
+            WeaponSkill.self,
+            CharacterHitLocation.self,
+            CharacterHonor.self,
+            CharacterPassion.self,
+        ],
         inMemory: true
     )
 }
