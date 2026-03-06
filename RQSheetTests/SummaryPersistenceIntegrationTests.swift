@@ -15,6 +15,7 @@ struct SummaryPersistenceIntegrationTests {
             CharacterHitLocation.self,
             CharacterHonor.self,
             CharacterPassion.self,
+            CharacterEquipmentItem.self,
         ])
 
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -24,6 +25,8 @@ struct SummaryPersistenceIntegrationTests {
         let character = RQCharacter(name: "Arkat")
         character.ensureHonorExists().percentage = 55
         character.addPassion(description: "Loyalty (Companions)", percentage: 70)
+        let bedroll = CharacterEquipmentItem(name: "Bedroll", encumbrance: 1, notes: "Worn", isEquipped: true, character: character)
+        character.equipmentItems.append(bedroll)
 
         context.insert(character)
         try context.save()
@@ -32,5 +35,7 @@ struct SummaryPersistenceIntegrationTests {
         #expect(results.count == 1)
         #expect(results[0].honor?.percentage == 55)
         #expect(results[0].passions.count == 1)
+        #expect(results[0].equipmentItems.count == 1)
+        #expect(results[0].equipmentItems[0].name == "Bedroll")
     }
 }
