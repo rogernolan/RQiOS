@@ -34,14 +34,6 @@ struct EditorSocialSectionView: View {
                 )
             )
 
-            EditorToggleRow(
-                label: "Honor experience check",
-                isOn: Binding(
-                    get: { honor.experienceCheck },
-                    set: { honor.experienceCheck = $0 }
-                )
-            )
-
             EditorTextFieldRow(
                 label: "Occupation",
                 placeholder: "Occupation",

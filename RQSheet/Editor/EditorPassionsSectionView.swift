@@ -55,23 +55,23 @@ struct EditorPassionsSectionView: View {
             .textFieldStyle(.roundedBorder)
             .frame(width: 72)
 
-            Button {
-                movePassionUp(at: index)
-            } label: {
-                Image(systemName: "arrow.up")
-            }
-            .buttonStyle(.bordered)
-            .disabled(index == 0)
-            .accessibilityLabel("Move passion up")
+            HStack(alignment: .center, spacing: 4) {
+                compactArrowButton(
+                    systemImage: "arrow.up",
+                    accessibilityLabel: "Move passion up",
+                    disabled: index == 0
+                ) {
+                    movePassionUp(at: index)
+                }
 
-            Button {
-                movePassionDown(at: index)
-            } label: {
-                Image(systemName: "arrow.down")
+                compactArrowButton(
+                    systemImage: "arrow.down",
+                    accessibilityLabel: "Move passion down",
+                    disabled: index == count - 1
+                ) {
+                    movePassionDown(at: index)
+                }
             }
-            .buttonStyle(.bordered)
-            .disabled(index == count - 1)
-            .accessibilityLabel("Move passion down")
 
             Button(role: .destructive) {
                 viewModel.deletePassions(at: IndexSet(integer: index))
@@ -98,5 +98,28 @@ struct EditorPassionsSectionView: View {
         }
 
         viewModel.movePassions(from: IndexSet(integer: index), to: index + 2)
+    }
+
+    private func compactArrowButton(
+        systemImage: String,
+        accessibilityLabel: String,
+        disabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            action()
+        } label: {
+            Image(systemName: systemImage)
+                .font(.caption)
+                .frame(width: 22, height: 22)
+                .background(.thinMaterial, in: .rect(cornerRadius: 6))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(.quaternary, lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .accessibilityLabel(accessibilityLabel)
     }
 }

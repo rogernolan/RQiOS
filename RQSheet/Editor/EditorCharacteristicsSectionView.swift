@@ -40,22 +40,6 @@ struct EditorCharacteristicsSectionView: View {
                         .accessibilityLabel("Edit \(key.label) with dice")
                     }
 
-                    if key == .pow {
-                        HStack(alignment: .center, spacing: 8) {
-                            Text("POW experience check")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Toggle(
-                                "",
-                                isOn: Binding(
-                                    get: { viewModel.character.powExperienceCheck },
-                                    set: { viewModel.character.powExperienceCheck = $0 }
-                                )
-                            )
-                            .labelsHidden()
-                        }
-                    }
-
                     if expandedDiceRows.contains(key) {
                         StatDiceRollerView(key: key, viewModel: viewModel)
                     }
