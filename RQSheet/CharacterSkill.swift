@@ -40,4 +40,11 @@ final class CharacterSkill {
         let dynamicPart = definition.baseValue(for: character) + character.bonus(for: definition.group)
         successPercentage = clampedTarget - dynamicPart
     }
+
+    func refreshForCharacteristicChange() {
+        guard let character, let definition else { return }
+        let dynamicPart = definition.baseValue(for: character) + character.bonus(for: definition.group)
+        let effective = (dynamicPart + successPercentage).clampedPercentage
+        successPercentage = effective - dynamicPart
+    }
 }
