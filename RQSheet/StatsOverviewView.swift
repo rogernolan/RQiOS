@@ -20,23 +20,30 @@ struct StatsOverviewView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                headerRow
-
-                if character == nil {
-                    Button("Create New Character") {
-                        _ = SkillSeeder.createCharacter(in: modelContext)
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-
+            ZStack(alignment: .topLeading) {
                 if let character {
                     summaryContent(for: character)
+                        .padding(.top, 18)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Button("Create New Character") {
+                                _ = SkillSeeder.createCharacter(in: modelContext)
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 70)
+                        .padding(.bottom, 120)
+                    }
+                    .scrollIndicators(.hidden)
+                    .ignoresSafeArea(edges: .bottom)
                 }
 
-                Spacer(minLength: 0)
+                headerRow
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
             }
-            .padding(16)
             .mainRuneBackground(runeName: "RuneMan")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $isPresentingPassionEditor) {
@@ -79,6 +86,14 @@ struct StatsOverviewView: View {
                 .accessibilityLabel("Edit character details")
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(.rect(cornerRadius: 14))
     }
 
     private func summaryContent(for character: RQCharacter) -> some View {
@@ -88,31 +103,43 @@ struct StatsOverviewView: View {
             VStack(alignment: .leading, spacing: 12) {
                 identityCard(character: character, viewModel: viewModel)
                 characteristicsCard(character: character, viewModel: viewModel)
-                topRunesCard(viewModel: viewModel)
-                derivedStatsCard(viewModel: viewModel)
                 honorCard(character: character)
                 passionsCard(character: character)
+                topRunesCard(viewModel: viewModel)
+                derivedStatsCard(viewModel: viewModel)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 52)
+            .padding(.bottom, 120)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .bottom)
     }
 
     private func identityCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        SummaryCard(title: "Identity", headerAction: {
-            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                Label("Change Photo", systemImage: "photo")
-            }
-            .buttonStyle(.bordered)
-            .accessibilityLabel("Change portrait")
-        }) {
+        SummaryCard {
             HStack(alignment: .top, spacing: 12) {
-                SummaryPortraitView(portraitData: character.portraitData)
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    SummaryPortraitView(portraitData: character.portraitData)
+                        .overlay(alignment: .topTrailing) {
+                            Image(systemName: "camera.fill")
+                                .font(.footnote)
+                                .padding(6)
+                                .background(.thinMaterial, in: .circle)
+                                .overlay {
+                                    Circle()
+                                        .stroke(.quaternary, lineWidth: 1)
+                                }
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change portrait")
 
                 VStack(alignment: .leading, spacing: 8) {
-                    SummaryValueRow(label: "Name", value: viewModel.displayName)
-                    SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
                     SummaryValueRow(label: "Family", value: viewModel.familyText)
                     SummaryValueRow(label: "Patron", value: viewModel.patronText)
+                    SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
                 }
             }
         }
@@ -132,7 +159,7 @@ struct StatsOverviewView: View {
     }
 
     private func characteristicsCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        SummaryCard(title: "Characteristics") {
+        SummaryCard {
             LazyVGrid(
                 columns: [
                     GridItem(.flexible(), spacing: 8),
@@ -183,7 +210,7 @@ struct StatsOverviewView: View {
     private func honorCard(character: RQCharacter) -> some View {
         let honor = character.ensureHonorExists()
 
-        return SummaryCard(title: "Honor") {
+        return SummaryCard {
             HStack(alignment: .center, spacing: 8) {
                 Text(honor.descriptionText.isEmpty ? "Honor" : honor.descriptionText)
                 Spacer()
@@ -240,7 +267,7 @@ struct StatsOverviewView: View {
 
     private var summaryTitle: String {
         guard let character else { return "Summary" }
-        return character.name.isEmpty ? "Summary" : character.name
+        return character.name.isEmpty ? "Unnamed Character" : character.name
     }
 
     private func formattedBonus(_ value: Int) -> String {
@@ -290,7 +317,7 @@ private struct SummaryRuneTile: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: .rect(cornerRadius: 10))
+        .background(Color(.systemBackground), in: .rect(cornerRadius: 10))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(.quaternary, lineWidth: 1)
@@ -343,6 +370,8 @@ private struct CharacteristicChip: View {
                     .font(.body)
                     .monospacedDigit()
 
+                Spacer(minLength: 0)
+
                 if let isChecked {
                     Button {
                         toggleCheck()
@@ -357,7 +386,7 @@ private struct CharacteristicChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: .rect(cornerRadius: 10))
+        .background(Color(.systemBackground), in: .rect(cornerRadius: 10))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(.quaternary, lineWidth: 1)

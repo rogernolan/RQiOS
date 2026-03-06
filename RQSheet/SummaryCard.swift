@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct SummaryCard<Content: View, HeaderAction: View>: View {
-    let title: String
+    let title: String?
+    let showsHeaderAction: Bool
     @ViewBuilder var headerAction: HeaderAction
     @ViewBuilder var content: Content
 
@@ -11,24 +12,31 @@ struct SummaryCard<Content: View, HeaderAction: View>: View {
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
+        self.showsHeaderAction = true
         self.headerAction = headerAction()
         self.content = content()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 8) {
-                Text(title)
-                    .font(.headline)
-                    .bold()
-                Spacer()
-                headerAction
+            if title != nil || showsHeaderAction {
+                HStack(alignment: .center, spacing: 8) {
+                    if let title {
+                        Text(title)
+                            .font(.headline)
+                            .bold()
+                    }
+                    Spacer()
+                    if showsHeaderAction {
+                        headerAction
+                    }
+                }
             }
 
             content
         }
         .padding(14)
-        .background(.thinMaterial, in: .rect(cornerRadius: 12))
+        .background(Color(.systemBackground).opacity(0.52), in: .rect(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(.quaternary, lineWidth: 1)
@@ -42,6 +50,18 @@ extension SummaryCard where HeaderAction == EmptyView {
         title: String,
         @ViewBuilder content: () -> Content
     ) {
-        self.init(title: title, headerAction: { EmptyView() }, content: content)
+        self.title = title
+        self.showsHeaderAction = false
+        self.headerAction = EmptyView()
+        self.content = content()
+    }
+
+    init(
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = nil
+        self.showsHeaderAction = false
+        self.headerAction = EmptyView()
+        self.content = content()
     }
 }
