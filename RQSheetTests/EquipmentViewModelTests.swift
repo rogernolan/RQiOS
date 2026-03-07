@@ -28,4 +28,42 @@ struct EquipmentViewModelTests {
         #expect(viewModel.visibleItems.map(\.name) == ["Shield", "Rope"])
         #expect(viewModel.headerEncumbranceText == "\(character.maxEncumbrance) / \(character.currentEncumbrance)")
     }
+
+    @Test
+    @MainActor
+    func addNewItemAppendsBlankItemAtEndOfInsertionOrder() {
+        let character = RQCharacter()
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
+        let viewModel = EquipmentViewModel(character: character)
+
+        let newItem = viewModel.addNewItem()
+
+        #expect(character.equipmentItems.count == 2)
+        #expect(newItem.name.isEmpty)
+        #expect(newItem.sortOrder == 1)
+        #expect(viewModel.visibleItems.last === newItem)
+    }
+
+    @Test
+    @MainActor
+    func deleteConfirmationStateTracksPendingAndConfirmedDeletes() {
+        let character = RQCharacter()
+        let first = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
+        let second = character.addEquipmentItem(name: "Rope", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+        let viewModel = EquipmentViewModel(character: character)
+
+        viewModel.requestDelete(first)
+        #expect(viewModel.pendingDeleteItem === first)
+
+        viewModel.cancelDelete()
+        #expect(viewModel.pendingDeleteItem == nil)
+        #expect(character.equipmentItems.count == 2)
+
+        viewModel.requestDelete(second)
+        viewModel.confirmDelete()
+
+        #expect(viewModel.pendingDeleteItem == nil)
+        #expect(character.equipmentItems.count == 1)
+        #expect(character.equipmentItems[0] === first)
+    }
 }

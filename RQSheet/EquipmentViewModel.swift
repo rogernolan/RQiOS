@@ -36,4 +36,23 @@ final class EquipmentViewModel {
     var headerEncumbranceText: String {
         "\(character.maxEncumbrance) / \(character.currentEncumbrance)"
     }
+
+    @discardableResult
+    func addNewItem() -> CharacterEquipmentItem {
+        character.addEquipmentItem()
+    }
+
+    func requestDelete(_ item: CharacterEquipmentItem) {
+        pendingDeleteItem = item
+    }
+
+    func cancelDelete() {
+        pendingDeleteItem = nil
+    }
+
+    func confirmDelete() {
+        guard let pendingDeleteItem else { return }
+        character.equipmentItems.removeAll { $0 == pendingDeleteItem }
+        self.pendingDeleteItem = nil
+    }
 }
