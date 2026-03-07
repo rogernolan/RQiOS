@@ -69,6 +69,7 @@ struct ContentView: View {
     ContentView().modelContainer(
         for: [
             RQCharacter.self,
+            CharacterEquipmentItem.self,
             RuneAffinity.self,
             SkillDefinition.self,
             CharacterSkill.self,

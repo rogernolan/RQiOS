@@ -122,6 +122,7 @@ final class RQCharacter {
     var powExperienceCheck: Bool
     var honor: CharacterHonor?
     var passions: [CharacterPassion] = []
+    var equipmentItems: [CharacterEquipmentItem] = []
     var skills: [CharacterSkill] = []
     var weaponSkills: [WeaponSkill] = []
     var hitLocations: [CharacterHitLocation] = []
@@ -604,11 +605,43 @@ final class RQCharacter {
         passions.append(passion)
     }
 
+    var currentEncumbrance: Int {
+        equipmentItems
+            .filter(\.isCurrentlyEquipped)
+            .reduce(0) { total, item in
+                total + item.encumbrance
+            }
+    }
+
+    var maxEncumbrance: Int {
+        min(str, (str + con) / 2)
+    }
+
+    @discardableResult
+    func addEquipmentItem(
+        name: String = "",
+        encumbrance: Int = 0,
+        notes: String = "",
+        isCurrentlyEquipped: Bool = false
+    ) -> CharacterEquipmentItem {
+        let nextSortOrder = (equipmentItems.map(\.sortOrder).max() ?? -1) + 1
+        let item = CharacterEquipmentItem(
+            name: name,
+            encumbrance: encumbrance,
+            notes: notes,
+            isCurrentlyEquipped: isCurrentlyEquipped,
+            sortOrder: nextSortOrder,
+            character: self
+        )
+        equipmentItems.append(item)
+        return item
+    }
+
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
-         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [],
+         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [], equipmentItems: [CharacterEquipmentItem] = [],
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -649,9 +682,13 @@ final class RQCharacter {
         self.powExperienceCheck = powExperienceCheck
         self.honor = honor
         self.passions = passions
+        self.equipmentItems = equipmentItems
         self.honor?.character = self
         for passion in passions {
             passion.character = self
+        }
+        for item in equipmentItems {
+            item.character = self
         }
 
         syncHitLocationMaximums(preserveDamage: false)

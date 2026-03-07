@@ -13,6 +13,7 @@ struct RQSheetApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             RQCharacter.self,
+            CharacterEquipmentItem.self,
             RuneAffinity.self,
             SkillDefinition.self,
             CharacterSkill.self,
