@@ -59,6 +59,24 @@ final class RQSheetUITests: XCTestCase {
     }
 
     @MainActor
+    func testEquipmentAddButtonIsVisibleAndTappable() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
+            app.buttons["Create New Character"].tap()
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["Equipment"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["Equipment"].tap()
+
+        let addButton = app.buttons["equipment.addItem"]
+        XCTAssertTrue(addButton.waitForExistence(timeout: 12))
+        XCTAssertTrue(addButton.isHittable)
+        XCTAssertLessThan(addButton.frame.maxY, app.tabBars.firstMatch.frame.minY)
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {

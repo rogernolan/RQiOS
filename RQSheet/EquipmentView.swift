@@ -36,28 +36,25 @@ private struct CharacterEquipmentContentView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .top) {
-                equipmentList
-                headerOverlay
-                addButton
+        ZStack(alignment: .top) {
+            equipmentList
+            headerOverlay
+        }
+        .navigationDestination(item: $selectedItem) { item in
+            EquipmentEditorView(item: item)
+        }
+        .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
+            Button("No", role: .cancel) {
+                viewModel.cancelDelete()
             }
-            .navigationDestination(item: $selectedItem) { item in
-                EquipmentEditorView(item: item)
-            }
-            .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
-                Button("No", role: .cancel) {
-                    viewModel.cancelDelete()
+            Button("Yes", role: .destructive) {
+                if let pending = viewModel.pendingDeleteItem {
+                    modelContext.delete(pending)
                 }
-                Button("Yes", role: .destructive) {
-                    if let pending = viewModel.pendingDeleteItem {
-                        modelContext.delete(pending)
-                    }
-                    viewModel.confirmDelete()
-                }
-            } message: {
-                Text("Delete this equipment item?")
+                viewModel.confirmDelete()
             }
+        } message: {
+            Text("Delete this equipment item?")
         }
     }
 
@@ -95,11 +92,7 @@ private struct CharacterEquipmentContentView: View {
                 }
             }
 
-            Color.clear
-                .frame(height: 92)
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
+            addButtonRow
         }
         .listStyle(.plain)
         .environment(\.defaultMinListRowHeight, 0)
@@ -151,8 +144,8 @@ private struct CharacterEquipmentContentView: View {
         .padding(.top, 8)
     }
 
-    private var addButton: some View {
-        VStack {
+    private var addButtonRow: some View {
+        HStack {
             Spacer()
 
             Button {
@@ -170,10 +163,15 @@ private struct CharacterEquipmentContentView: View {
                     }
             }
             .buttonStyle(.plain)
-            .padding(.bottom, 24)
+            .accessibilityIdentifier("equipment.addItem")
+
+            Spacer()
         }
-        .padding(.horizontal, 16)
-        .ignoresSafeArea(edges: .bottom)
+        .padding(.top, 8)
+        .padding(.bottom, 96)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
 
     private var isShowingDeleteAlert: Binding<Bool> {
@@ -240,7 +238,7 @@ private struct EquipmentRowCard: View {
             .accessibilityLabel(item.isCurrentlyEquipped ? "Unequip item" : "Equip item")
         }
         .padding(12)
-        .background(Color(.systemBackground).opacity(0.68), in: RoundedRectangle(cornerRadius: 12))
+        .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(.quaternary, lineWidth: 1)
