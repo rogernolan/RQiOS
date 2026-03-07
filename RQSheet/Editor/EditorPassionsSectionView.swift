@@ -5,16 +5,6 @@ struct EditorPassionsSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 8) {
-                Button {
-                    viewModel.addPassion(description: "", percentage: 0)
-                } label: {
-                    Label("Add Passion", systemImage: "plus")
-                }
-                .buttonStyle(.bordered)
-                Spacer()
-            }
-
             let passions = viewModel.sortedPassions
             if passions.isEmpty {
                 Text("No passions yet.")
@@ -26,6 +16,16 @@ struct EditorPassionsSectionView: View {
                         passionRow(passion: passion, index: index, count: passions.count)
                     }
                 }
+            }
+
+            HStack(alignment: .center, spacing: 8) {
+                Button {
+                    viewModel.addPassion(description: "", percentage: 0)
+                } label: {
+                    Label("Add Passion", systemImage: "plus")
+                }
+                .buttonStyle(.bordered)
+                Spacer()
             }
         }
     }

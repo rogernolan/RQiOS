@@ -85,26 +85,24 @@ struct EditorIdentitySectionView: View {
         let portraitData = viewModel.character.portraitData
 
         return HStack(alignment: .top, spacing: 10) {
+            Text("Portrait")
+                .foregroundStyle(.secondary)
+
             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
                 SummaryPortraitView(portraitData: portraitData)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Change portrait")
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Portrait")
-                    .foregroundStyle(.secondary)
-
-                Button(role: .destructive) {
-                    viewModel.character.portraitData = nil
-                } label: {
-                    Label("Remove", systemImage: "trash")
-                }
-                .buttonStyle(.borderless)
-                .disabled(viewModel.character.portraitData == nil)
-            }
-
             Spacer(minLength: 0)
+
+            Button(role: .destructive) {
+                viewModel.character.portraitData = nil
+            } label: {
+                Label("Remove", systemImage: "trash")
+            }
+            .buttonStyle(.borderless)
+            .disabled(viewModel.character.portraitData == nil)
         }
     }
 }

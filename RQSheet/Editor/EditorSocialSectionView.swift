@@ -16,17 +16,8 @@ struct EditorSocialSectionView: View {
                 )
             )
 
-            EditorTextFieldRow(
-                label: "Honor",
-                placeholder: "Honor description",
-                text: Binding(
-                    get: { honor.descriptionText },
-                    set: { honor.descriptionText = $0 }
-                )
-            )
-
             EditorIntegerFieldRow(
-                label: "Honor %",
+                label: "Honor",
                 placeholder: "Honor %",
                 value: Binding(
                     get: { honor.percentage },

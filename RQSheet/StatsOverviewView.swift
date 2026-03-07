@@ -217,19 +217,15 @@ struct StatsOverviewView: View {
 
         return SummaryCard {
             HStack(alignment: .center, spacing: 8) {
-                Text(honor.descriptionText.isEmpty ? "Honor" : honor.descriptionText)
+                Text("Honor")
+
                 Spacer()
-                Text("\(honor.percentage)%")
+                Text("\(honor.percentage)")
+                .monospacedDigit()
+
+                Text("%")
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-
-                Button {
-                    honor.experienceCheck.toggle()
-                } label: {
-                    Image(systemName: honor.experienceCheck ? "checkmark.circle.fill" : "circle")
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Toggle Honor experience check")
             }
         }
     }
@@ -246,7 +242,7 @@ struct StatsOverviewView: View {
             Button {
                 isPresentingPassionEditor = true
             } label: {
-                Label("Add Passion", systemImage: "plus")
+                Text("+")
             }
             .buttonStyle(.bordered)
             .accessibilityLabel("Add passion")
