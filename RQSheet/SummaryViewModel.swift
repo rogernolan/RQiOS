@@ -31,6 +31,10 @@ final class SummaryViewModel {
         "\(character.move)"
     }
 
+    var encumbranceText: String {
+        "\(character.maxEncumbrance)/\(character.currentEncumbrance)"
+    }
+
     var displayName: String {
         display(character.name)
     }

@@ -79,4 +79,18 @@ struct SummaryViewModelTests {
         #expect(viewModel.primaryStats.map(\.label) == ["STR", "CON", "SIZ", "DEX", "INT", "POW", "CHA"])
         #expect(viewModel.primaryStats.map(\.value) == [10, 11, 12, 13, 14, 15, 16])
     }
+
+    @Test
+    @MainActor
+    func encumbranceDisplayUsesCharacterTotals() {
+        let character = RQCharacter()
+        character.str = 12
+        character.con = 16
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Torch", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.encumbranceText == "12/2")
+    }
 }
