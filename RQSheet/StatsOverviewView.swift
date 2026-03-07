@@ -194,6 +194,7 @@ struct StatsOverviewView: View {
                 DerivedStatChip(label: "HP", value: viewModel.hitPointsText)
                 DerivedStatChip(label: "Healing", value: viewModel.healingRateText)
                 DerivedStatChip(label: "Move", value: viewModel.moveText)
+                DerivedStatChip(label: "ENC", value: viewModel.encumbranceText)
             }
 
             Divider()
