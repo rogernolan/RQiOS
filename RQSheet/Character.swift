@@ -125,6 +125,7 @@ final class RQCharacter {
     var skills: [CharacterSkill] = []
     var weaponSkills: [WeaponSkill] = []
     var hitLocations: [CharacterHitLocation] = []
+    var equipmentItems: [CharacterEquipmentItem] = []
     
 
     var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)
@@ -604,11 +605,24 @@ final class RQCharacter {
         passions.append(passion)
     }
 
+    func addEquipmentItem(name: String = "", encumbrance: Int = 0, notes: String = "", isEquipped: Bool = false) {
+        let nextSortOrder = (equipmentItems.map(\.sortOrder).max() ?? -1) + 1
+        let item = CharacterEquipmentItem(
+            name: name,
+            encumbrance: max(0, encumbrance),
+            notes: notes,
+            isEquipped: isEquipped,
+            sortOrder: nextSortOrder,
+            character: self
+        )
+        equipmentItems.append(item)
+    }
+
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
-         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [],
+         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [], equipmentItems: [CharacterEquipmentItem] = [],
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -649,9 +663,13 @@ final class RQCharacter {
         self.powExperienceCheck = powExperienceCheck
         self.honor = honor
         self.passions = passions
+        self.equipmentItems = equipmentItems
         self.honor?.character = self
         for passion in passions {
             passion.character = self
+        }
+        for equipmentItem in equipmentItems {
+            equipmentItem.character = self
         }
 
         syncHitLocationMaximums(preserveDamage: false)
