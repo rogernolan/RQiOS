@@ -14,12 +14,35 @@ final class CharacterSkill {
 
     private(set) var successPercentage: Int
     var experienceCheck: Bool
+    var customName: String
+    var customGroup: SkillGroup?
 
-    init(character: RQCharacter? = nil, definition: SkillDefinition? = nil, successPercentage: Int = 0, experienceCheck: Bool = false) {
+    init(
+        character: RQCharacter? = nil,
+        definition: SkillDefinition? = nil,
+        successPercentage: Int = 0,
+        experienceCheck: Bool = false,
+        customName: String = "",
+        customGroup: SkillGroup? = nil
+    ) {
         self.character = character
         self.definition = definition
         self.successPercentage = successPercentage
         self.experienceCheck = experienceCheck
+        self.customName = customName
+        self.customGroup = customGroup
+    }
+
+    var displayName: String {
+        let trimmed = customName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty == false {
+            return trimmed
+        }
+        return definition?.name ?? "Unknown Skill"
+    }
+
+    var resolvedGroup: SkillGroup? {
+        customGroup ?? definition?.group
     }
 
     func effectiveValue() -> Int {
