@@ -137,6 +137,7 @@ final class RQCharacter {
             }
         }
     }
+    var notes: String = ""
     var occupation: String
     var sol: String
     var income: Int
@@ -688,7 +689,7 @@ final class RQCharacter {
     }
 
     init(name: String = "",
-         worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
+         worships: String = "", reputation: Int = 0, notes: String = "", occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
          currentMagicPoints: Int? = nil, runePoints: Int = 3,
@@ -726,6 +727,7 @@ final class RQCharacter {
         
         self.worships = worships
         self.reputation = reputation.clampedPercentage
+        self.notes = notes
         self.occupation = occupation
         self.sol = sol
         self.income = income

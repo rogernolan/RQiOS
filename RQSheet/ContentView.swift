@@ -12,30 +12,41 @@ import UIKit
 struct ContentView: View {
     var body: some View {
         TabView {
-            StatsOverviewView()
-                .tabItem {
-                    tabLabel("Summary", image: "RuneMan")
-                }
-            CombatView()
-                .tabItem {
-                    tabLabel("Combat", image: "RuneDeath")
-                }
-            SkillsView()
-                .tabItem {
-                    tabLabel("Skills", image: "RuneMastery")
-                }
-            RunesView()
-                .tabItem {
-                    tabLabel("Runes", image: "RuneInfinity")
-                }
-            MagicView()
-                .tabItem {
-                    tabLabel("Magic", image: "RuneMagic")
-                }
-            EquipmentView()
-                .tabItem {
-                    tabLabel("Equipment", image: "RuneTrade")
-                }
+            Tab {
+                StatsOverviewView()
+            } label: {
+                tabLabel("Summary", image: "RuneMan")
+            }
+            Tab {
+                CombatView()
+            } label: {
+                tabLabel("Combat", image: "RuneDeath")
+            }
+            Tab {
+                SkillsView()
+            } label: {
+                tabLabel("Skills", image: "RuneMastery")
+            }
+            Tab {
+                RunesView()
+            } label: {
+                tabLabel("Runes", image: "RuneInfinity")
+            }
+            Tab {
+                MagicView()
+            } label: {
+                tabLabel("Magic", image: "RuneMagic")
+            }
+            Tab {
+                EquipmentView()
+            } label: {
+                tabLabel("Equipment", image: "RuneTrade")
+            }
+            Tab {
+                NotesView()
+            } label: {
+                tabLabel("Notes", image: "RuneTruth")
+            }
         }
     }
 
