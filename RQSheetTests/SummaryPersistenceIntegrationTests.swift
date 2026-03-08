@@ -26,7 +26,7 @@ struct SummaryPersistenceIntegrationTests {
         let character = RQCharacter(name: "Arkat")
         character.ensureHonorExists().percentage = 55
         character.addPassion(description: "Loyalty (Companions)", percentage: 70)
-        let bedroll = CharacterEquipmentItem(name: "Bedroll", encumbrance: 1, notes: "Worn", isEquipped: true, character: character)
+        let bedroll = CharacterEquipmentItem(name: "Bedroll", encumbrance: 1, notes: "Worn", isCurrentlyEquipped: true, character: character)
         character.equipmentItems.append(bedroll)
 
         context.insert(character)
