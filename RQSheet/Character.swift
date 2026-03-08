@@ -65,8 +65,34 @@ final class RQCharacter {
     var siz: Int
     var dex: Int
     var int: Int
-    var pow: Int
+    private var powValue: Int
     var cha: Int
+
+    var pow: Int {
+        get { powValue }
+        set {
+            powValue = newValue
+            if currentMagicPointsValue > maxMagicPoints {
+                currentMagicPointsValue = maxMagicPoints
+            }
+        }
+    }
+
+    var maxMagicPoints: Int {
+        max(0, pow)
+    }
+
+    private var currentMagicPointsValue: Int
+    var currentMagicPoints: Int {
+        get { min(max(0, currentMagicPointsValue), maxMagicPoints) }
+        set { currentMagicPointsValue = min(max(0, newValue), maxMagicPoints) }
+    }
+
+    private var runePointsValue: Int
+    var runePoints: Int {
+        get { max(0, runePointsValue) }
+        set { runePointsValue = max(0, newValue) }
+    }
     var maxHitpoints: Int {
         didSet {
             if maxHitpoints < 1 {
@@ -122,10 +148,11 @@ final class RQCharacter {
     var powExperienceCheck: Bool
     var honor: CharacterHonor?
     var passions: [CharacterPassion] = []
+    var equipmentItems: [CharacterEquipmentItem] = []
+    var spells: [CharacterSpell] = []
     var skills: [CharacterSkill] = []
     var weaponSkills: [WeaponSkill] = []
     var hitLocations: [CharacterHitLocation] = []
-    var equipmentItems: [CharacterEquipmentItem] = []
     
 
     var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)
@@ -552,6 +579,9 @@ final class RQCharacter {
     }
 
     private func recalculateDerivedData() {
+        if currentMagicPoints > maxMagicPoints {
+            currentMagicPoints = maxMagicPoints
+        }
         let recalculatedMax = Self.generatedMaxHitpoints(con: con, siz: siz, pow: pow)
         if recalculatedMax != maxHitpoints {
             maxHitpoints = recalculatedMax
@@ -605,24 +635,64 @@ final class RQCharacter {
         passions.append(passion)
     }
 
-    func addEquipmentItem(name: String = "", encumbrance: Int = 0, notes: String = "", isEquipped: Bool = false) {
+    var currentEncumbrance: Int {
+        equipmentItems
+            .filter(\.isCurrentlyEquipped)
+            .reduce(0) { total, item in
+                total + item.encumbrance
+            }
+    }
+
+    var maxEncumbrance: Int {
+        min(str, (str + con) / 2)
+    }
+
+    @discardableResult
+    func addEquipmentItem(
+        name: String = "",
+        encumbrance: Int = 0,
+        notes: String = "",
+        isCurrentlyEquipped: Bool = false
+    ) -> CharacterEquipmentItem {
         let nextSortOrder = (equipmentItems.map(\.sortOrder).max() ?? -1) + 1
         let item = CharacterEquipmentItem(
             name: name,
-            encumbrance: max(0, encumbrance),
+            encumbrance: encumbrance,
             notes: notes,
-            isEquipped: isEquipped,
+            isCurrentlyEquipped: isCurrentlyEquipped,
             sortOrder: nextSortOrder,
             character: self
         )
         equipmentItems.append(item)
+        return item
+    }
+
+    @discardableResult
+    func addSpell(
+        name: String = "",
+        points: Int = 0,
+        page: String = "",
+        kind: SpellKind
+    ) -> CharacterSpell {
+        let nextSortOrder = (spells.map(\.sortOrder).max() ?? -1) + 1
+        let spell = CharacterSpell(
+            name: name,
+            points: points,
+            page: page,
+            kind: kind,
+            sortOrder: nextSortOrder,
+            character: self
+        )
+        spells.append(spell)
+        return spell
     }
 
     init(name: String = "",
          worships: String = "", reputation: Int = 0, occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
-         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [], equipmentItems: [CharacterEquipmentItem] = [],
+         currentMagicPoints: Int? = nil, runePoints: Int = 3,
+         honor: CharacterHonor? = nil, passions: [CharacterPassion] = [], equipmentItems: [CharacterEquipmentItem] = [], spells: [CharacterSpell] = [],
          runeAffinities: [RuneAffinity]? = nil) {
         self.name = name
         
@@ -637,11 +707,15 @@ final class RQCharacter {
 
         self.str = strRoll
         self.con = conRoll
-        self.pow = powRoll
+        self.powValue = powRoll
         self.dex = dexRoll
         self.cha = chaRoll
         self.int = intRoll
         self.siz = sizRoll
+        let generatedMaxMagicPoints = max(0, powRoll)
+        let defaultCurrentMagicPoints = currentMagicPoints ?? generatedMaxMagicPoints
+        self.currentMagicPointsValue = min(max(0, defaultCurrentMagicPoints), generatedMaxMagicPoints)
+        self.runePointsValue = max(0, runePoints)
         let generatedMaxHitpoints = Self.generatedMaxHitpoints(con: conRoll, siz: sizRoll, pow: powRoll)
         let clampedMaxHitpoints = maxHitpoints == 1 ? generatedMaxHitpoints : max(1, maxHitpoints)
         self.maxHitpoints = clampedMaxHitpoints
@@ -664,12 +738,16 @@ final class RQCharacter {
         self.honor = honor
         self.passions = passions
         self.equipmentItems = equipmentItems
+        self.spells = spells
         self.honor?.character = self
         for passion in passions {
             passion.character = self
         }
-        for equipmentItem in equipmentItems {
-            equipmentItem.character = self
+        for item in equipmentItems {
+            item.character = self
+        }
+        for spell in spells {
+            spell.character = self
         }
 
         syncHitLocationMaximums(preserveDamage: false)

@@ -11,8 +11,11 @@ import SwiftData
 @main
 struct RQSheetApp: App {
     var sharedModelContainer: ModelContainer = {
+        let isRunningUnderTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         let schema = Schema([
             RQCharacter.self,
+            CharacterEquipmentItem.self,
+            CharacterSpell.self,
             RuneAffinity.self,
             SkillDefinition.self,
             CharacterSkill.self,
@@ -22,7 +25,7 @@ struct RQSheetApp: App {
             CharacterPassion.self,
             CharacterEquipmentItem.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isRunningUnderTests)
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])

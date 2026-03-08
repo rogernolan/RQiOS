@@ -4,13 +4,15 @@ import SwiftData
 @Model
 final class CharacterEquipmentItem {
     var name: String
-    private var storedEncumbrance: Int
     var encumbrance: Int {
-        get { storedEncumbrance }
-        set { storedEncumbrance = max(0, newValue) }
+        didSet {
+            if encumbrance < 0 {
+                encumbrance = 0
+            }
+        }
     }
     var notes: String
-    var isEquipped: Bool
+    var isCurrentlyEquipped: Bool
     var sortOrder: Int
     var character: RQCharacter?
 
@@ -18,14 +20,14 @@ final class CharacterEquipmentItem {
         name: String = "",
         encumbrance: Int = 0,
         notes: String = "",
-        isEquipped: Bool = false,
+        isCurrentlyEquipped: Bool = false,
         sortOrder: Int = 0,
         character: RQCharacter? = nil
     ) {
         self.name = name
-        self.storedEncumbrance = max(0, encumbrance)
+        self.encumbrance = max(0, encumbrance)
         self.notes = notes
-        self.isEquipped = isEquipped
+        self.isCurrentlyEquipped = isCurrentlyEquipped
         self.sortOrder = sortOrder
         self.character = character
     }

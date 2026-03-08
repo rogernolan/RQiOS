@@ -31,6 +31,22 @@ final class SummaryViewModel {
         "\(character.move)"
     }
 
+    var magicPointsText: String {
+        "\(character.currentMagicPoints) / \(character.maxMagicPoints)"
+    }
+
+    var runePointsText: String {
+        "\(character.runePoints)"
+    }
+
+    var encumbranceText: String {
+        "\(character.maxEncumbrance)/\(character.currentEncumbrance)"
+    }
+
+    var isEncumbranceOverLimit: Bool {
+        character.currentEncumbrance > character.maxEncumbrance
+    }
+
     var displayName: String {
         display(character.name)
     }
@@ -63,7 +79,7 @@ final class SummaryViewModel {
         ]
     }
 
-    var groupBonuses: [(name: String, value: Int)] {
+    var skillBonuses: [(name: String, value: Int)] {
         SkillGroup.allCases.map { group in
             (name: groupTitle(for: group), value: character.bonus(for: group))
         }

@@ -103,10 +103,11 @@ struct StatsOverviewView: View {
             VStack(alignment: .leading, spacing: 12) {
                 identityCard(character: character, viewModel: viewModel)
                 characteristicsCard(character: character, viewModel: viewModel)
+                derivedStatsCard(viewModel: viewModel)
                 honorCard(character: character)
                 passionsCard(character: character)
                 topRunesCard(viewModel: viewModel)
-                derivedStatsCard(viewModel: viewModel)
+                skillBonusesCard(viewModel: viewModel)
             }
             .padding(.horizontal, 16)
             .padding(.top, 52)
@@ -189,17 +190,44 @@ struct StatsOverviewView: View {
     }
 
     private func derivedStatsCard(viewModel: SummaryViewModel) -> some View {
-        SummaryCard(title: "Derived Stats") {
-            HStack(spacing: 8) {
-                DerivedStatChip(label: "HP", value: viewModel.hitPointsText)
-                DerivedStatChip(label: "Healing", value: viewModel.healingRateText)
-                DerivedStatChip(label: "Move", value: viewModel.moveText)
+        let derivedStats = [
+            (label: "HP", value: viewModel.hitPointsText, hasAlertBorder: false),
+            (label: "Healing", value: viewModel.healingRateText, hasAlertBorder: false),
+            (label: "Move", value: viewModel.moveText, hasAlertBorder: false),
+            (label: "MP", value: viewModel.magicPointsText, hasAlertBorder: false),
+            (label: "RP", value: viewModel.runePointsText, hasAlertBorder: false),
+            (label: "ENC", value: viewModel.encumbranceText, hasAlertBorder: viewModel.isEncumbranceOverLimit),
+        ]
+        let rows = chunked(derivedStats, size: 3)
+
+        return SummaryCard(title: "Derived Stats") {
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(rows.indices, id: \.self) { rowIndex in
+                    HStack(spacing: 8) {
+                        ForEach(rows[rowIndex], id: \.label) { stat in
+                            DerivedStatChip(
+                                label: stat.label,
+                                value: stat.value,
+                                hasAlertBorder: stat.hasAlertBorder
+                            )
+                        }
+
+                        if rows[rowIndex].count < 3 {
+                            ForEach(rows[rowIndex].count..<3, id: \.self) { _ in
+                                Spacer(minLength: 0)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
+                }
             }
+        }
+    }
 
-            Divider()
-
+    private func skillBonusesCard(viewModel: SummaryViewModel) -> some View {
+        SummaryCard(title: "Skill Bonuses") {
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(viewModel.groupBonuses, id: \.name) { bonus in
+                ForEach(viewModel.skillBonuses, id: \.name) { bonus in
                     HStack(alignment: .center, spacing: 8) {
                         Text(bonus.name)
                         Spacer()
@@ -276,13 +304,13 @@ struct StatsOverviewView: View {
         return "\(sign)\(value)%"
     }
 
-    private func chunked(_ stats: [CharacteristicStatDisplay], size: Int) -> [[CharacteristicStatDisplay]] {
-        guard size > 0 else { return [stats] }
-        var result: [[CharacteristicStatDisplay]] = []
+    private func chunked<T>(_ values: [T], size: Int) -> [[T]] {
+        guard size > 0 else { return [values] }
+        var result: [[T]] = []
         var index = 0
-        while index < stats.count {
-            let end = min(index + size, stats.count)
-            result.append(Array(stats[index..<end]))
+        while index < values.count {
+            let end = min(index + size, values.count)
+            result.append(Array(values[index..<end]))
             index += size
         }
         return result
@@ -344,6 +372,7 @@ private struct SummaryRuneTile: View {
 private struct DerivedStatChip: View {
     let label: String
     let value: String
+    var hasAlertBorder = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -357,10 +386,15 @@ private struct DerivedStatChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: .rect(cornerRadius: 10))
+        .background(Color(.systemBackground), in: .rect(cornerRadius: 10))
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(.quaternary, lineWidth: 1)
+            if hasAlertBorder {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.red, lineWidth: 1)
+            } else {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.quaternary, lineWidth: 1)
+            }
         }
         .clipShape(.rect(cornerRadius: 10))
     }

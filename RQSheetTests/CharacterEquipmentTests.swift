@@ -1,27 +1,31 @@
-import SwiftData
 import Testing
 @testable import RQSheet
 
 struct CharacterEquipmentTests {
     @Test
-    func addEquipmentItemAssignsSortOrderAndDefaults() {
-        let character = RQCharacter(name: "Arkat")
+    func addEquipmentItemAssignsIncreasingSortOrder() {
+        let character = RQCharacter()
 
-        character.addEquipmentItem(name: "Backpack", encumbrance: 2, notes: "Worn", isEquipped: true)
-        character.addEquipmentItem(name: "Bedroll", encumbrance: 1, notes: "", isEquipped: false)
+        let rope = character.addEquipmentItem(name: "Rope", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+        let shield = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
 
-        #expect(character.equipmentItems.count == 2)
-        let ordered = character.equipmentItems.sorted { $0.sortOrder < $1.sortOrder }
-        #expect(ordered[0].sortOrder == 0)
-        #expect(ordered[1].sortOrder == 1)
-        #expect(ordered[0].character === character)
+        #expect(rope.sortOrder == 0)
+        #expect(shield.sortOrder == 1)
+        #expect(character.equipmentItems.map(\.name) == ["Rope", "Shield"])
     }
 
     @Test
-    func equipmentEncumbranceIsClampedToNonNegative() {
-        let item = CharacterEquipmentItem(name: "Torch", encumbrance: -2)
-        #expect(item.encumbrance == 0)
-        item.encumbrance = -9
-        #expect(item.encumbrance == 0)
+    func encumbranceRulesClampAndSumCorrectly() {
+        let character = RQCharacter()
+        character.str = 11
+        character.con = 15
+
+        _ = character.addEquipmentItem(name: "Heavy Cloak", encumbrance: -3, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Waterskin", encumbrance: 2, notes: "", isCurrentlyEquipped: false)
+        _ = character.addEquipmentItem(name: "Spear", encumbrance: 3, notes: "", isCurrentlyEquipped: true)
+
+        #expect(character.equipmentItems.map(\.encumbrance) == [0, 2, 3])
+        #expect(character.currentEncumbrance == 3)
+        #expect(character.maxEncumbrance == 11)
     }
 }

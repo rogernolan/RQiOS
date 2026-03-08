@@ -11,13 +11,18 @@ struct SummaryViewModelTests {
         character.maxHitpoints = 12
         character.healingRate = 3
         character.move = 8
+        character.pow = 11
+        character.currentMagicPoints = 7
+        character.runePoints = 4
 
         let viewModel = SummaryViewModel(character: character)
 
         #expect(viewModel.hitPointsText == "9 / 12")
         #expect(viewModel.healingRateText == "3")
         #expect(viewModel.moveText == "8")
-        #expect(viewModel.groupBonuses.count == 6)
+        #expect(viewModel.magicPointsText == "7 / 11")
+        #expect(viewModel.runePointsText == "4")
+        #expect(viewModel.skillBonuses.count == 6)
     }
 
     @Test
@@ -78,5 +83,35 @@ struct SummaryViewModelTests {
 
         #expect(viewModel.primaryStats.map(\.label) == ["STR", "CON", "SIZ", "DEX", "INT", "POW", "CHA"])
         #expect(viewModel.primaryStats.map(\.value) == [10, 11, 12, 13, 14, 15, 16])
+    }
+
+    @Test
+    @MainActor
+    func encumbranceDisplayUsesCharacterTotals() {
+        let character = RQCharacter()
+        character.str = 12
+        character.con = 16
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Torch", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.encumbranceText == "12/2")
+        #expect(viewModel.isEncumbranceOverLimit == false)
+    }
+
+    @Test
+    @MainActor
+    func encumbranceOverflowIsDetectedWhenCurrentExceedsMax() {
+        let character = RQCharacter()
+        character.str = 8
+        character.con = 12
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 5, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Pack", encumbrance: 4, notes: "", isCurrentlyEquipped: true)
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.encumbranceText == "8/9")
+        #expect(viewModel.isEncumbranceOverLimit)
     }
 }
