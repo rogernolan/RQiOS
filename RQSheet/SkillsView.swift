@@ -1,14 +1,8 @@
-//
-//  SkillsView.swift
-//  RQSheet
-//
-
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct SkillsView: View {
     @Query private var characters: [RQCharacter]
-    @State private var searchText = ""
 
     private var character: RQCharacter? {
         characters.first
@@ -17,58 +11,7 @@ struct SkillsView: View {
     var body: some View {
         Group {
             if let character {
-                ZStack(alignment: .top) {
-                    List {
-                        Color.clear
-                            .frame(height: 44)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-
-                        ForEach(SkillGroup.allCases, id: \.rawValue) { group in
-                            let groupSkills = filteredSkills(for: character, group: group)
-                            Section {
-                                ForEach(groupSkills) { skill in
-                                    SkillRowView(skill: skill)
-                                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
-                                        .listRowBackground(Color.clear)
-                                }
-                                if searchText.isEmpty == false && groupSkills.isEmpty {
-                                    Text("No matches")
-                                        .foregroundColor(.secondary)
-                                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
-                                        .listRowBackground(Color.clear)
-                                }
-                            } header: {
-                                groupHeader(for: character, group: group)
-                            }
-                        }
-                    }
-                    .listStyle(.plain)
-                    .environment(\.defaultMinListRowHeight, 34)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .contentMargins(.horizontal, 16, for: .scrollContent)
-
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.secondary)
-                        TextField("Search skills", text: $searchText)
-                            .textInputAutocapitalization(.never)
-                            .disableAutocorrection(true)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.white.opacity(0.45), lineWidth: 0.7)
-                    )
-                    .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
-                    .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                }
+                CharacterSkillsContentView(character: character)
             } else {
                 Text("Create a character in Summary to view skills.")
                     .foregroundStyle(.secondary)
@@ -77,36 +20,196 @@ struct SkillsView: View {
         }
         .mainRuneBackground(runeName: "RuneMastery")
     }
+}
 
-    private func skills(for character: RQCharacter, group: SkillGroup) -> [CharacterSkill] {
-        character.skills
-            .filter { $0.definition?.group == group }
-            .sorted { lhs, rhs in
-                (lhs.definition?.name ?? "") < (rhs.definition?.name ?? "")
-            }
+private struct CharacterSkillsContentView: View {
+    @Environment(\.modelContext) private var modelContext
+
+    let character: RQCharacter
+
+    @State private var viewModel: SkillsViewModel
+    @State private var presentedEditor: SkillEditorSheet?
+
+    init(character: RQCharacter) {
+        self.character = character
+        _viewModel = State(initialValue: SkillsViewModel(character: character))
     }
 
-    private func filteredSkills(for character: RQCharacter, group: SkillGroup) -> [CharacterSkill] {
-        let groupSkills = skills(for: character, group: group)
-        guard searchText.isEmpty == false else { return groupSkills }
-
-        return groupSkills.filter { skill in
-            let name = skill.definition?.name ?? ""
-            return name.localizedStandardContains(searchText)
+    var body: some View {
+        ZStack(alignment: .top) {
+            skillsList
+            headerOverlay
+        }
+        .sheet(item: $presentedEditor) { editor in
+            SkillEditorView(
+                title: editor.title,
+                name: editor.name,
+                percentage: editor.percentage
+            ) { name, percentage in
+                if let skill = editor.skill {
+                    viewModel.updateSkill(skill, name: name, percentage: percentage, group: editor.group)
+                } else {
+                    viewModel.addSkill(name: name, percentage: percentage, group: editor.group)
+                }
+            }
+        }
+        .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
+            Button("No", role: .cancel) {
+                viewModel.cancelDelete()
+            }
+            Button("Yes", role: .destructive) {
+                deletePendingSkill()
+            }
+        } message: {
+            Text("Delete this skill?")
         }
     }
 
-    private func groupHeader(for character: RQCharacter, group: SkillGroup) -> some View {
-        HStack(spacing: 8) {
+    private var skillsList: some View {
+        List {
+            Color.clear
+                .frame(height: 92)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+            ForEach(SkillGroup.allCases, id: \.rawValue) { group in
+                let groupSkills = viewModel.filteredSkills(for: group)
+                Section {
+                    if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && groupSkills.isEmpty {
+                        Text("No matches")
+                            .foregroundStyle(.secondary)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    } else {
+                        ForEach(groupSkills) { skill in
+                            SkillRowCard(
+                                skill: skill,
+                                onSelect: {
+                                    presentedEditor = .edit(skill, group: group)
+                                }
+                            )
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    viewModel.requestDelete(skill)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                        }
+                    }
+                } header: {
+                    groupHeader(for: group)
+                } footer: {
+                    addSkillRow(for: group)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 0)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var headerOverlay: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Skills")
+                .font(.title2)
+                .bold()
+
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search skills", text: $viewModel.searchText)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay {
+                Capsule()
+                    .stroke(Color.white.opacity(0.45), lineWidth: 0.7)
+            }
+            .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
+            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    private func groupHeader(for group: SkillGroup) -> some View {
+        HStack(alignment: .center, spacing: 12) {
             Text(groupTitle(for: group))
                 .font(.headline)
+
             Spacer()
-            Text("\(formattedBonus(character.bonus(for: group)))")
+
+            Text(formattedBonus(character.bonus(for: group)))
                 .font(.subheadline)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
+        .padding(.top, 12)
+        .padding(.bottom, 4)
         .textCase(nil)
+    }
+
+    private func addSkillRow(for group: SkillGroup) -> some View {
+        HStack {
+            Spacer()
+
+            Button {
+                presentedEditor = .add(group: group)
+            } label: {
+                Text("Add new skill")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(.regularMaterial, in: Capsule())
+                    .overlay {
+                        Capsule()
+                            .stroke(.quaternary, lineWidth: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("skills.add.\(group.rawValue)")
+
+            Spacer()
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private var isShowingDeleteAlert: Binding<Bool> {
+        Binding(
+            get: { viewModel.pendingDeleteSkill != nil },
+            set: { isPresented in
+                if isPresented == false {
+                    viewModel.cancelDelete()
+                }
+            }
+        )
+    }
+
+    private func deletePendingSkill() {
+        guard let pendingSkill = viewModel.pendingDeleteSkill else { return }
+        if let definition = pendingSkill.definition,
+           definition.key.hasPrefix("custom."),
+           definition.characterSkills.count <= 1 {
+            modelContext.delete(definition)
+        }
+        modelContext.delete(pendingSkill)
+        viewModel.confirmDelete()
     }
 
     private func formattedBonus(_ value: Int) -> String {
@@ -132,30 +235,79 @@ struct SkillsView: View {
     }
 }
 
-private struct SkillRowView: View {
-    @Bindable var skill: CharacterSkill
+private struct SkillEditorSheet: Identifiable {
+    let id: UUID
+    let skill: CharacterSkill?
+    let title: String
+    let name: String
+    let percentage: Int
+    let group: SkillGroup
+
+    static func add(group: SkillGroup) -> SkillEditorSheet {
+        SkillEditorSheet(
+            id: UUID(),
+            skill: nil,
+            title: "Add Skill",
+            name: "",
+            percentage: 0,
+            group: group
+        )
+    }
+
+    static func edit(_ skill: CharacterSkill, group: SkillGroup) -> SkillEditorSheet {
+        SkillEditorSheet(
+            id: UUID(),
+            skill: skill,
+            title: "Edit Skill",
+            name: skill.displayName,
+            percentage: skill.effectiveValue(),
+            group: group
+        )
+    }
+}
+
+private struct SkillRowCard: View {
+    let skill: CharacterSkill
+    let onSelect: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text(skill.definition?.name ?? "Unknown Skill")
-                .font(.subheadline)
+        HStack(alignment: .center, spacing: 12) {
+            Button(action: onSelect) {
+                HStack(alignment: .center, spacing: 12) {
+                    Text(skill.displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
 
-            Spacer()
+                    Spacer(minLength: 8)
 
-            Text("\(skill.effectiveValue())%")
-                .font(.subheadline)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
+                    Text("\(skill.effectiveValue())%")
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {
                 skill.experienceCheck.toggle()
             } label: {
                 Image(systemName: skill.experienceCheck ? "checkmark.square.fill" : "square")
-                    .font(.callout)
+                    .font(.body)
+                    .foregroundStyle(skill.experienceCheck ? .primary : .secondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Toggle experience check")
         }
-        .padding(.vertical, 1)
+        .padding(12)
+        .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
