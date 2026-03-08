@@ -104,6 +104,42 @@ final class RQSheetUITests: XCTestCase {
     }
 
     @MainActor
+    func testMagicAddButtonPresentsSheet() throws {
+        let app = XCUIApplication()
+        openMagicTab(in: app)
+
+        let addButton = app.buttons["Add new spell"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
+        addButton.tap()
+
+        XCTAssertTrue(app.navigationBars["Add Spirit Magic"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testMagicRowPresentsEditSheet() throws {
+        let app = XCUIApplication()
+        openMagicTab(in: app)
+
+        let addButton = app.buttons["Add new spell"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
+        addButton.tap()
+
+        let nameField = app.textFields["Name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        nameField.tap()
+        nameField.typeText("Bladesharp")
+
+        app.navigationBars.buttons["Save"].tap()
+
+        let rowButton = app.buttons["Bladesharp"]
+        XCTAssertTrue(rowButton.waitForExistence(timeout: 5))
+        rowButton.tap()
+
+        XCTAssertTrue(app.navigationBars["Edit Spirit Magic"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["Name"].value as? String, "Bladesharp")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
@@ -121,5 +157,26 @@ final class RQSheetUITests: XCTestCase {
 
         XCTAssertTrue(app.tabBars.buttons["Equipment"].waitForExistence(timeout: 12))
         app.tabBars.buttons["Equipment"].tap()
+    }
+
+    @MainActor
+    private func openMagicTab(in app: XCUIApplication) {
+        app.launch()
+
+        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
+            app.buttons["Create New Character"].tap()
+        }
+
+        if app.tabBars.buttons["Magic"].waitForExistence(timeout: 5) {
+            app.tabBars.buttons["Magic"].tap()
+            return
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["More"].tap()
+
+        let magicCell = app.tables.cells.staticTexts["Magic"]
+        XCTAssertTrue(magicCell.waitForExistence(timeout: 5))
+        magicCell.tap()
     }
 }

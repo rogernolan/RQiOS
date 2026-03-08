@@ -70,6 +70,7 @@ struct ContentView: View {
         for: [
             RQCharacter.self,
             CharacterEquipmentItem.self,
+            CharacterSpell.self,
             RuneAffinity.self,
             SkillDefinition.self,
             CharacterSkill.self,

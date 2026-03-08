@@ -103,10 +103,11 @@ struct StatsOverviewView: View {
             VStack(alignment: .leading, spacing: 12) {
                 identityCard(character: character, viewModel: viewModel)
                 characteristicsCard(character: character, viewModel: viewModel)
+                derivedStatsCard(viewModel: viewModel)
                 honorCard(character: character)
                 passionsCard(character: character)
                 topRunesCard(viewModel: viewModel)
-                derivedStatsCard(viewModel: viewModel)
+                skillBonusesCard(viewModel: viewModel)
             }
             .padding(.horizontal, 16)
             .padding(.top, 52)
@@ -194,17 +195,21 @@ struct StatsOverviewView: View {
                 DerivedStatChip(label: "HP", value: viewModel.hitPointsText)
                 DerivedStatChip(label: "Healing", value: viewModel.healingRateText)
                 DerivedStatChip(label: "Move", value: viewModel.moveText)
+                DerivedStatChip(label: "MP", value: viewModel.magicPointsText)
+                DerivedStatChip(label: "RP", value: viewModel.runePointsText)
                 DerivedStatChip(
                     label: "ENC",
                     value: viewModel.encumbranceText,
                     hasAlertBorder: viewModel.isEncumbranceOverLimit
                 )
             }
+        }
+    }
 
-            Divider()
-
+    private func skillBonusesCard(viewModel: SummaryViewModel) -> some View {
+        SummaryCard(title: "Skill Bonuses") {
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(viewModel.groupBonuses, id: \.name) { bonus in
+                ForEach(viewModel.skillBonuses, id: \.name) { bonus in
                     HStack(alignment: .center, spacing: 8) {
                         Text(bonus.name)
                         Spacer()

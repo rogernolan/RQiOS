@@ -11,13 +11,18 @@ struct SummaryViewModelTests {
         character.maxHitpoints = 12
         character.healingRate = 3
         character.move = 8
+        character.pow = 11
+        character.currentMagicPoints = 7
+        character.runePoints = 4
 
         let viewModel = SummaryViewModel(character: character)
 
         #expect(viewModel.hitPointsText == "9 / 12")
         #expect(viewModel.healingRateText == "3")
         #expect(viewModel.moveText == "8")
-        #expect(viewModel.groupBonuses.count == 6)
+        #expect(viewModel.magicPointsText == "7 / 11")
+        #expect(viewModel.runePointsText == "4")
+        #expect(viewModel.skillBonuses.count == 6)
     }
 
     @Test
