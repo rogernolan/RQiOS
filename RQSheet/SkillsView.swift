@@ -104,6 +104,8 @@ private struct CharacterSkillsContentView: View {
                     }
                 } header: {
                     groupHeader(for: group)
+                } footer: {
+                    addSkillRow(for: group)
                 }
             }
         }
@@ -143,18 +145,25 @@ private struct CharacterSkillsContentView: View {
     }
 
     private func groupHeader(for group: SkillGroup) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Text(groupTitle(for: group))
-                    .font(.headline)
+        HStack(alignment: .center, spacing: 12) {
+            Text(groupTitle(for: group))
+                .font(.headline)
 
-                Spacer()
+            Spacer()
 
-                Text(formattedBonus(character.bonus(for: group)))
-                    .font(.subheadline)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
+            Text(formattedBonus(character.bonus(for: group)))
+                .font(.subheadline)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, 12)
+        .padding(.bottom, 4)
+        .textCase(nil)
+    }
+
+    private func addSkillRow(for group: SkillGroup) -> some View {
+        HStack {
+            Spacer()
 
             Button {
                 presentedEditor = .add(group: group)
@@ -171,10 +180,14 @@ private struct CharacterSkillsContentView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("skills.add.\(group.rawValue)")
+
+            Spacer()
         }
-        .padding(.top, 12)
-        .padding(.bottom, 4)
-        .textCase(nil)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
 
     private var isShowingDeleteAlert: Binding<Bool> {
@@ -274,8 +287,10 @@ private struct SkillRowCard: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {
                 skill.experienceCheck.toggle()
