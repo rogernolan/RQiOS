@@ -6,35 +6,40 @@ import Testing
 struct EquipmentEditorViewTests {
     @Test
     @MainActor
-    func editorCanBeCreatedForAnEquipmentItem() {
-        let item = CharacterEquipmentItem(
+    func editorCanBeCreatedWithInitialValues() {
+        let view = EquipmentEditorView(
+            title: "Edit Equipment",
             name: "Shield",
             encumbrance: 2,
-            notes: "Bronze",
-            isCurrentlyEquipped: true
-        )
-
-        let view = EquipmentEditorView(item: item)
+            notes: "Bronze"
+        ) { _, _, _ in }
 
         _ = view.body
-        #expect(item.name == "Shield")
-        #expect(item.encumbrance == 2)
-        #expect(item.notes == "Bronze")
     }
 
     @Test
-    func editorUsesScrollLayoutInsteadOfForm() throws {
+    func editorUsesNavigationStackAndForm() throws {
         let source = try equipmentEditorSource()
 
-        #expect(source.contains("Form {") == false)
+        #expect(source.contains("NavigationStack {"))
+        #expect(source.contains("Form {"))
     }
 
     @Test
     func editorUsesTextEditorForNotes() throws {
         let source = try equipmentEditorSource()
 
-        #expect(source.contains("TextEditor(text: $item.notes)"))
-        #expect(source.contains("TextField(\"Description / Notes\"") == false)
+        #expect(source.contains("Section(\"Description / Notes\")"))
+        #expect(source.contains("TextEditor(text: $notes)"))
+    }
+
+    @Test
+    func editorHasExplicitCancelAndSaveToolbar() throws {
+        let source = try equipmentEditorSource()
+
+        #expect(source.contains("ToolbarItem(placement: .cancellationAction)"))
+        #expect(source.contains("ToolbarItem(placement: .confirmationAction)"))
+        #expect(source.contains("Button(\"Save\")"))
     }
 
     private func equipmentEditorSource() throws -> String {

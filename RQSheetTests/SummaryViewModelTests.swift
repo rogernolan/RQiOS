@@ -92,5 +92,21 @@ struct SummaryViewModelTests {
         let viewModel = SummaryViewModel(character: character)
 
         #expect(viewModel.encumbranceText == "12/2")
+        #expect(viewModel.isEncumbranceOverLimit == false)
+    }
+
+    @Test
+    @MainActor
+    func encumbranceOverflowIsDetectedWhenCurrentExceedsMax() {
+        let character = RQCharacter()
+        character.str = 8
+        character.con = 12
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 5, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Pack", encumbrance: 4, notes: "", isCurrentlyEquipped: true)
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.encumbranceText == "8/9")
+        #expect(viewModel.isEncumbranceOverLimit)
     }
 }

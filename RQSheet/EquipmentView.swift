@@ -28,7 +28,7 @@ private struct CharacterEquipmentContentView: View {
     let character: RQCharacter
 
     @State private var viewModel: EquipmentViewModel
-    @State private var selectedItem: CharacterEquipmentItem?
+    @State private var presentedEditor: EquipmentEditorSheet?
 
     init(character: RQCharacter) {
         self.character = character
@@ -40,8 +40,19 @@ private struct CharacterEquipmentContentView: View {
             equipmentList
             headerOverlay
         }
-        .navigationDestination(item: $selectedItem) { item in
-            EquipmentEditorView(item: item)
+        .sheet(item: $presentedEditor) { editor in
+            EquipmentEditorView(
+                title: editor.title,
+                name: editor.name,
+                encumbrance: editor.encumbrance,
+                notes: editor.notes
+            ) { name, encumbrance, notes in
+                if let item = editor.item {
+                    viewModel.updateItem(item, name: name, encumbrance: encumbrance, notes: notes)
+                } else {
+                    viewModel.addNewItem(name: name, encumbrance: encumbrance, notes: notes)
+                }
+            }
         }
         .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
             Button("No", role: .cancel) {
@@ -76,7 +87,7 @@ private struct CharacterEquipmentContentView: View {
                 ForEach(viewModel.visibleItems) { item in
                     EquipmentRowCard(
                         item: item,
-                        onSelect: { selectedItem = item },
+                        onSelect: { presentEditSheet(for: item) },
                         onToggleEquipped: { item.isCurrentlyEquipped.toggle() }
                     )
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -118,8 +129,13 @@ private struct CharacterEquipmentContentView: View {
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial, in: .capsule)
                     .overlay {
-                        Capsule()
-                            .stroke(.quaternary, lineWidth: 1)
+                        if viewModel.isEncumbranceOverLimit {
+                            Capsule()
+                                .stroke(.red, lineWidth: 1)
+                        } else {
+                            Capsule()
+                                .stroke(.quaternary, lineWidth: 1)
+                        }
                     }
             }
 
@@ -149,8 +165,7 @@ private struct CharacterEquipmentContentView: View {
             Spacer()
 
             Button {
-                let item = viewModel.addNewItem()
-                selectedItem = item
+                presentedEditor = .add
             } label: {
                 Text("Add new item")
                     .font(.headline)
@@ -182,6 +197,41 @@ private struct CharacterEquipmentContentView: View {
                     viewModel.cancelDelete()
                 }
             }
+        )
+    }
+
+    private func presentEditSheet(for item: CharacterEquipmentItem) {
+        presentedEditor = .edit(item)
+    }
+}
+
+private struct EquipmentEditorSheet: Identifiable {
+    let id: UUID
+    let item: CharacterEquipmentItem?
+    let title: String
+    let name: String
+    let encumbrance: Int
+    let notes: String
+
+    static var add: EquipmentEditorSheet {
+        EquipmentEditorSheet(
+            id: UUID(),
+            item: nil,
+            title: "Add Equipment",
+            name: "",
+            encumbrance: 0,
+            notes: ""
+        )
+    }
+
+    static func edit(_ item: CharacterEquipmentItem) -> EquipmentEditorSheet {
+        EquipmentEditorSheet(
+            id: UUID(),
+            item: item,
+            title: "Edit Equipment",
+            name: item.name,
+            encumbrance: item.encumbrance,
+            notes: item.notes
         )
     }
 }

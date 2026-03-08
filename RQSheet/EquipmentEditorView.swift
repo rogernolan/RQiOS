@@ -1,67 +1,75 @@
 import SwiftUI
 
 struct EquipmentEditorView: View {
-    @Bindable var item: CharacterEquipmentItem
-    @FocusState private var focusedField: Field?
+    @Environment(\.dismiss) private var dismiss
 
-    private enum Field: Hashable {
-        case name
-        case encumbrance
-        case notes
+    @State private var name: String
+    @State private var encumbranceText: String
+    @State private var notes: String
+
+    let title: String
+    let onSave: (String, Int, String) -> Void
+
+    init(
+        title: String,
+        name: String = "",
+        encumbrance: Int = 0,
+        notes: String = "",
+        onSave: @escaping (String, Int, String) -> Void
+    ) {
+        self.title = title
+        self.onSave = onSave
+        _name = State(initialValue: name)
+        _encumbranceText = State(initialValue: String(max(0, encumbrance)))
+        _notes = State(initialValue: notes)
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                editorField(title: "Name") {
-                    TextField("Name", text: $item.name)
-                        .focused($focusedField, equals: .name)
+        NavigationStack {
+            Form {
+                Section("Details") {
+                    LabeledContent("Name") {
+                        TextField("Name", text: $name)
+                            .multilineTextAlignment(.trailing)
+                    }
+
+                    LabeledContent("ENC") {
+                        TextField("0", text: $encumbranceText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
 
-                editorField(title: "ENC") {
-                    TextField("0", value: encumbranceBinding, format: .number)
-                        .keyboardType(.numberPad)
-                        .focused($focusedField, equals: .encumbrance)
-                }
-
-                editorField(title: "Description / Notes") {
-                    TextEditor(text: $item.notes)
-                        .focused($focusedField, equals: .notes)
-                        .frame(minHeight: 132)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemBackground).opacity(0.34), in: RoundedRectangle(cornerRadius: 10))
+                Section("Description / Notes") {
+                    TextEditor(text: $notes)
+                        .frame(minHeight: 180)
+                        .scrollContentBackground(.hidden)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-        .scrollIndicators(.hidden)
-        .navigationTitle(item.name.isEmpty ? "New Item" : item.name)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private var encumbranceBinding: Binding<Int> {
-        Binding(
-            get: { item.encumbrance },
-            set: { item.encumbrance = max(0, $0) }
-        )
-    }
-
-    private func editorField<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            content()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.quaternary, lineWidth: 1)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        onSave(cleanName, parsedEncumbrance, notes)
+                        dismiss()
+                    }
+                }
+            }
         }
+    }
+
+    private var cleanName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var parsedEncumbrance: Int {
+        max(0, Int(encumbranceText.filter(\.isNumber)) ?? 0)
     }
 }

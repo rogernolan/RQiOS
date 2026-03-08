@@ -35,6 +35,10 @@ final class SummaryViewModel {
         "\(character.maxEncumbrance)/\(character.currentEncumbrance)"
     }
 
+    var isEncumbranceOverLimit: Bool {
+        character.currentEncumbrance > character.maxEncumbrance
+    }
+
     var displayName: String {
         display(character.name)
     }

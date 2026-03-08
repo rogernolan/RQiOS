@@ -27,21 +27,37 @@ struct EquipmentViewModelTests {
 
         #expect(viewModel.visibleItems.map(\.name) == ["Shield", "Rope"])
         #expect(viewModel.headerEncumbranceText == "\(character.maxEncumbrance) / \(character.currentEncumbrance)")
+        #expect(viewModel.isEncumbranceOverLimit == false)
     }
 
     @Test
     @MainActor
-    func addNewItemAppendsBlankItemAtEndOfInsertionOrder() {
+    func addNewItemAppendsAtEndOfInsertionOrder() {
         let character = RQCharacter()
         _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
         let viewModel = EquipmentViewModel(character: character)
 
-        let newItem = viewModel.addNewItem()
+        let newItem = viewModel.addNewItem(name: "Rope", encumbrance: 1, notes: "Hemp")
 
         #expect(character.equipmentItems.count == 2)
-        #expect(newItem.name.isEmpty)
+        #expect(newItem.name == "Rope")
+        #expect(newItem.notes == "Hemp")
         #expect(newItem.sortOrder == 1)
         #expect(viewModel.visibleItems.last === newItem)
+    }
+
+    @Test
+    @MainActor
+    func updateItemPersistsEditedValuesAndClampsEncumbrance() {
+        let character = RQCharacter()
+        let item = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "Bronze", isCurrentlyEquipped: true)
+        let viewModel = EquipmentViewModel(character: character)
+
+        viewModel.updateItem(item, name: "Tower Shield", encumbrance: -4, notes: "Iron rim")
+
+        #expect(item.name == "Tower Shield")
+        #expect(item.encumbrance == 0)
+        #expect(item.notes == "Iron rim")
     }
 
     @Test
@@ -65,5 +81,20 @@ struct EquipmentViewModelTests {
         #expect(viewModel.pendingDeleteItem == nil)
         #expect(character.equipmentItems.count == 1)
         #expect(character.equipmentItems[0] === first)
+    }
+
+    @Test
+    @MainActor
+    func headerEncumbranceOverLimitMatchesCharacterTotals() {
+        let character = RQCharacter()
+        character.str = 8
+        character.con = 12
+        _ = character.addEquipmentItem(name: "Shield", encumbrance: 5, notes: "", isCurrentlyEquipped: true)
+        _ = character.addEquipmentItem(name: "Pack", encumbrance: 4, notes: "", isCurrentlyEquipped: true)
+
+        let viewModel = EquipmentViewModel(character: character)
+
+        #expect(viewModel.headerEncumbranceText == "8 / 9")
+        #expect(viewModel.isEncumbranceOverLimit)
     }
 }

@@ -61,14 +61,7 @@ final class RQSheetUITests: XCTestCase {
     @MainActor
     func testEquipmentAddButtonIsVisibleAndTappable() throws {
         let app = XCUIApplication()
-        app.launch()
-
-        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
-            app.buttons["Create New Character"].tap()
-        }
-
-        XCTAssertTrue(app.tabBars.buttons["Equipment"].waitForExistence(timeout: 12))
-        app.tabBars.buttons["Equipment"].tap()
+        openEquipmentTab(in: app)
 
         let addButton = app.buttons["equipment.addItem"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 12))
@@ -77,10 +70,56 @@ final class RQSheetUITests: XCTestCase {
     }
 
     @MainActor
+    func testEquipmentAddButtonPresentsSheet() throws {
+        let app = XCUIApplication()
+        openEquipmentTab(in: app)
+
+        app.buttons["equipment.addItem"].tap()
+
+        XCTAssertTrue(app.navigationBars["Add Equipment"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testEquipmentRowPresentsEditSheet() throws {
+        let app = XCUIApplication()
+        openEquipmentTab(in: app)
+
+        app.buttons["equipment.addItem"].tap()
+        XCTAssertTrue(app.navigationBars["Add Equipment"].waitForExistence(timeout: 5))
+
+        let nameField = app.textFields["Name"]
+        XCTAssertTrue(nameField.waitForExistence(timeout: 5))
+        nameField.tap()
+        nameField.typeText("Shield")
+
+        app.navigationBars.buttons["Save"].tap()
+
+        let rowButton = app.buttons["Shield"]
+        XCTAssertTrue(rowButton.waitForExistence(timeout: 5))
+        rowButton.tap()
+
+        XCTAssertTrue(app.navigationBars["Edit Equipment"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["Name"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["Name"].value as? String, "Shield")
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
+    }
+
+    @MainActor
+    private func openEquipmentTab(in app: XCUIApplication) {
+        app.launch()
+
+        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
+            app.buttons["Create New Character"].tap()
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["Equipment"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["Equipment"].tap()
     }
 }

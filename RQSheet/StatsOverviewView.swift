@@ -194,7 +194,11 @@ struct StatsOverviewView: View {
                 DerivedStatChip(label: "HP", value: viewModel.hitPointsText)
                 DerivedStatChip(label: "Healing", value: viewModel.healingRateText)
                 DerivedStatChip(label: "Move", value: viewModel.moveText)
-                DerivedStatChip(label: "ENC", value: viewModel.encumbranceText)
+                DerivedStatChip(
+                    label: "ENC",
+                    value: viewModel.encumbranceText,
+                    hasAlertBorder: viewModel.isEncumbranceOverLimit
+                )
             }
 
             Divider()
@@ -345,6 +349,7 @@ private struct SummaryRuneTile: View {
 private struct DerivedStatChip: View {
     let label: String
     let value: String
+    var hasAlertBorder = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -360,8 +365,13 @@ private struct DerivedStatChip: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.regularMaterial, in: .rect(cornerRadius: 10))
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(.quaternary, lineWidth: 1)
+            if hasAlertBorder {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.red, lineWidth: 1)
+            } else {
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(.quaternary, lineWidth: 1)
+            }
         }
         .clipShape(.rect(cornerRadius: 10))
     }

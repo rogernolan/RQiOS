@@ -37,9 +37,24 @@ final class EquipmentViewModel {
         "\(character.maxEncumbrance) / \(character.currentEncumbrance)"
     }
 
+    var isEncumbranceOverLimit: Bool {
+        character.currentEncumbrance > character.maxEncumbrance
+    }
+
     @discardableResult
-    func addNewItem() -> CharacterEquipmentItem {
-        character.addEquipmentItem()
+    func addNewItem(name: String, encumbrance: Int, notes: String, isCurrentlyEquipped: Bool = false) -> CharacterEquipmentItem {
+        character.addEquipmentItem(
+            name: name,
+            encumbrance: encumbrance,
+            notes: notes,
+            isCurrentlyEquipped: isCurrentlyEquipped
+        )
+    }
+
+    func updateItem(_ item: CharacterEquipmentItem, name: String, encumbrance: Int, notes: String) {
+        item.name = name
+        item.encumbrance = max(0, encumbrance)
+        item.notes = notes
     }
 
     func requestDelete(_ item: CharacterEquipmentItem) {
