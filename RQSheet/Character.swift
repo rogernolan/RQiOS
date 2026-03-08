@@ -636,6 +636,29 @@ final class RQCharacter {
         passions.append(passion)
     }
 
+    @discardableResult
+    func addSkill(name: String, percentage: Int, group: SkillGroup, baseRule: String = "0") -> CharacterSkill {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = trimmedName.isEmpty ? "Unnamed skill" : trimmedName
+        let definition = SkillDefinition(
+            key: "custom.\(UUID().uuidString.lowercased())",
+            name: displayName,
+            group: group,
+            baseRule: baseRule
+        )
+        let skill = CharacterSkill(
+            character: self,
+            definition: definition,
+            successPercentage: 0,
+            customName: displayName,
+            customGroup: group
+        )
+        skill.setEffectiveValue(percentage)
+        skills.append(skill)
+        definition.characterSkills.append(skill)
+        return skill
+    }
+
     var currentEncumbrance: Int {
         equipmentItems
             .filter(\.isCurrentlyEquipped)
