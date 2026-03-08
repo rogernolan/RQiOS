@@ -35,11 +35,6 @@ struct RunicAffinitiesPentagramView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if isEditing {
-                Spacer()
-                    .frame(height: 10)
-            }
-
             HStack(alignment: .center) {
                 Text("Elemental affinities")
                     .font(.subheadline)
@@ -186,7 +181,7 @@ struct RunicAffinityNodeView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 4) {
+            HStack(spacing: RuneChipLayoutMetrics.titleSpacing) {
                 Text(rune.name.rawValue)
                     .font(.footnote)
                     .fontWeight(.semibold)
@@ -198,45 +193,58 @@ struct RunicAffinityNodeView: View {
                 } label: {
                     Image(systemName: rune.experienceCheck ? "checkmark.circle.fill" : "circle")
                         .font(.caption2)
+                        .frame(
+                            width: RuneChipLayoutMetrics.checkboxSlotWidth,
+                            height: RuneChipLayoutMetrics.checkboxSlotHeight
+                        )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Toggle \(rune.name.rawValue) experience check")
             }
             .frame(maxWidth: .infinity)
 
-            HStack(alignment: .center, spacing: 6) {
+            HStack(alignment: .center, spacing: RuneChipLayoutMetrics.valueRowSpacing) {
                 Image(runeAssetName)
                     .resizable()
                     .scaledToFit()
                     .padding(1)
-                    .frame(width: 26, height: 26, alignment: .leading)
+                    .frame(
+                        width: RuneChipLayoutMetrics.runeIconSize,
+                        height: RuneChipLayoutMetrics.runeIconSize,
+                        alignment: .leading
+                    )
 
                 Spacer(minLength: 0)
 
                 percentageView
+                    .frame(height: RuneChipLayoutMetrics.percentageEditorHeight, alignment: .trailing)
+                    .frame(width: RuneChipLayoutMetrics.percentageSlotWidth(for: isEditing), alignment: .trailing)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: RuneChipLayoutMetrics.percentageEditorHeight)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 5)
-        .frame(width: 97, alignment: .leading)
+        .padding(.horizontal, RuneChipLayoutMetrics.chipHorizontalPadding)
+        .padding(.vertical, RuneChipLayoutMetrics.chipVerticalPadding)
+        .frame(
+            width: RuneChipLayoutMetrics.chipWidth,
+            height: RuneChipLayoutMetrics.chipHeight,
+            alignment: .topLeading
+        )
         .background(Color(.systemGray6))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color(.systemGray4), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(.rect(cornerRadius: 8))
     }
 
     @ViewBuilder
     private var percentageView: some View {
         if isEditing {
-            HStack(spacing: 2) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(.systemBackground))
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
+            ZStack {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(.systemBackground))
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
 
                 TextField(
                     "",
@@ -255,19 +263,20 @@ struct RunicAffinityNodeView: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(.callout.monospacedDigit())
-                .padding(.horizontal, 6)
-                }
-                .frame(width: 52, height: 28)
-
-                Text("%")
-                    .font(.footnote.monospacedDigit())
-                    .foregroundColor(.secondary)
+                .padding(.horizontal, RuneChipLayoutMetrics.percentageEditorHorizontalInset)
             }
+            .frame(
+                width: RuneChipLayoutMetrics.percentageEditorWidth,
+                height: RuneChipLayoutMetrics.percentageEditorHeight
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, RuneChipLayoutMetrics.percentageContentLeadingInset)
         } else {
             Text("\(rune.percentage)%")
                 .font(.callout.monospacedDigit())
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 2)
+                .frame(width: RuneChipLayoutMetrics.percentageDisplayWidth, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, RuneChipLayoutMetrics.percentageContentLeadingInset)
         }
     }
 
