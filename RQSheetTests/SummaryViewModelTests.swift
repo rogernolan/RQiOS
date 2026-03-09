@@ -106,10 +106,12 @@ struct SummaryViewModelTests {
         character.con = 16
         _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
         _ = character.addEquipmentItem(name: "Torch", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+        character.weapons.append(Weapon(name: "Broadsword", damage: "1d8+1", enc: 1, isEquipped: true))
+        character.weapons.append(Weapon(name: "Dagger", damage: "1d4+2", enc: 1, isEquipped: false))
 
         let viewModel = SummaryViewModel(character: character)
 
-        #expect(viewModel.encumbranceText == "12/2")
+        #expect(viewModel.encumbranceText == "12/3")
         #expect(viewModel.isEncumbranceOverLimit == false)
     }
 
@@ -121,10 +123,11 @@ struct SummaryViewModelTests {
         character.con = 12
         _ = character.addEquipmentItem(name: "Shield", encumbrance: 5, notes: "", isCurrentlyEquipped: true)
         _ = character.addEquipmentItem(name: "Pack", encumbrance: 4, notes: "", isCurrentlyEquipped: true)
+        character.weapons.append(Weapon(name: "Longsword", damage: "1d8+1", enc: 1, isEquipped: true))
 
         let viewModel = SummaryViewModel(character: character)
 
-        #expect(viewModel.encumbranceText == "8/9")
+        #expect(viewModel.encumbranceText == "8/10")
         #expect(viewModel.isEncumbranceOverLimit)
     }
 }

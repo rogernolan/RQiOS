@@ -20,13 +20,16 @@ struct EquipmentViewModelTests {
     @MainActor
     func emptySearchReturnsInsertionOrder() {
         let character = RQCharacter()
+        character.str = 10
+        character.con = 10
         _ = character.addEquipmentItem(name: "Shield", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
         _ = character.addEquipmentItem(name: "Rope", encumbrance: 1, notes: "", isCurrentlyEquipped: false)
+        character.weapons.append(Weapon(name: "Spear", damage: "1d8+1", enc: 1, isEquipped: true))
 
         let viewModel = EquipmentViewModel(character: character)
 
         #expect(viewModel.visibleItems.map(\.name) == ["Shield", "Rope"])
-        #expect(viewModel.headerEncumbranceText == "\(character.maxEncumbrance) / \(character.currentEncumbrance)")
+        #expect(viewModel.headerEncumbranceText == "10 / 3")
         #expect(viewModel.isEncumbranceOverLimit == false)
     }
 
@@ -91,10 +94,11 @@ struct EquipmentViewModelTests {
         character.con = 12
         _ = character.addEquipmentItem(name: "Shield", encumbrance: 5, notes: "", isCurrentlyEquipped: true)
         _ = character.addEquipmentItem(name: "Pack", encumbrance: 4, notes: "", isCurrentlyEquipped: true)
+        character.weapons.append(Weapon(name: "Longsword", damage: "1d8+1", enc: 1, isEquipped: true))
 
         let viewModel = EquipmentViewModel(character: character)
 
-        #expect(viewModel.headerEncumbranceText == "8 / 9")
+        #expect(viewModel.headerEncumbranceText == "8 / 10")
         #expect(viewModel.isEncumbranceOverLimit)
     }
 }

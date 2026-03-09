@@ -662,11 +662,17 @@ final class RQCharacter {
     }
 
     var currentEncumbrance: Int {
-        equipmentItems
-            .filter(\.isCurrentlyEquipped)
-            .reduce(0) { total, item in
-                total + item.encumbrance
+        let equipmentTotal = equipmentItems.reduce(into: 0) { total, item in
+            if item.isCurrentlyEquipped {
+                total += item.encumbrance
             }
+        }
+        let weaponTotal = weapons.reduce(into: 0) { total, weapon in
+            if weapon.isEquipped, let enc = weapon.enc {
+                total += enc
+            }
+        }
+        return equipmentTotal + weaponTotal
     }
 
     var maxEncumbrance: Int {

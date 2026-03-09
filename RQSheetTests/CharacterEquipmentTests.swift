@@ -28,4 +28,18 @@ struct CharacterEquipmentTests {
         #expect(character.currentEncumbrance == 3)
         #expect(character.maxEncumbrance == 11)
     }
+
+    @Test
+    func currentEncumbranceIncludesEquippedWeapons() {
+        let character = RQCharacter()
+        character.str = 12
+        character.con = 12
+
+        _ = character.addEquipmentItem(name: "Pack", encumbrance: 2, notes: "", isCurrentlyEquipped: true)
+        character.weapons.append(Weapon(name: "Broadsword", damage: "1d8+1", enc: 1, isEquipped: true))
+        character.weapons.append(Weapon(name: "Bow", damage: "1d8", enc: 2, isEquipped: false))
+        character.weapons.append(Weapon(name: "Knife", damage: "1d4+2", enc: nil, isEquipped: true))
+
+        #expect(character.currentEncumbrance == 3)
+    }
 }
