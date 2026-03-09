@@ -115,125 +115,76 @@ struct CombatView: View {
     }
 
     private func weaponsSection(for character: RQCharacter) -> some View {
-        ZStack(alignment: .top) {
-            weaponsList(for: character)
-            weaponsHeaderOverlay
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        return weaponsList(for: character)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func weaponsList(for character: RQCharacter) -> some View {
-        List {
-            Color.clear
-                .frame(height: 86)
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-
-            if character.weapons.isEmpty {
-                Text("No weapons yet")
-                    .foregroundStyle(.secondary)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-            } else {
-                ForEach(character.weapons) { weapon in
-                    WeaponRowCard(
-                        weapon: weapon,
-                        isExpanded: isExpanded(weapon),
-                        onSelect: {
-                            presentedEditor = .edit(weapon)
-                        },
-                        onToggleExperience: {
-                            weapon.experienceCheck.toggle()
-                        },
-                        onToggleExpanded: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                toggleExpanded(weapon)
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                if character.weapons.isEmpty {
+                    Text("No weapons yet")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ForEach(character.weapons) { weapon in
+                        WeaponRowCard(
+                            weapon: weapon,
+                            isExpanded: isExpanded(weapon),
+                            onSelect: {
+                                presentedEditor = .edit(weapon)
+                            },
+                            onToggleExperience: {
+                                weapon.experienceCheck.toggle()
+                            },
+                            onToggleExpanded: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    toggleExpanded(weapon)
+                                }
+                            },
+                            onToggleEquipped: {
+                                weapon.isEquipped.toggle()
                             }
-                        },
-                        onToggleEquipped: {
-                            weapon.isEquipped.toggle()
-                        }
-                    )
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            pendingDeleteWeapon = weapon
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                        )
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                pendingDeleteWeapon = weapon
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
                         }
                     }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
                 }
+
+                Color.clear
+                    .frame(height: 96)
             }
-
-            HStack {
-                Spacer()
-
-                Button("Add weapon") {
-                    presentedEditor = .add
-                }
-                .font(.headline)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 12)
-                .background(.regularMaterial, in: Capsule())
-                .overlay {
-                    Capsule()
-                        .stroke(.quaternary, lineWidth: 1)
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("combat.addWeapon")
-
-                Spacer()
-            }
-            .padding(.top, 8)
-            .padding(.bottom, 96)
-            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
+            .padding(.horizontal, 10)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
         }
-        .listStyle(.plain)
-        .environment(\.defaultMinListRowHeight, 0)
-        .scrollContentBackground(.hidden)
-        .background(Color.clear)
+        .overlay(alignment: .bottom) {
+            addWeaponButton
+                .padding(.bottom, 8)
+        }
         .scrollIndicators(.hidden)
-        .ignoresSafeArea(edges: .bottom)
+        .background(Color.clear)
     }
 
-    private var weaponsHeaderOverlay: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Weapons")
-                .font(.title2)
-                .bold()
-
-            HStack(spacing: 8) {
-                Text("Name")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text("%")
-                    .frame(width: 40, alignment: .trailing)
-                Image(systemName: "square")
-                    .frame(width: 28, alignment: .center)
-                Text("SR")
-                    .frame(width: 46, alignment: .trailing)
-                Text("Damage")
-                    .frame(width: 74, alignment: .trailing)
-                Image(systemName: "chevron.down")
-                    .frame(width: 28, alignment: .center)
-            }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.35), lineWidth: 0.7)
-            }
+    private var addWeaponButton: some View {
+        Button("Add weapon") {
+            presentedEditor = .add
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .font(.headline)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .background(.regularMaterial, in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("combat.addWeapon")
     }
 
     private func isExpanded(_ weapon: Weapon) -> Bool {
@@ -474,12 +425,21 @@ struct CombatView: View {
 }
 
 private struct WeaponRowCard: View {
+    private let weaponDetailRowHeight: CGFloat = 34
+    private let weaponDetailVerticalSpacing: CGFloat = 8
+    private let weaponDetailDividerHeight: CGFloat = 17
+    private let weaponDetailTopPadding: CGFloat = 16
+    private let weaponDetailBottomPadding: CGFloat = 8
+
     let weapon: Weapon
     let isExpanded: Bool
     let onSelect: () -> Void
     let onToggleExperience: () -> Void
     let onToggleExpanded: () -> Void
     let onToggleEquipped: () -> Void
+
+    @State private var detailOpacity: Double = 0
+    @State private var detailFadeTask: Task<Void, Never>?
 
     private var displayName: String {
         let trimmed = weapon.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -510,9 +470,60 @@ private struct WeaponRowCard: View {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    private var expandedDetailHeight: CGFloat {
+        weaponDetailTopPadding
+        + weaponDetailDividerHeight
+        + weaponDetailRowHeight
+        + (displayRange == nil ? 0 : weaponDetailVerticalSpacing + weaponDetailRowHeight)
+        + weaponDetailBottomPadding
+    }
+
+    private var detailContent: some View {
+        VStack(alignment: .leading, spacing: weaponDetailVerticalSpacing) {
+            Divider()
+                .padding(.vertical, 8)
+
+            HStack(spacing: 12) {
+                WeaponDetailChip(label: "HP", value: displayHP)
+                WeaponDetailChip(label: "ENC", value: displayENC)
+                WeaponDetailChip(label: "Type", value: displayType)
+                if displayRange == nil {
+                    equippedButton
+                }
+            }
+            .frame(height: weaponDetailRowHeight)
+
+            if let displayRange {
+                HStack(spacing: 12) {
+                    WeaponDetailChip(label: "Range", value: displayRange)
+                    equippedButton
+
+                    Spacer(minLength: 0)
+                }
+                .frame(height: weaponDetailRowHeight)
+            }
+        }
+    }
+
+    private var equippedButton: some View {
+        Button(action: onToggleEquipped) {
+            HStack(spacing: 6) {
+                Text("Equipped:")
+                    .foregroundStyle(.secondary)
+                Image(systemName: weapon.isEquipped ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(weapon.isEquipped ? .primary : .secondary)
+            }
+            .font(.footnote)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.1), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: 5) {
                 Text(displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
@@ -522,7 +533,7 @@ private struct WeaponRowCard: View {
                 Text("\(weapon.basePercentage)%")
                     .font(.subheadline)
                     .monospacedDigit()
-                    .frame(width: 40, alignment: .trailing)
+                    .frame(width: 34, alignment: .trailing)
 
                 Button(action: onToggleExperience) {
                     Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
@@ -530,77 +541,79 @@ private struct WeaponRowCard: View {
                         .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
                 }
                 .buttonStyle(.plain)
-                .frame(width: 28, alignment: .center)
+                .frame(width: 22, alignment: .center)
 
-                Text(displayStrikeRank)
-                    .font(.subheadline)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .frame(width: 46, alignment: .trailing)
+                HStack(spacing: 2) {
+                    Text("SR")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text(displayStrikeRank)
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
 
                 Text(weapon.damage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .frame(width: 74, alignment: .trailing)
+                    .frame(width: 62, alignment: .trailing)
 
                 Button(action: onToggleExpanded) {
-                    Image(systemName: "chevron.down")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 0 : -90))
-                        .frame(width: 28, height: 28)
-                        .background(Color.white.opacity(0.12), in: Circle())
+                    DisclosureTriangle(isFilled: isExpanded)
+                        .frame(width: 22, height: 22)
                 }
                 .buttonStyle(.plain)
             }
             .contentShape(Rectangle())
             .onTapGesture(perform: onSelect)
 
-            if isExpanded {
-                Divider()
-                    .padding(.vertical, 10)
+            detailContent
+                .opacity(detailOpacity)
+                .frame(height: isExpanded ? expandedDetailHeight : 0, alignment: .top)
+                .clipped()
+        }
+        .padding(10)
+        .onAppear {
+            detailOpacity = isExpanded ? 1 : 0
+        }
+        .onDisappear {
+            detailFadeTask?.cancel()
+        }
+        .onChange(of: isExpanded) { _, expanded in
+            detailFadeTask?.cancel()
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 12) {
-                        WeaponDetailChip(label: "HP", value: displayHP)
-                        WeaponDetailChip(label: "ENC", value: displayENC)
-                        WeaponDetailChip(label: "Type", value: displayType)
-                    }
-
-                    HStack(spacing: 12) {
-                        if let displayRange {
-                            WeaponDetailChip(label: "Range", value: displayRange)
-                        }
-
-                        Button(action: onToggleEquipped) {
-                            HStack(spacing: 6) {
-                                Text("Equipped:")
-                                    .foregroundStyle(.secondary)
-                                Image(systemName: weapon.isEquipped ? "checkmark.square.fill" : "square")
-                                    .foregroundStyle(weapon.isEquipped ? .primary : .secondary)
-                            }
-                            .font(.footnote)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 8)
-                            .background(Color.white.opacity(0.1), in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-
-                        Spacer(minLength: 0)
-                    }
+            if expanded {
+                scheduleDetailFadeIn()
+            } else {
+                withAnimation(.easeOut(duration: 0.08)) {
+                    detailOpacity = 0
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .padding(12)
         .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 12))
         .overlay {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(.quaternary, lineWidth: 1)
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .animation(.easeInOut(duration: 0.2), value: isExpanded)
+    }
+
+    private func scheduleDetailFadeIn() {
+        detailOpacity = 0
+        detailFadeTask?.cancel()
+        detailFadeTask = Task {
+            try? await Task.sleep(for: .milliseconds(140))
+            guard Task.isCancelled == false else { return }
+            await MainActor.run {
+                withAnimation(.easeIn(duration: 0.12)) {
+                    detailOpacity = 1
+                }
+            }
+        }
     }
 }
 
@@ -620,6 +633,33 @@ private struct WeaponDetailChip: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(Color.white.opacity(0.1), in: Capsule())
+    }
+}
+
+private struct DisclosureTriangle: View {
+    let isFilled: Bool
+
+    var body: some View {
+        TriangleShape()
+            .rotation(.degrees(180))
+            .fill(isFilled ? Color.secondary : Color.clear)
+            .overlay {
+                TriangleShape()
+                    .rotation(.degrees(180))
+                    .stroke(Color.secondary, lineWidth: 1.6)
+            }
+            .padding(4)
+    }
+}
+
+private struct TriangleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 

@@ -57,7 +57,6 @@ struct WeaponEditorView: View {
                             .multilineTextAlignment(.trailing)
                     }
 
-                    Toggle("Experience check", isOn: $experienceCheck)
                     Toggle("Equipped", isOn: $isEquipped)
 
                     Picker("Type", selection: $type) {
@@ -108,6 +107,9 @@ struct WeaponEditorView: View {
                             .multilineTextAlignment(.trailing)
                     }
                 }
+            }
+            .onChange(of: maxHPText) { _, _ in
+                synchronizeCurrentHPWithMaxHP()
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -179,6 +181,19 @@ struct WeaponEditorView: View {
         }
 
         return (parsedMaxHP, resolvedCurrentHP)
+    }
+
+    private func synchronizeCurrentHPWithMaxHP() {
+        let trimmedMaxHP = maxHPText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedCurrentHP = currentHPText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let hpMax = optionalIntValue(trimmedMaxHP) else { return }
+
+        if trimmedCurrentHP.isEmpty {
+            currentHPText = maxHPText
+        } else if let currentHP = optionalIntValue(trimmedCurrentHP) {
+            currentHPText = String(min(currentHP, hpMax))
+        }
     }
 
     private func optionalIntValue(_ text: String) -> Int? {
