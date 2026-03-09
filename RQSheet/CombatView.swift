@@ -9,7 +9,7 @@ import SwiftData
 struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var characters: [RQCharacter]
-    @State private var isPresentingAddWeapon = false
+    @State private var presentedEditor: WeaponEditorSheet?
 
     var character: RQCharacter? {
         characters.first
@@ -58,7 +58,7 @@ struct CombatView: View {
                     .frame(minHeight: 120)
 
                     Button("Add weapon") {
-                        isPresentingAddWeapon = true
+                        presentedEditor = .add
                     }
                     .buttonStyle(.bordered)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -72,20 +72,50 @@ struct CombatView: View {
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .sheet(isPresented: $isPresentingAddWeapon) {
-            if let character {
-                AddWeaponView { name, basePercentage, damage, hpMax, hpCurrent, enc, strikeRank, type in
-                    addWeapon(
-                        to: character,
+        .sheet(item: $presentedEditor) { editor in
+            WeaponEditorView(
+                title: editor.title,
+                name: editor.name,
+                basePercentage: editor.basePercentage,
+                experienceCheck: editor.experienceCheck,
+                strikeRank: editor.strikeRank,
+                damage: editor.damage,
+                hpMax: editor.hpMax,
+                hpCurrent: editor.hpCurrent,
+                enc: editor.enc,
+                type: editor.type,
+                range: editor.range,
+                isEquipped: editor.isEquipped
+            ) { name, basePercentage, experienceCheck, strikeRank, damage, hpMax, hpCurrent, enc, type, range, isEquipped in
+                if let weapon = editor.weapon {
+                    updateWeapon(
+                        weapon,
                         name: name,
                         basePercentage: basePercentage,
-                        experienceCheck: false,
+                        experienceCheck: experienceCheck,
                         damage: damage,
                         hpMax: hpMax,
                         hpCurrent: hpCurrent,
                         enc: enc,
                         strikeRank: strikeRank,
-                        type: type
+                        type: type,
+                        range: range,
+                        isEquipped: isEquipped
+                    )
+                } else if let character {
+                    addWeapon(
+                        to: character,
+                        name: name,
+                        basePercentage: basePercentage,
+                        experienceCheck: experienceCheck,
+                        damage: damage,
+                        hpMax: hpMax,
+                        hpCurrent: hpCurrent,
+                        enc: enc,
+                        strikeRank: strikeRank,
+                        type: type,
+                        range: range,
+                        isEquipped: isEquipped
                     )
                 }
             }
@@ -143,6 +173,10 @@ struct CombatView: View {
                 .frame(width: 52, alignment: .trailing)
         }
         .font(.footnote)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            presentedEditor = .edit(weapon)
+        }
     }
 
     private func weaponTypeText(for weapon: Weapon) -> String {
@@ -293,7 +327,9 @@ struct CombatView: View {
         hpCurrent: Int?,
         enc: Int?,
         strikeRank: String,
-        type: WeaponType?
+        type: WeaponType?,
+        range: String,
+        isEquipped: Bool
     ) {
         let weapon = Weapon(
             character: character,
@@ -305,118 +341,93 @@ struct CombatView: View {
             hpCurrent: hpCurrent,
             enc: enc,
             strikeRank: strikeRank,
-            type: type
+            type: type,
+            range: range,
+            isEquipped: isEquipped
         )
         modelContext.insert(weapon)
         character.weapons.append(weapon)
     }
+
+    private func updateWeapon(
+        _ weapon: Weapon,
+        name: String,
+        basePercentage: Int,
+        experienceCheck: Bool,
+        damage: String,
+        hpMax: Int?,
+        hpCurrent: Int?,
+        enc: Int?,
+        strikeRank: String,
+        type: WeaponType?,
+        range: String,
+        isEquipped: Bool
+    ) {
+        weapon.name = name
+        weapon.basePercentage = basePercentage
+        weapon.experienceCheck = experienceCheck
+        weapon.damage = damage
+        weapon.hpMax = hpMax
+        weapon.hpCurrent = hpCurrent
+        weapon.enc = enc
+        weapon.strikeRank = strikeRank
+        weapon.type = type
+        weapon.range = range
+        weapon.isEquipped = isEquipped
+    }
 }
 
-private struct AddWeaponView: View {
-    @Environment(\.dismiss) private var dismiss
+private struct WeaponEditorSheet: Identifiable {
+    let id: UUID
+    let weapon: Weapon?
+    let title: String
+    let name: String
+    let basePercentage: Int
+    let experienceCheck: Bool
+    let strikeRank: String
+    let damage: String
+    let hpMax: Int?
+    let hpCurrent: Int?
+    let enc: Int?
+    let type: WeaponType?
+    let range: String
+    let isEquipped: Bool
 
-    @State private var name = ""
-    @State private var basePercentage = "0"
-    @State private var damage = ""
-    @State private var hpMax = ""
-    @State private var hpCurrent = ""
-    @State private var enc = ""
-    @State private var strikeRank = ""
-    @State private var type: WeaponType? = nil
-
-    let onSave: (String, Int, String, Int?, Int?, Int?, String, WeaponType?) -> Void
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Weapon") {
-                    LabeledContent("Name") {
-                        TextField("Weapon", text: $name)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    Picker("Type", selection: $type) {
-                        Text("-").tag(Optional<WeaponType>.none)
-                        ForEach(WeaponType.allCases, id: \.self) { weaponType in
-                            Text(weaponType.rawValue).tag(Optional(weaponType))
-                        }
-                    }
-                    LabeledContent("Damage") {
-                        TextField("e.g. 1d8+1", text: $damage)
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-
-                Section("Stats") {
-                    LabeledContent("Base %") {
-                        TextField("0", text: $basePercentage)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("HP Max") {
-                        TextField("", text: $hpMax)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("HP Current") {
-                        TextField("", text: $hpCurrent)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("ENC") {
-                        TextField("", text: $enc)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("Strike Rank (SR)") {
-                        TextField("SR", text: $strikeRank)
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-            }
-            .navigationTitle("Add Weapon")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        onSave(
-                            normalizedName,
-                            intValue(basePercentage, fallback: 0),
-                            damage.isEmpty ? "-" : damage,
-                            optionalIntValue(hpMax),
-                            optionalIntValue(hpCurrent),
-                            optionalIntValue(enc),
-                            normalizedStrikeRank,
-                            optionalWeaponType
-                        )
-                        dismiss()
-                    }
-                }
-            }
-        }
+    static var add: WeaponEditorSheet {
+        WeaponEditorSheet(
+            id: UUID(),
+            weapon: nil,
+            title: "Add Weapon",
+            name: "",
+            basePercentage: 0,
+            experienceCheck: false,
+            strikeRank: "",
+            damage: "",
+            hpMax: nil,
+            hpCurrent: nil,
+            enc: nil,
+            type: nil,
+            range: "",
+            isEquipped: false
+        )
     }
 
-    private var normalizedName: String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Weapon" : trimmed
-    }
-
-    private var normalizedStrikeRank: String {
-        strikeRank.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var optionalWeaponType: WeaponType? {
-        type
-    }
-
-    private func intValue(_ text: String, fallback: Int) -> Int {
-        Int(text.filter(\.isNumber)) ?? fallback
-    }
-
-    private func optionalIntValue(_ text: String) -> Int? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.isEmpty == false else { return nil }
-        return Int(trimmed.filter(\.isNumber))
+    static func edit(_ weapon: Weapon) -> WeaponEditorSheet {
+        WeaponEditorSheet(
+            id: UUID(),
+            weapon: weapon,
+            title: "Edit Weapon",
+            name: weapon.name,
+            basePercentage: weapon.basePercentage,
+            experienceCheck: weapon.experienceCheck,
+            strikeRank: weapon.strikeRank,
+            damage: weapon.damage,
+            hpMax: weapon.hpMax,
+            hpCurrent: weapon.hpCurrent,
+            enc: weapon.enc,
+            type: weapon.type,
+            range: weapon.range,
+            isEquipped: weapon.isEquipped
+        )
     }
 }

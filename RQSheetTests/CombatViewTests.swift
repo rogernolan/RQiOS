@@ -17,12 +17,10 @@ struct CombatViewTests {
     func combatViewKeepsStrikeRankAsTextAndBlankOptionalsAsNil() throws {
         let source = try combatViewSource()
 
-        #expect(source.contains("TextField(\"SR\", text: $strikeRank)"))
-        #expect(source.contains("optionalIntValue(hpMax)"))
-        #expect(source.contains("optionalIntValue(hpCurrent)"))
-        #expect(source.contains("optionalIntValue(enc)"))
-        #expect(source.contains("optionalWeaponType"))
-        #expect(source.contains("normalizedStrikeRank"))
+        #expect(source.contains(".sheet(item: $presentedEditor)"))
+        #expect(source.contains("WeaponEditorView("))
+        #expect(source.contains("presentedEditor = .add"))
+        #expect(source.contains("presentedEditor = .edit("))
     }
 
     private func combatViewSource() throws -> String {
