@@ -13,6 +13,10 @@ struct StatsOverviewView: View {
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var isPresentingPassionEditor = false
+    @State private var summaryScrollOffset: CGFloat = 0
+    @State private var summaryHeaderHeight: CGFloat = 48
+
+    private let summaryProfileCollapseDistance: CGFloat = 140
 
     private var character: RQCharacter? {
         characters.first
@@ -23,7 +27,6 @@ struct StatsOverviewView: View {
             ZStack(alignment: .topLeading) {
                 if let character {
                     summaryContent(for: character)
-                        .padding(.top, 18)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
@@ -43,6 +46,11 @@ struct StatsOverviewView: View {
                 headerRow
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
+                    .onGeometryChange(for: CGFloat.self) { geometry in
+                        geometry.size.height
+                    } action: { _, newHeight in
+                        summaryHeaderHeight = newHeight
+                    }
             }
             .mainRuneBackground(runeName: "RuneMan")
             .navigationBarTitleDisplayMode(.inline)
@@ -98,52 +106,142 @@ struct StatsOverviewView: View {
 
     private func summaryContent(for character: RQCharacter) -> some View {
         let viewModel = SummaryViewModel(character: character)
+        let profileCollapseProgress = profileCollapseProgress(for: summaryScrollOffset)
+        let profileReleaseOffset = profileReleaseOffset(for: summaryScrollOffset)
 
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                identityCard(character: character, viewModel: viewModel)
-                characteristicsCard(character: character, viewModel: viewModel)
-                derivedStatsCard(viewModel: viewModel)
-                honorCard(character: character)
-                passionsCard(character: character)
-                topRunesCard(viewModel: viewModel)
-                skillBonusesCard(viewModel: viewModel)
+        return GeometryReader { geometry in
+            let contentWidth = geometry.size.width - 32
+            let profileTopOffset = summaryHeaderHeight + 22
+            let profileHeight = profileSectionHeight(for: contentWidth, collapseProgress: profileCollapseProgress)
+            let effectiveProfileSpacerHeight = profileTopOffset + profileHeight + min(summaryScrollOffset, summaryProfileCollapseDistance)
+
+            ZStack(alignment: .topLeading) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Color.clear
+                            .frame(height: effectiveProfileSpacerHeight)
+                        characteristicsCard(character: character, viewModel: viewModel)
+                        derivedStatsCard(viewModel: viewModel)
+                        honorCard(character: character)
+                        passionsCard(character: character)
+                        topRunesCard(viewModel: viewModel)
+                        skillBonusesCard(viewModel: viewModel)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 120)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y + geometry.contentInsets.top
+                } action: { _, newOffset in
+                    summaryScrollOffset = max(newOffset, 0)
+                }
+                .scrollIndicators(.hidden)
+                .ignoresSafeArea(edges: .bottom)
+
+                summaryProfileSection(
+                    character: character,
+                    viewModel: viewModel,
+                    availableWidth: contentWidth,
+                    collapseProgress: profileCollapseProgress
+                )
+                .frame(width: contentWidth, alignment: .leading)
+                .offset(x: 16, y: profileTopOffset - profileReleaseOffset)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 52)
-            .padding(.bottom, 120)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .scrollIndicators(.hidden)
-        .ignoresSafeArea(edges: .bottom)
     }
 
-    private func identityCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        SummaryCard {
-            HStack(alignment: .top, spacing: 12) {
+    private func profileCollapseProgress(for offset: CGFloat) -> CGFloat {
+        return min(max(offset / summaryProfileCollapseDistance, 0), 1)
+    }
+
+    private func profileReleaseOffset(for offset: CGFloat) -> CGFloat {
+        return max(offset - summaryProfileCollapseDistance, 0)
+    }
+
+    private func easeInOut(_ value: CGFloat) -> CGFloat {
+        return value * value * (3 - (2 * value))
+    }
+
+    private func profileSectionHeight(for width: CGFloat, collapseProgress: CGFloat) -> CGFloat {
+        let expandedPortraitInset: CGFloat = 4
+        let collapsedPortraitSize: CGFloat = 96
+        let metadataHeight: CGFloat = 84
+        let portraitMetadataSpacing: CGFloat = 12
+        let collapsedCardPadding: CGFloat = 14
+        let expandedPortraitSize = width - (expandedPortraitInset * 2)
+        let expandedHeight = expandedPortraitInset + expandedPortraitSize + portraitMetadataSpacing + metadataHeight + collapsedCardPadding
+        let collapsedHeight = collapsedPortraitSize + (collapsedCardPadding * 2)
+
+        return expandedHeight - ((expandedHeight - collapsedHeight) * collapseProgress)
+    }
+
+    private func summaryProfileSection(character: RQCharacter, viewModel: SummaryViewModel, availableWidth: CGFloat, collapseProgress: CGFloat) -> some View {
+        let cardWidth = max(availableWidth, 124)
+        let cardCornerRadius: CGFloat = 12
+        let expandedPortraitInset: CGFloat = 4
+        let collapsedPortraitSize: CGFloat = 96
+        let collapsedCardPadding: CGFloat = 14
+        let expandedPortraitSize = cardWidth - (expandedPortraitInset * 2)
+        let expandedPortraitCornerRadius = cardCornerRadius - expandedPortraitInset
+        let collapsedPortraitCornerRadius: CGFloat = 20
+        let portraitMetadataSpacing: CGFloat = 12
+        let profileContentPadding = expandedPortraitInset + ((collapsedCardPadding - expandedPortraitInset) * collapseProgress)
+        let portraitSize = expandedPortraitSize - ((expandedPortraitSize - collapsedPortraitSize) * collapseProgress)
+        let portraitCornerRadius = expandedPortraitCornerRadius + ((collapsedPortraitCornerRadius - expandedPortraitCornerRadius) * collapseProgress)
+        let portraitFallbackPadding = 18 - (6 * collapseProgress)
+        let expandedMetadataTop = profileContentPadding + portraitSize + portraitMetadataSpacing
+        let collapsedMetadataTop = collapsedCardPadding
+        let metadataVerticalProgress = easeInOut(min(pow(collapseProgress, 1.85), 1))
+        let metadataTop = expandedMetadataTop + ((collapsedMetadataTop - expandedMetadataTop) * metadataVerticalProgress)
+        let expandedMetadataLeading = collapsedCardPadding
+        let collapsedMetadataLeading = collapsedCardPadding + collapsedPortraitSize + portraitMetadataSpacing
+        let metadataHorizontalProgress = easeInOut(min(pow(collapseProgress, 0.55), 1))
+        let metadataLeading = expandedMetadataLeading + ((collapsedMetadataLeading - expandedMetadataLeading) * metadataHorizontalProgress)
+        let metadataWidth = max(cardWidth - metadataLeading - collapsedCardPadding, 0)
+        let sectionHeight = profileSectionHeight(for: cardWidth, collapseProgress: collapseProgress)
+
+        return ZStack(alignment: .topLeading) {
+            ZStack(alignment: .topTrailing) {
+                SummaryPortraitView(
+                    portraitData: character.portraitData,
+                    width: portraitSize,
+                    height: portraitSize,
+                    cornerRadius: portraitCornerRadius,
+                    fallbackPadding: portraitFallbackPadding
+                )
                 PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    SummaryPortraitView(portraitData: character.portraitData)
-                        .overlay(alignment: .topTrailing) {
-                            Image(systemName: "camera.fill")
-                                .font(.footnote)
-                                .padding(6)
-                                .background(.thinMaterial, in: .circle)
-                                .overlay {
-                                    Circle()
-                                        .stroke(.quaternary, lineWidth: 1)
-                                }
+                    Image(systemName: "camera.fill")
+                        .font(.footnote)
+                        .padding(6)
+                        .background(.thinMaterial, in: .circle)
+                        .overlay {
+                            Circle()
+                                .stroke(.quaternary, lineWidth: 1)
                         }
+                        .padding(8)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Change portrait")
-
-                VStack(alignment: .leading, spacing: 8) {
-                    SummaryValueRow(label: "Family", value: viewModel.familyText)
-                    SummaryValueRow(label: "Patron", value: viewModel.patronText)
-                    SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
-                }
             }
+            .offset(x: profileContentPadding, y: profileContentPadding)
+
+            VStack(alignment: .leading, spacing: 8) {
+                SummaryValueRow(label: "Family", value: viewModel.familyText)
+                SummaryValueRow(label: "Patron", value: viewModel.patronText)
+                SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
+            }
+            .frame(width: metadataWidth, alignment: .leading)
+            .offset(x: metadataLeading, y: metadataTop)
         }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: sectionHeight, alignment: .topLeading)
+        .background(Color(.systemBackground).opacity(0.52), in: .rect(cornerRadius: cardCornerRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: cardCornerRadius)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(.rect(cornerRadius: cardCornerRadius))
     }
 
     private func topRunesCard(viewModel: SummaryViewModel) -> some View {

@@ -3,6 +3,10 @@ import UIKit
 
 struct SummaryPortraitView: View {
     let portraitData: Data?
+    var width: CGFloat = 96
+    var height: CGFloat = 96
+    var cornerRadius: CGFloat = 48
+    var fallbackPadding: CGFloat = 18
 
     var body: some View {
         Group {
@@ -17,15 +21,15 @@ struct SummaryPortraitView: View {
                     .scaledToFit()
                     .foregroundStyle(.secondary)
                     .saturation(0)
-                    .padding(18)
+                    .padding(fallbackPadding)
                     .background(.secondary.opacity(0.08))
             }
         }
-        .frame(width: 96, height: 96)
+        .frame(width: width, height: height)
         .background(.secondary.opacity(0.06))
-        .clipShape(.circle)
+        .clipShape(.rect(cornerRadius: cornerRadius))
         .overlay {
-            Circle()
+            RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(.quaternary, lineWidth: 1)
         }
         .accessibilityLabel("Character portrait")
