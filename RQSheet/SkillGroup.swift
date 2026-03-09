@@ -10,6 +10,7 @@ enum SkillGroup: String, Codable, CaseIterable {
     case communication
     case knowledge
     case manipulation
+    case magic
     case perception
     case stealth
 }

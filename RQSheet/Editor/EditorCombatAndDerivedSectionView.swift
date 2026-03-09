@@ -5,12 +5,22 @@ struct EditorCombatAndDerivedSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            EditorIntegerFieldRow(
+            EditorTextFieldRow(
                 label: "Move",
                 placeholder: "Move",
-                value: Binding(
-                    get: { viewModel.character.move },
-                    set: { viewModel.character.move = $0 }
+                text: Binding(
+                    get: { viewModel.character.move.map(String.init) ?? "" },
+                    set: { newValue in
+                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard trimmed.isEmpty == false else {
+                            viewModel.character.move = nil
+                            return
+                        }
+
+                        if let value = Int(trimmed.filter(\.isNumber)) {
+                            viewModel.character.move = max(1, value)
+                        }
+                    }
                 )
             )
 

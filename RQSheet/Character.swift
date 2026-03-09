@@ -121,10 +121,10 @@ final class RQCharacter {
             }
         }
     }
-    var move: Int {
+    var move: Int? {
         didSet {
-            if move < 1 {
-                move = 1
+            if let move, move < 1 {
+                self.move = 1
             }
         }
     }
@@ -140,7 +140,7 @@ final class RQCharacter {
     var notes: String = ""
     var occupation: String
     var sol: String
-    var income: Int
+    var income: String
     var ransom: Int
     var dateOfBirth: String
     var family: String
@@ -504,6 +504,8 @@ final class RQCharacter {
             return knoledgeBonus()
         case .manipulation:
             return manipulationBonus()
+        case .magic:
+            return 0
         case .perception:
             return perceptionBonus()
         case .stealth:
@@ -712,7 +714,7 @@ final class RQCharacter {
     }
 
     init(name: String = "",
-         worships: String = "", reputation: Int = 0, notes: String = "", occupation: String = "", sol: String = "", income: Int = 0, ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int = 8,
+         worships: String = "", reputation: Int = 0, notes: String = "", occupation: String = "", sol: String = "", income: String = "", ransom: Int = 1000, powExperienceCheck: Bool = false, move: Int? = nil,
          maxHitpoints: Int = 1, currentHitpoints: Int = 1, healingRate: Int = 1,
          dateOfBirth: String = "", family: String = "", patron: String = "", portraitData: Data? = nil,
          currentMagicPoints: Int? = nil, runePoints: Int = 3,
@@ -746,7 +748,7 @@ final class RQCharacter {
         let defaultCurrent = currentHitpoints == 1 ? clampedMaxHitpoints : currentHitpoints
         self.currentHitpoints = min(max(1, defaultCurrent), clampedMaxHitpoints)
         self.healingRate = max(1, healingRate)
-        self.move = max(1, move)
+        self.move = move.map { max(1, $0) }
         
         self.worships = worships
         self.reputation = reputation.clampedPercentage

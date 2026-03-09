@@ -17,6 +17,14 @@ struct SkillsViewTests {
     }
 
     @Test
+    func skillsViewIncludesMagicGroupTitle() throws {
+        let source = try skillsViewSource()
+
+        #expect(source.contains("case .magic:"))
+        #expect(source.contains("return \"Magic\""))
+    }
+
+    @Test
     func skillsViewUsesSwipeDeleteWithUndoWarning() throws {
         let source = try skillsViewSource()
 

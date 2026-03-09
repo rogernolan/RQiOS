@@ -20,9 +20,22 @@ struct SummaryViewModelTests {
         #expect(viewModel.hitPointsText == "9 / 12")
         #expect(viewModel.healingRateText == "3")
         #expect(viewModel.moveText == "8")
+        #expect(viewModel.isMoveFallback == false)
         #expect(viewModel.magicPointsText == "7 / 11")
         #expect(viewModel.runePointsText == "4")
-        #expect(viewModel.skillBonuses.count == 6)
+        #expect(viewModel.skillBonuses.count == 7)
+    }
+
+    @Test
+    @MainActor
+    func missingMoveFallsBackToEight() {
+        let character = RQCharacter()
+        character.move = nil
+
+        let viewModel = SummaryViewModel(character: character)
+
+        #expect(viewModel.moveText == "8")
+        #expect(viewModel.isMoveFallback)
     }
 
     @Test

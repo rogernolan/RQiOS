@@ -334,12 +334,12 @@ struct StatsOverviewView: View {
 
     private func derivedStatsCard(viewModel: SummaryViewModel) -> some View {
         let derivedStats = [
-            (label: "HP", value: viewModel.hitPointsText, hasAlertBorder: false),
-            (label: "Healing", value: viewModel.healingRateText, hasAlertBorder: false),
-            (label: "Move", value: viewModel.moveText, hasAlertBorder: false),
-            (label: "MP", value: viewModel.magicPointsText, hasAlertBorder: false),
-            (label: "RP", value: viewModel.runePointsText, hasAlertBorder: false),
-            (label: "ENC", value: viewModel.encumbranceText, hasAlertBorder: viewModel.isEncumbranceOverLimit),
+            (label: "HP", value: viewModel.hitPointsText, hasAlertBorder: false, usesSecondaryValueStyle: false),
+            (label: "Healing", value: viewModel.healingRateText, hasAlertBorder: false, usesSecondaryValueStyle: false),
+            (label: "Move", value: viewModel.moveText, hasAlertBorder: false, usesSecondaryValueStyle: viewModel.isMoveFallback),
+            (label: "MP", value: viewModel.magicPointsText, hasAlertBorder: false, usesSecondaryValueStyle: false),
+            (label: "RP", value: viewModel.runePointsText, hasAlertBorder: false, usesSecondaryValueStyle: false),
+            (label: "ENC", value: viewModel.encumbranceText, hasAlertBorder: viewModel.isEncumbranceOverLimit, usesSecondaryValueStyle: false),
         ]
         let rows = chunked(derivedStats, size: 3)
 
@@ -351,7 +351,8 @@ struct StatsOverviewView: View {
                             DerivedStatChip(
                                 label: stat.label,
                                 value: stat.value,
-                                hasAlertBorder: stat.hasAlertBorder
+                                hasAlertBorder: stat.hasAlertBorder,
+                                usesSecondaryValueStyle: stat.usesSecondaryValueStyle
                             )
                         }
 
@@ -516,6 +517,7 @@ private struct DerivedStatChip: View {
     let label: String
     let value: String
     var hasAlertBorder = false
+    var usesSecondaryValueStyle = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -525,6 +527,7 @@ private struct DerivedStatChip: View {
             Text(value)
                 .font(.body)
                 .monospacedDigit()
+                .foregroundStyle(usesSecondaryValueStyle ? .secondary : .primary)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
