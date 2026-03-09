@@ -5,10 +5,10 @@ struct EditorEconomySectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            EditorIntegerFieldRow(
-                label: "Income (L)",
+            EditorTextFieldRow(
+                label: "Income",
                 placeholder: "Income",
-                value: Binding(
+                text: Binding(
                     get: { viewModel.character.income },
                     set: { viewModel.character.income = $0 }
                 )

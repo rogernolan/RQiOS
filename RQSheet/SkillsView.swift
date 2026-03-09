@@ -227,6 +227,8 @@ private struct CharacterSkillsContentView: View {
             return "Knowledge"
         case .manipulation:
             return "Manipulation"
+        case .magic:
+            return "Magic"
         case .perception:
             return "Perception"
         case .stealth:

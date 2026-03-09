@@ -28,7 +28,11 @@ final class SummaryViewModel {
     }
 
     var moveText: String {
-        "\(character.move)"
+        character.move.map(String.init) ?? "8"
+    }
+
+    var isMoveFallback: Bool {
+        character.move == nil
     }
 
     var magicPointsText: String {
@@ -95,6 +99,8 @@ final class SummaryViewModel {
             return "Knowledge"
         case .manipulation:
             return "Manipulation"
+        case .magic:
+            return "Magic"
         case .perception:
             return "Perception"
         case .stealth:

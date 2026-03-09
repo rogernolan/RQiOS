@@ -32,6 +32,20 @@ struct StatsOverviewViewTests {
     }
 
     @Test
+    func derivedStatsCardTracksFallbackMoveStyling() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("RQSheet/StatsOverviewView.swift")
+
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        #expect(source.contains("(label: \"Move\", value: viewModel.moveText, hasAlertBorder: false, usesSecondaryValueStyle: viewModel.isMoveFallback)"))
+        #expect(source.contains("var usesSecondaryValueStyle = false"))
+        #expect(source.contains(".foregroundStyle(usesSecondaryValueStyle ? .secondary : .primary)"))
+    }
+
+    @Test
     func derivedStatsUseTwoRowsOfThreeAndCharacteristicChipStyling() throws {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

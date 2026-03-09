@@ -32,45 +32,47 @@ final class WeaponSkill {
 
     var damage: String
 
-    var hpMax: Int {
+    var hpMax: Int? {
         didSet {
-            if hpMax < 1 {
-                hpMax = 1
+            guard let hpMax else { return }
+            let clamped = max(1, hpMax)
+            if hpMax != clamped {
+                self.hpMax = clamped
+                return
             }
-            if hpCurrent > hpMax {
-                hpCurrent = hpMax
+            if let hpCurrent, hpCurrent > clamped {
+                self.hpCurrent = clamped
             }
         }
     }
 
-    var hpCurrent: Int {
+    var hpCurrent: Int? {
         didSet {
+            guard let hpCurrent else { return }
+            if let hpMax {
+                let clamped = min(max(1, hpCurrent), hpMax)
+                if hpCurrent != clamped {
+                    self.hpCurrent = clamped
+                }
+                return
+            }
             if hpCurrent < 1 {
-                hpCurrent = 1
-            }
-            if hpCurrent > hpMax {
-                hpCurrent = hpMax
+                self.hpCurrent = 1
             }
         }
     }
 
-    var enc: Int {
+    var enc: Int? {
         didSet {
-            if enc < 0 {
-                enc = 0
+            if let enc, enc < 0 {
+                self.enc = 0
             }
         }
     }
 
-    var strikeRank: Int {
-        didSet {
-            if strikeRank < 0 {
-                strikeRank = 0
-            }
-        }
-    }
+    var strikeRank: String
 
-    var type: WeaponType
+    var type: WeaponType?
 
     init(
         character: RQCharacter? = nil,
@@ -78,11 +80,11 @@ final class WeaponSkill {
         basePercentage: Int = 0,
         experienceCheck: Bool = false,
         damage: String = "",
-        hpMax: Int = 1,
-        hpCurrent: Int = 1,
-        enc: Int = 0,
-        strikeRank: Int = 0,
-        type: WeaponType
+        hpMax: Int? = nil,
+        hpCurrent: Int? = nil,
+        enc: Int? = nil,
+        strikeRank: String = "",
+        type: WeaponType? = nil
     ) {
         self.character = character
         self.name = name
@@ -90,12 +92,16 @@ final class WeaponSkill {
         self.experienceCheck = experienceCheck
         self.damage = damage
 
-        let clampedHpMax = max(1, hpMax)
+        let clampedHpMax = hpMax.map { max(1, $0) }
         self.hpMax = clampedHpMax
-        self.hpCurrent = min(max(1, hpCurrent), clampedHpMax)
+        if let hpCurrent, let hpMax = clampedHpMax {
+            self.hpCurrent = min(max(1, hpCurrent), hpMax)
+        } else {
+            self.hpCurrent = hpCurrent.map { max(1, $0) }
+        }
 
-        self.enc = max(0, enc)
-        self.strikeRank = max(0, strikeRank)
+        self.enc = enc.map { max(0, $0) }
+        self.strikeRank = strikeRank
         self.type = type
     }
 }

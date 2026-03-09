@@ -101,10 +101,14 @@ struct CombatView: View {
                 .frame(width: 64, alignment: .trailing)
             Text("Damage")
                 .frame(width: 72, alignment: .trailing)
-            Text("HP (M/C)")
-                .frame(width: 74, alignment: .trailing)
+            Text("Type")
+                .frame(width: 84, alignment: .trailing)
+            Text("HP")
+                .frame(width: 60, alignment: .trailing)
+            Text("ENC")
+                .frame(width: 40, alignment: .trailing)
             Text("SR")
-                .frame(width: 32, alignment: .trailing)
+                .frame(width: 52, alignment: .trailing)
         }
         .font(.caption)
         .fontWeight(.semibold)
@@ -128,12 +132,35 @@ struct CombatView: View {
             Text(weapon.damage)
                 .lineLimit(1)
                 .frame(width: 72, alignment: .trailing)
-            Text("\(weapon.hpMax)/\(weapon.hpCurrent)")
-                .frame(width: 74, alignment: .trailing)
-            Text("\(weapon.strikeRank)")
-                .frame(width: 32, alignment: .trailing)
+            Text(weaponTypeText(for: weapon))
+                .lineLimit(1)
+                .frame(width: 84, alignment: .trailing)
+            Text(weaponHPText(for: weapon))
+                .frame(width: 60, alignment: .trailing)
+            Text(weaponEncText(for: weapon))
+                .frame(width: 40, alignment: .trailing)
+            Text(weaponStrikeRankText(for: weapon))
+                .frame(width: 52, alignment: .trailing)
         }
         .font(.footnote)
+    }
+
+    private func weaponTypeText(for weapon: WeaponSkill) -> String {
+        weapon.type?.rawValue ?? "-"
+    }
+
+    private func weaponHPText(for weapon: WeaponSkill) -> String {
+        guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return "-" }
+        return "\(hpMax)/\(hpCurrent)"
+    }
+
+    private func weaponEncText(for weapon: WeaponSkill) -> String {
+        guard let enc = weapon.enc else { return "-" }
+        return "\(enc)"
+    }
+
+    private func weaponStrikeRankText(for weapon: WeaponSkill) -> String {
+        return weapon.strikeRank.isEmpty ? "-" : weapon.strikeRank
     }
 
     private func hitLocationOverlay(for character: RQCharacter) -> some View {
@@ -262,11 +289,11 @@ struct CombatView: View {
         basePercentage: Int,
         experienceCheck: Bool,
         damage: String,
-        hpMax: Int,
-        hpCurrent: Int,
-        enc: Int,
-        strikeRank: Int,
-        type: WeaponType
+        hpMax: Int?,
+        hpCurrent: Int?,
+        enc: Int?,
+        strikeRank: String,
+        type: WeaponType?
     ) {
         let weapon = WeaponSkill(
             character: character,
@@ -291,13 +318,13 @@ private struct AddWeaponView: View {
     @State private var name = ""
     @State private var basePercentage = "0"
     @State private var damage = ""
-    @State private var hpMax = "1"
-    @State private var hpCurrent = "1"
-    @State private var enc = "0"
-    @State private var strikeRank = "0"
-    @State private var type: WeaponType = .slashing
+    @State private var hpMax = ""
+    @State private var hpCurrent = ""
+    @State private var enc = ""
+    @State private var strikeRank = ""
+    @State private var type: WeaponType? = nil
 
-    let onSave: (String, Int, String, Int, Int, Int, Int, WeaponType) -> Void
+    let onSave: (String, Int, String, Int?, Int?, Int?, String, WeaponType?) -> Void
 
     var body: some View {
         NavigationStack {
@@ -308,8 +335,9 @@ private struct AddWeaponView: View {
                             .multilineTextAlignment(.trailing)
                     }
                     Picker("Type", selection: $type) {
+                        Text("-").tag(Optional<WeaponType>.none)
                         ForEach(WeaponType.allCases, id: \.self) { weaponType in
-                            Text(weaponType.rawValue).tag(weaponType)
+                            Text(weaponType.rawValue).tag(Optional(weaponType))
                         }
                     }
                     LabeledContent("Damage") {
@@ -325,23 +353,22 @@ private struct AddWeaponView: View {
                             .multilineTextAlignment(.trailing)
                     }
                     LabeledContent("HP Max") {
-                        TextField("1", text: $hpMax)
+                        TextField("", text: $hpMax)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                     }
                     LabeledContent("HP Current") {
-                        TextField("1", text: $hpCurrent)
+                        TextField("", text: $hpCurrent)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                     }
                     LabeledContent("ENC") {
-                        TextField("0", text: $enc)
+                        TextField("", text: $enc)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                     }
                     LabeledContent("Strike Rank (SR)") {
-                        TextField("0", text: $strikeRank)
-                            .keyboardType(.numberPad)
+                        TextField("SR", text: $strikeRank)
                             .multilineTextAlignment(.trailing)
                     }
                 }
@@ -357,11 +384,11 @@ private struct AddWeaponView: View {
                             normalizedName,
                             intValue(basePercentage, fallback: 0),
                             damage.isEmpty ? "-" : damage,
-                            max(1, intValue(hpMax, fallback: 1)),
-                            max(1, intValue(hpCurrent, fallback: 1)),
-                            max(0, intValue(enc, fallback: 0)),
-                            max(0, intValue(strikeRank, fallback: 0)),
-                            type
+                            optionalIntValue(hpMax),
+                            optionalIntValue(hpCurrent),
+                            optionalIntValue(enc),
+                            normalizedStrikeRank,
+                            optionalWeaponType
                         )
                         dismiss()
                     }
@@ -375,7 +402,21 @@ private struct AddWeaponView: View {
         return trimmed.isEmpty ? "Weapon" : trimmed
     }
 
+    private var normalizedStrikeRank: String {
+        strikeRank.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var optionalWeaponType: WeaponType? {
+        type
+    }
+
     private func intValue(_ text: String, fallback: Int) -> Int {
         Int(text.filter(\.isNumber)) ?? fallback
+    }
+
+    private func optionalIntValue(_ text: String) -> Int? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else { return nil }
+        return Int(trimmed.filter(\.isNumber))
     }
 }
