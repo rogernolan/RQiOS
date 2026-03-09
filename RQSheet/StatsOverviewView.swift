@@ -8,6 +8,18 @@ import SwiftData
 import SwiftUI
 
 struct StatsOverviewView: View {
+    private struct SummaryProfileLayoutMetrics {
+        let cardWidth: CGFloat
+        let sectionHeight: CGFloat
+        let profileContentPadding: CGFloat
+        let portraitSize: CGFloat
+        let portraitCornerRadius: CGFloat
+        let portraitFallbackPadding: CGFloat
+        let metadataTop: CGFloat
+        let metadataLeading: CGFloat
+        let metadataWidth: CGFloat
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Query private var characters: [RQCharacter]
 
@@ -112,8 +124,8 @@ struct StatsOverviewView: View {
         return GeometryReader { geometry in
             let contentWidth = geometry.size.width - 32
             let profileTopOffset = summaryHeaderHeight + 22
-            let profileHeight = profileSectionHeight(for: contentWidth, collapseProgress: profileCollapseProgress)
-            let effectiveProfileSpacerHeight = profileTopOffset + profileHeight + min(summaryScrollOffset, summaryProfileCollapseDistance)
+            let profileLayout = summaryProfileLayoutMetrics(availableWidth: contentWidth, collapseProgress: profileCollapseProgress)
+            let effectiveProfileSpacerHeight = profileTopOffset + profileLayout.sectionHeight + min(summaryScrollOffset, summaryProfileCollapseDistance)
 
             ZStack(alignment: .topLeading) {
                 ScrollView {
@@ -142,6 +154,14 @@ struct StatsOverviewView: View {
                 summaryProfileSection(
                     character: character,
                     viewModel: viewModel,
+                    availableWidth: contentWidth,
+                    collapseProgress: profileCollapseProgress
+                )
+                .frame(width: contentWidth, alignment: .leading)
+                .allowsHitTesting(false)
+                .offset(x: 16, y: profileTopOffset - profileReleaseOffset)
+
+                summaryProfileCameraButton(
                     availableWidth: contentWidth,
                     collapseProgress: profileCollapseProgress
                 )
@@ -176,7 +196,7 @@ struct StatsOverviewView: View {
         return expandedHeight - ((expandedHeight - collapsedHeight) * collapseProgress)
     }
 
-    private func summaryProfileSection(character: RQCharacter, viewModel: SummaryViewModel, availableWidth: CGFloat, collapseProgress: CGFloat) -> some View {
+    private func summaryProfileLayoutMetrics(availableWidth: CGFloat, collapseProgress: CGFloat) -> SummaryProfileLayoutMetrics {
         let cardWidth = max(availableWidth, 124)
         let cardCornerRadius: CGFloat = 12
         let expandedPortraitInset: CGFloat = 4
@@ -201,41 +221,66 @@ struct StatsOverviewView: View {
         let metadataWidth = max(cardWidth - metadataLeading - collapsedCardPadding, 0)
         let sectionHeight = profileSectionHeight(for: cardWidth, collapseProgress: collapseProgress)
 
+        return SummaryProfileLayoutMetrics(
+            cardWidth: cardWidth,
+            sectionHeight: sectionHeight,
+            profileContentPadding: profileContentPadding,
+            portraitSize: portraitSize,
+            portraitCornerRadius: portraitCornerRadius,
+            portraitFallbackPadding: portraitFallbackPadding,
+            metadataTop: metadataTop,
+            metadataLeading: metadataLeading,
+            metadataWidth: metadataWidth
+        )
+    }
+
+    private func summaryProfileCameraButton(availableWidth: CGFloat, collapseProgress: CGFloat) -> some View {
+        let layout = summaryProfileLayoutMetrics(availableWidth: availableWidth, collapseProgress: collapseProgress)
+
         return ZStack(alignment: .topLeading) {
-            ZStack(alignment: .topTrailing) {
-                SummaryPortraitView(
-                    portraitData: character.portraitData,
-                    width: portraitSize,
-                    height: portraitSize,
-                    cornerRadius: portraitCornerRadius,
-                    fallbackPadding: portraitFallbackPadding
-                )
-                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                    Image(systemName: "camera.fill")
-                        .font(.footnote)
-                        .padding(6)
-                        .background(.thinMaterial, in: .circle)
-                        .overlay {
-                            Circle()
-                                .stroke(.quaternary, lineWidth: 1)
-                        }
-                        .padding(8)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Change portrait")
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                Image(systemName: "camera.fill")
+                    .font(.footnote)
+                    .padding(6)
+                    .background(.thinMaterial, in: .circle)
+                    .overlay {
+                        Circle()
+                            .stroke(.quaternary, lineWidth: 1)
+                    }
+                    .padding(8)
             }
-            .offset(x: profileContentPadding, y: profileContentPadding)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Change portrait")
+            .frame(width: layout.portraitSize, height: layout.portraitSize, alignment: .topTrailing)
+            .offset(x: layout.profileContentPadding, y: layout.profileContentPadding)
+        }
+        .frame(width: layout.cardWidth, height: layout.sectionHeight, alignment: .topLeading)
+    }
+
+    private func summaryProfileSection(character: RQCharacter, viewModel: SummaryViewModel, availableWidth: CGFloat, collapseProgress: CGFloat) -> some View {
+        let layout = summaryProfileLayoutMetrics(availableWidth: availableWidth, collapseProgress: collapseProgress)
+        let cardCornerRadius: CGFloat = 12
+
+        return ZStack(alignment: .topLeading) {
+            SummaryPortraitView(
+                portraitData: character.portraitData,
+                width: layout.portraitSize,
+                height: layout.portraitSize,
+                cornerRadius: layout.portraitCornerRadius,
+                fallbackPadding: layout.portraitFallbackPadding
+            )
+            .offset(x: layout.profileContentPadding, y: layout.profileContentPadding)
 
             VStack(alignment: .leading, spacing: 8) {
                 SummaryValueRow(label: "Family", value: viewModel.familyText)
                 SummaryValueRow(label: "Patron", value: viewModel.patronText)
                 SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
             }
-            .frame(width: metadataWidth, alignment: .leading)
-            .offset(x: metadataLeading, y: metadataTop)
+            .frame(width: layout.metadataWidth, alignment: .leading)
+            .offset(x: layout.metadataLeading, y: layout.metadataTop)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(height: sectionHeight, alignment: .topLeading)
+        .frame(height: layout.sectionHeight, alignment: .topLeading)
         .background(Color(.systemBackground).opacity(0.52), in: .rect(cornerRadius: cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: cardCornerRadius)
