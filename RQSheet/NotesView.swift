@@ -95,7 +95,7 @@ private struct NotesHeaderView: View {
                 RuneAffinity.self,
                 SkillDefinition.self,
                 CharacterSkill.self,
-                WeaponSkill.self,
+                Weapon.self,
                 CharacterHitLocation.self,
                 CharacterHonor.self,
                 CharacterPassion.self,

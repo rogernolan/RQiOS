@@ -152,7 +152,7 @@ final class RQCharacter {
     var equipmentItems: [CharacterEquipmentItem] = []
     var spells: [CharacterSpell] = []
     var skills: [CharacterSkill] = []
-    var weaponSkills: [WeaponSkill] = []
+    var weapons: [Weapon] = []
     var hitLocations: [CharacterHitLocation] = []
     
 

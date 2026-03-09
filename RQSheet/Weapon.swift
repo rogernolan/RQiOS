@@ -1,5 +1,5 @@
 //
-//  WeaponSkill.swift
+//  Weapon.swift
 //  RQSheet
 //
 
@@ -15,7 +15,7 @@ enum WeaponType: String, Codable, CaseIterable {
 }
 
 @Model
-final class WeaponSkill {
+final class Weapon {
     var character: RQCharacter?
 
     var name: String
@@ -71,8 +71,9 @@ final class WeaponSkill {
     }
 
     var strikeRank: String
-
     var type: WeaponType?
+    var range: String
+    var isEquipped: Bool
 
     init(
         character: RQCharacter? = nil,
@@ -84,7 +85,9 @@ final class WeaponSkill {
         hpCurrent: Int? = nil,
         enc: Int? = nil,
         strikeRank: String = "",
-        type: WeaponType? = nil
+        type: WeaponType? = nil,
+        range: String = "",
+        isEquipped: Bool = false
     ) {
         self.character = character
         self.name = name
@@ -103,5 +106,7 @@ final class WeaponSkill {
         self.enc = enc.map { max(0, $0) }
         self.strikeRank = strikeRank
         self.type = type
+        self.range = range
+        self.isEquipped = isEquipped
     }
 }

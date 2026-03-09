@@ -2,17 +2,19 @@ import Foundation
 import Testing
 @testable import RQSheet
 
-struct WeaponSkillTests {
+struct WeaponTests {
     @Test
-    func weaponSkillAllowsMissingCombatFields() {
-        let weapon = WeaponSkill(
+    func weaponAllowsMissingCombatFields() {
+        let weapon = Weapon(
             name: "Sling",
             damage: "1d6",
             hpMax: nil,
             hpCurrent: nil,
             enc: nil,
             strikeRank: "missile",
-            type: nil
+            type: nil,
+            range: "",
+            isEquipped: false
         )
 
         #expect(weapon.hpMax == nil)
@@ -20,15 +22,19 @@ struct WeaponSkillTests {
         #expect(weapon.enc == nil)
         #expect(weapon.strikeRank == "missile")
         #expect(weapon.type == nil)
+        #expect(weapon.range == "")
+        #expect(weapon.isEquipped == false)
     }
 
     @Test
-    func weaponSkillPreservesStringStrikeRank() {
-        let weapon = WeaponSkill(
+    func weaponPreservesStringStrikeRank() {
+        let weapon = Weapon(
             name: "Broadsword",
             damage: "1d8+1",
             strikeRank: "DEX+SIZ",
-            type: .slashing
+            type: .slashing,
+            range: "",
+            isEquipped: false
         )
 
         #expect(weapon.strikeRank == "DEX+SIZ")

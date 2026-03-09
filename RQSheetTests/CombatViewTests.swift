@@ -7,9 +7,9 @@ struct CombatViewTests {
     func combatViewFormatsOptionalWeaponFieldsForDisplay() throws {
         let source = try combatViewSource()
 
-        #expect(source.contains("private func weaponHPText(for weapon: WeaponSkill) -> String"))
+        #expect(source.contains("private func weaponHPText(for weapon: Weapon) -> String"))
         #expect(source.contains("guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return \"-\" }"))
-        #expect(source.contains("private func weaponStrikeRankText(for weapon: WeaponSkill) -> String"))
+        #expect(source.contains("private func weaponStrikeRankText(for weapon: Weapon) -> String"))
         #expect(source.contains("return weapon.strikeRank.isEmpty ? \"-\" : weapon.strikeRank"))
     }
 

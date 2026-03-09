@@ -49,7 +49,7 @@ struct CombatView: View {
                 if let character {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 6) {
-                            ForEach(character.weaponSkills) { weapon in
+                            ForEach(character.weapons) { weapon in
                                 weaponRow(for: weapon)
                             }
                         }
@@ -114,7 +114,7 @@ struct CombatView: View {
         .fontWeight(.semibold)
     }
 
-    private func weaponRow(for weapon: WeaponSkill) -> some View {
+    private func weaponRow(for weapon: Weapon) -> some View {
         HStack(spacing: 8) {
             Text(weapon.name)
                 .lineLimit(1)
@@ -145,21 +145,21 @@ struct CombatView: View {
         .font(.footnote)
     }
 
-    private func weaponTypeText(for weapon: WeaponSkill) -> String {
+    private func weaponTypeText(for weapon: Weapon) -> String {
         weapon.type?.rawValue ?? "-"
     }
 
-    private func weaponHPText(for weapon: WeaponSkill) -> String {
+    private func weaponHPText(for weapon: Weapon) -> String {
         guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return "-" }
         return "\(hpMax)/\(hpCurrent)"
     }
 
-    private func weaponEncText(for weapon: WeaponSkill) -> String {
+    private func weaponEncText(for weapon: Weapon) -> String {
         guard let enc = weapon.enc else { return "-" }
         return "\(enc)"
     }
 
-    private func weaponStrikeRankText(for weapon: WeaponSkill) -> String {
+    private func weaponStrikeRankText(for weapon: Weapon) -> String {
         return weapon.strikeRank.isEmpty ? "-" : weapon.strikeRank
     }
 
@@ -295,7 +295,7 @@ struct CombatView: View {
         strikeRank: String,
         type: WeaponType?
     ) {
-        let weapon = WeaponSkill(
+        let weapon = Weapon(
             character: character,
             name: name,
             basePercentage: basePercentage,
@@ -308,7 +308,7 @@ struct CombatView: View {
             type: type
         )
         modelContext.insert(weapon)
-        character.weaponSkills.append(weapon)
+        character.weapons.append(weapon)
     }
 }
 
