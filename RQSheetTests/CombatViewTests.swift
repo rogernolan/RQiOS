@@ -23,6 +23,18 @@ struct CombatViewTests {
         #expect(source.contains("presentedEditor = .edit("))
     }
 
+    @Test
+    func combatViewUsesExpandableWeaponCardsAndFloatingAddButton() throws {
+        let source = try combatViewSource()
+
+        #expect(source.contains("List {"))
+        #expect(source.contains("WeaponRowCard("))
+        #expect(source.contains("swipeActions(edge: .trailing, allowsFullSwipe: false)"))
+        #expect(source.contains("withAnimation"))
+        #expect(source.contains("Button(\"Add weapon\")"))
+        #expect(source.contains("This cannot be undone"))
+    }
+
     private func combatViewSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

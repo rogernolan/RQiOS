@@ -10,67 +10,48 @@ struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var characters: [RQCharacter]
     @State private var presentedEditor: WeaponEditorSheet?
+    @State private var pendingDeleteWeapon: Weapon?
+    @State private var expandedWeaponIDs: Set<ObjectIdentifier> = []
 
     var character: RQCharacter? {
         characters.first
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 12) {
-                let panelHeight = max(360, geometry.size.width )
+        Group {
+            if let character {
+                GeometryReader { geometry in
+                    VStack(alignment: .leading, spacing: 12) {
+                        let panelHeight = max(360, geometry.size.width)
 
-                ZStack {
-                    Image("RuneMan")
-                        .resizable()
-                        .renderingMode(.template)
-                        .scaledToFit()
-                        .foregroundStyle(Color(.systemGray3))
-                        .frame(maxWidth: .infinity)
+                        ZStack {
+                            Image("RuneMan")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .foregroundStyle(Color(.systemGray3))
+                                .frame(maxWidth: .infinity)
 
-                    if let character {
-                        hitLocationOverlay(for: character)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: panelHeight)
-
-                if let character {
-                    Text("Total Hitpoints: \(character.currentHitpoints)/\(character.maxHitpoints)")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 4)
-                }
-
-                Divider()
-
-                headerRow
-
-                if let character {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(character.weapons) { weapon in
-                                weaponRow(for: weapon)
-                            }
+                            hitLocationOverlay(for: character)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(minHeight: 120)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: panelHeight)
 
-                    Button("Add weapon") {
-                        presentedEditor = .add
+                        Text("Total Hitpoints: \(character.currentHitpoints)/\(character.maxHitpoints)")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.top, 4)
+
+                        weaponsSection(for: character)
                     }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    Text("Create a character in Summary to manage combat weapons.")
-                        .foregroundColor(.secondary)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
-
-                Spacer(minLength: 0)
+            } else {
+                Text("Create a character in Summary to manage combat weapons.")
+                    .foregroundColor(.secondary)
+                    .padding()
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .sheet(item: $presentedEditor) { editor in
             WeaponEditorView(
@@ -120,62 +101,151 @@ struct CombatView: View {
                 }
             }
         }
+        .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
+            Button("No", role: .cancel) {
+                pendingDeleteWeapon = nil
+            }
+            Button("Yes", role: .destructive) {
+                confirmDelete()
+            }
+        } message: {
+            Text("Delete this weapon?")
+        }
         .mainRuneBackground(runeName: "RuneDeath")
     }
 
-    private var headerRow: some View {
-        HStack(spacing: 8) {
-            Text("Name")
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Text("%")
-                .frame(width: 64, alignment: .trailing)
-            Text("Damage")
-                .frame(width: 72, alignment: .trailing)
-            Text("Type")
-                .frame(width: 84, alignment: .trailing)
-            Text("HP")
-                .frame(width: 60, alignment: .trailing)
-            Text("ENC")
-                .frame(width: 40, alignment: .trailing)
-            Text("SR")
-                .frame(width: 52, alignment: .trailing)
+    private func weaponsSection(for character: RQCharacter) -> some View {
+        ZStack(alignment: .top) {
+            weaponsList(for: character)
+            weaponsHeaderOverlay
         }
-        .font(.caption)
-        .fontWeight(.semibold)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    private func weaponRow(for weapon: Weapon) -> some View {
-        HStack(spacing: 8) {
-            Text(weapon.name)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 4) {
-                Text("\(weapon.basePercentage)%")
-                Button {
-                    weapon.experienceCheck.toggle()
-                } label: {
-                    Image(systemName: weapon.experienceCheck ? "checkmark.circle.fill" : "circle")
+    private func weaponsList(for character: RQCharacter) -> some View {
+        List {
+            Color.clear
+                .frame(height: 86)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+
+            if character.weapons.isEmpty {
+                Text("No weapons yet")
+                    .foregroundStyle(.secondary)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            } else {
+                ForEach(character.weapons) { weapon in
+                    WeaponRowCard(
+                        weapon: weapon,
+                        isExpanded: isExpanded(weapon),
+                        onSelect: {
+                            presentedEditor = .edit(weapon)
+                        },
+                        onToggleExperience: {
+                            weapon.experienceCheck.toggle()
+                        },
+                        onToggleExpanded: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                toggleExpanded(weapon)
+                            }
+                        },
+                        onToggleEquipped: {
+                            weapon.isEquipped.toggle()
+                        }
+                    )
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            pendingDeleteWeapon = weapon
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                }
+            }
+
+            HStack {
+                Spacer()
+
+                Button("Add weapon") {
+                    presentedEditor = .add
+                }
+                .font(.headline)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .background(.regularMaterial, in: Capsule())
+                .overlay {
+                    Capsule()
+                        .stroke(.quaternary, lineWidth: 1)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("combat.addWeapon")
+
+                Spacer()
             }
-            .frame(width: 64, alignment: .trailing)
-            Text(weapon.damage)
-                .lineLimit(1)
-                .frame(width: 72, alignment: .trailing)
-            Text(weaponTypeText(for: weapon))
-                .lineLimit(1)
-                .frame(width: 84, alignment: .trailing)
-            Text(weaponHPText(for: weapon))
-                .frame(width: 60, alignment: .trailing)
-            Text(weaponEncText(for: weapon))
-                .frame(width: 40, alignment: .trailing)
-            Text(weaponStrikeRankText(for: weapon))
-                .frame(width: 52, alignment: .trailing)
+            .padding(.top, 8)
+            .padding(.bottom, 96)
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
         }
-        .font(.footnote)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            presentedEditor = .edit(weapon)
+        .listStyle(.plain)
+        .environment(\.defaultMinListRowHeight, 0)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
+        .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var weaponsHeaderOverlay: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Weapons")
+                .font(.title2)
+                .bold()
+
+            HStack(spacing: 8) {
+                Text("Name")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("%")
+                    .frame(width: 40, alignment: .trailing)
+                Image(systemName: "square")
+                    .frame(width: 28, alignment: .center)
+                Text("SR")
+                    .frame(width: 46, alignment: .trailing)
+                Text("Damage")
+                    .frame(width: 74, alignment: .trailing)
+                Image(systemName: "chevron.down")
+                    .frame(width: 28, alignment: .center)
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.35), lineWidth: 0.7)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    private func isExpanded(_ weapon: Weapon) -> Bool {
+        expandedWeaponIDs.contains(ObjectIdentifier(weapon))
+    }
+
+    private func toggleExpanded(_ weapon: Weapon) {
+        let id = ObjectIdentifier(weapon)
+        if expandedWeaponIDs.contains(id) {
+            expandedWeaponIDs.remove(id)
+        } else {
+            expandedWeaponIDs.insert(id)
         }
     }
 
@@ -195,6 +265,11 @@ struct CombatView: View {
 
     private func weaponStrikeRankText(for weapon: Weapon) -> String {
         return weapon.strikeRank.isEmpty ? "-" : weapon.strikeRank
+    }
+
+    private func weaponRangeText(for weapon: Weapon) -> String? {
+        let trimmed = weapon.range.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     private func hitLocationOverlay(for character: RQCharacter) -> some View {
@@ -349,6 +424,27 @@ struct CombatView: View {
         character.weapons.append(weapon)
     }
 
+    private func confirmDelete() {
+        guard let pendingDeleteWeapon else { return }
+        if isExpanded(pendingDeleteWeapon) {
+            expandedWeaponIDs.remove(ObjectIdentifier(pendingDeleteWeapon))
+        }
+        character?.weapons.removeAll { $0 == pendingDeleteWeapon }
+        modelContext.delete(pendingDeleteWeapon)
+        self.pendingDeleteWeapon = nil
+    }
+
+    private var isShowingDeleteAlert: Binding<Bool> {
+        Binding(
+            get: { pendingDeleteWeapon != nil },
+            set: { isPresented in
+                if isPresented == false {
+                    pendingDeleteWeapon = nil
+                }
+            }
+        )
+    }
+
     private func updateWeapon(
         _ weapon: Weapon,
         name: String,
@@ -374,6 +470,156 @@ struct CombatView: View {
         weapon.type = type
         weapon.range = range
         weapon.isEquipped = isEquipped
+    }
+}
+
+private struct WeaponRowCard: View {
+    let weapon: Weapon
+    let isExpanded: Bool
+    let onSelect: () -> Void
+    let onToggleExperience: () -> Void
+    let onToggleExpanded: () -> Void
+    let onToggleEquipped: () -> Void
+
+    private var displayName: String {
+        let trimmed = weapon.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Weapon" : trimmed
+    }
+
+    private var displayStrikeRank: String {
+        let trimmed = weapon.strikeRank.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "-" : trimmed
+    }
+
+    private var displayHP: String {
+        guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return "-" }
+        return "\(hpCurrent)/\(hpMax)"
+    }
+
+    private var displayENC: String {
+        guard let enc = weapon.enc else { return "-" }
+        return "\(enc)"
+    }
+
+    private var displayType: String {
+        weapon.type?.rawValue ?? "-"
+    }
+
+    private var displayRange: String? {
+        let trimmed = weapon.range.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Text(displayName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("\(weapon.basePercentage)%")
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .frame(width: 40, alignment: .trailing)
+
+                Button(action: onToggleExperience) {
+                    Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
+                        .font(.body)
+                        .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 28, alignment: .center)
+
+                Text(displayStrikeRank)
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(width: 46, alignment: .trailing)
+
+                Text(weapon.damage)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(width: 74, alignment: .trailing)
+
+                Button(action: onToggleExpanded) {
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 0 : -90))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.12), in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelect)
+
+            if isExpanded {
+                Divider()
+                    .padding(.vertical, 10)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 12) {
+                        WeaponDetailChip(label: "HP", value: displayHP)
+                        WeaponDetailChip(label: "ENC", value: displayENC)
+                        WeaponDetailChip(label: "Type", value: displayType)
+                    }
+
+                    HStack(spacing: 12) {
+                        if let displayRange {
+                            WeaponDetailChip(label: "Range", value: displayRange)
+                        }
+
+                        Button(action: onToggleEquipped) {
+                            HStack(spacing: 6) {
+                                Text("Equipped:")
+                                    .foregroundStyle(.secondary)
+                                Image(systemName: weapon.isEquipped ? "checkmark.square.fill" : "square")
+                                    .foregroundStyle(weapon.isEquipped ? .primary : .secondary)
+                            }
+                            .font(.footnote)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.1), in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .padding(12)
+        .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct WeaponDetailChip: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("\(label):")
+                .foregroundStyle(.secondary)
+            Text(value)
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+        }
+        .font(.footnote)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.1), in: Capsule())
     }
 }
 
