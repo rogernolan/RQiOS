@@ -37,9 +37,7 @@ struct CombatView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: panelHeight)
 
-                        Text("Total Hitpoints: \(character.currentHitpoints)/\(character.maxHitpoints)")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity, alignment: .center)
+                        combatHeader(for: character)
                             .padding(.top, 4)
 
                         weaponsSection(for: character)
@@ -116,7 +114,34 @@ struct CombatView: View {
 
     private func weaponsSection(for character: RQCharacter) -> some View {
         return weaponsList(for: character)
+            .overlay(alignment: .top) {
+                LinearGradient(
+                    colors: [
+                        Color(.systemBackground).opacity(0.78),
+                        Color(.systemBackground).opacity(0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 28)
+                .allowsHitTesting(false)
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func combatHeader(for character: RQCharacter) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            HitPointsCombatChip(character: character)
+
+            Spacer(minLength: 0)
+
+            CombatHeaderChip(label: "Damage Bonus") {
+                Text(character.damageBonusText)
+                    .font(.body.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+            }
+        }
     }
 
     private func weaponsList(for character: RQCharacter) -> some View {
@@ -483,42 +508,38 @@ private struct WeaponRowCard: View {
             Divider()
                 .padding(.vertical, 8)
 
-            HStack(spacing: 12) {
-                WeaponDetailChip(label: "HP", value: displayHP)
-                WeaponDetailChip(label: "ENC", value: displayENC)
-                WeaponDetailChip(label: "Type", value: displayType)
-                if displayRange == nil {
-                    equippedButton
-                }
-            }
-            .frame(height: weaponDetailRowHeight)
+            detailPrimaryRow
 
-            if let displayRange {
-                HStack(spacing: 12) {
-                    WeaponDetailChip(label: "Range", value: displayRange)
-                    equippedButton
-
-                    Spacer(minLength: 0)
-                }
-                .frame(height: weaponDetailRowHeight)
+            if displayRange != nil {
+                detailSecondaryRow
             }
         }
     }
 
-    private var equippedButton: some View {
-        Button(action: onToggleEquipped) {
-            HStack(spacing: 6) {
-                Text("Equipped:")
-                    .foregroundStyle(.secondary)
-                Image(systemName: weapon.isEquipped ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(weapon.isEquipped ? .primary : .secondary)
+    private var detailPrimaryRow: some View {
+        HStack(spacing: 12) {
+            WeaponDetailSlot(label: "HP", value: displayHP)
+            WeaponDetailSlot(label: "ENC", value: displayENC)
+            WeaponDetailSlot(label: "Type", value: displayType)
+            Button(action: onToggleEquipped) {
+                WeaponDetailSlot(label: "Equipped", value: weapon.isEquipped ? "Yes" : "No")
             }
-            .font(.footnote)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.1), in: Capsule())
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .frame(height: weaponDetailRowHeight)
+    }
+
+    private var detailSecondaryRow: some View {
+        HStack(spacing: 12) {
+            Color.clear
+                .frame(maxWidth: .infinity)
+            Color.clear
+                .frame(maxWidth: .infinity)
+            Color.clear
+                .frame(maxWidth: .infinity)
+            WeaponDetailSlot(label: "Range", value: displayRange ?? "", isVisible: displayRange != nil)
+        }
+        .frame(height: weaponDetailRowHeight)
     }
 
     var body: some View {
@@ -533,7 +554,7 @@ private struct WeaponRowCard: View {
                 Text("\(weapon.basePercentage)%")
                     .font(.subheadline)
                     .monospacedDigit()
-                    .frame(width: 34, alignment: .trailing)
+                    .frame(width: 38, alignment: .trailing)
 
                 Button(action: onToggleExperience) {
                     Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
@@ -541,7 +562,7 @@ private struct WeaponRowCard: View {
                         .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
                 }
                 .buttonStyle(.plain)
-                .frame(width: 22, alignment: .center)
+                .frame(width: 24, alignment: .center)
 
                 HStack(spacing: 2) {
                     Text("SR")
@@ -554,12 +575,13 @@ private struct WeaponRowCard: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+                .frame(width: 56, alignment: .leading)
 
                 Text(weapon.damage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .frame(width: 62, alignment: .trailing)
+                    .frame(width: 54, alignment: .trailing)
 
                 Button(action: onToggleExpanded) {
                     DisclosureTriangle(isFilled: isExpanded)
@@ -617,25 +639,6 @@ private struct WeaponRowCard: View {
     }
 }
 
-private struct WeaponDetailChip: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Text("\(label):")
-                .foregroundStyle(.secondary)
-            Text(value)
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-        }
-        .font(.footnote)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.1), in: Capsule())
-    }
-}
-
 private struct DisclosureTriangle: View {
     let isFilled: Bool
 
@@ -649,6 +652,112 @@ private struct DisclosureTriangle: View {
                     .stroke(Color.secondary, lineWidth: 1.6)
             }
             .padding(4)
+    }
+}
+
+private struct CombatHeaderChip: View {
+    let label: String
+    let content: AnyView
+
+    init(label: String, @ViewBuilder content: () -> some View) {
+        self.label = label
+        self.content = AnyView(content())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            content
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color(.systemBackground).opacity(0.58), in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(.quaternary, lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct HitPointsCombatChip: View {
+    let character: RQCharacter
+    @State private var currentHitpointsText: String = ""
+
+    var body: some View {
+        CombatHeaderChip(label: "HP") {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                TextField("", text: $currentHitpointsText)
+                    .font(.body.weight(.semibold))
+                    .monospacedDigit()
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.numberPad)
+                    .frame(minWidth: 28)
+                    .onChange(of: currentHitpointsText) { _, newValue in
+                        applyHitPointInput(newValue)
+                    }
+
+                Text("/\(character.maxHitpoints)")
+                    .font(.body.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+            }
+        }
+        .onAppear {
+            syncCurrentHitpointsText()
+        }
+        .onChange(of: character.currentHitpoints) { _, _ in
+            syncCurrentHitpointsText()
+        }
+        .onChange(of: character.maxHitpoints) { _, _ in
+            syncCurrentHitpointsText()
+        }
+    }
+
+    private func applyHitPointInput(_ input: String) {
+        let digits = input.filter(\.isNumber)
+        if digits != input {
+            currentHitpointsText = digits
+            return
+        }
+
+        guard let value = Int(digits) else { return }
+        character.currentHitpoints = value
+        syncCurrentHitpointsText()
+    }
+
+    private func syncCurrentHitpointsText() {
+        let clamped = String(character.currentHitpoints)
+        if currentHitpointsText != clamped {
+            currentHitpointsText = clamped
+        }
+    }
+}
+
+private struct WeaponDetailSlot: View {
+    let label: String
+    let value: String
+    var isVisible = true
+
+    var body: some View {
+        Group {
+            if isVisible {
+                HStack(spacing: 4) {
+                    Text("\(label):")
+                        .foregroundStyle(.secondary)
+                    Text(value)
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                }
+                .font(.subheadline)
+            } else {
+                Color.clear
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

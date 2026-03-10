@@ -130,4 +130,38 @@ struct SummaryViewModelTests {
         #expect(viewModel.encumbranceText == "8/10")
         #expect(viewModel.isEncumbranceOverLimit)
     }
+
+    @Test
+    @MainActor
+    func damageBonusUsesStrengthAndSizeBands() {
+        let under = RQCharacter()
+        under.str = 6
+        under.siz = 6
+        #expect(SummaryViewModel(character: under).damageBonusText == "-1D4")
+
+        let none = RQCharacter()
+        none.str = 12
+        none.siz = 12
+        #expect(SummaryViewModel(character: none).damageBonusText == "-")
+
+        let quarter = RQCharacter()
+        quarter.str = 12
+        quarter.siz = 13
+        #expect(SummaryViewModel(character: quarter).damageBonusText == "+1D4")
+
+        let d6 = RQCharacter()
+        d6.str = 17
+        d6.siz = 16
+        #expect(SummaryViewModel(character: d6).damageBonusText == "+1D6")
+
+        let twoD6 = RQCharacter()
+        twoD6.str = 21
+        twoD6.siz = 20
+        #expect(SummaryViewModel(character: twoD6).damageBonusText == "+2D6")
+
+        let threeD6 = RQCharacter()
+        threeD6.str = 29
+        threeD6.siz = 28
+        #expect(SummaryViewModel(character: threeD6).damageBonusText == "+3D6")
+    }
 }

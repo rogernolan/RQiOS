@@ -43,6 +43,10 @@ final class SummaryViewModel {
         "\(character.runePoints)"
     }
 
+    var damageBonusText: String {
+        character.damageBonusText
+    }
+
     var encumbranceText: String {
         "\(character.maxEncumbrance)/\(character.currentEncumbrance)"
     }

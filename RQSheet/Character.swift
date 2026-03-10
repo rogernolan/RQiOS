@@ -82,6 +82,25 @@ final class RQCharacter {
         max(0, pow)
     }
 
+    var damageBonusText: String {
+        let total = str + siz
+
+        switch total {
+        case ...12:
+            return "-1D4"
+        case 13...24:
+            return "-"
+        case 25...32:
+            return "+1D4"
+        case 33...40:
+            return "+1D6"
+        case 41...56:
+            return "+2D6"
+        default:
+            return "+\(3 + ((total - 57) / 16))D6"
+        }
+    }
+
     private var currentMagicPointsValue: Int
     var currentMagicPoints: Int {
         get { min(max(0, currentMagicPointsValue), maxMagicPoints) }
