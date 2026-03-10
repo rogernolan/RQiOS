@@ -161,10 +161,11 @@ struct CombatView: View {
                             onDelete: {
                                 pendingDeleteWeapon = weapon
                             }
-                        ) {
+                        ) { isActionInteractionEnabled in
                             WeaponRowCard(
                                 weapon: weapon,
                                 isExpanded: isExpanded(weapon),
+                                isActionInteractionEnabled: isActionInteractionEnabled,
                                 onSelect: {
                                     presentedEditor = .edit(weapon)
                                 },
@@ -462,6 +463,7 @@ private struct WeaponRowCard: View {
 
     let weapon: Weapon
     let isExpanded: Bool
+    let isActionInteractionEnabled: Bool
     let onSelect: () -> Void
     let onToggleExperience: () -> Void
     let onToggleExpanded: () -> Void
@@ -554,7 +556,10 @@ private struct WeaponRowCard: View {
                     .monospacedDigit()
                     .frame(width: 38, alignment: .trailing)
 
-                Button(action: onToggleExperience) {
+                Button(action: {
+                    guard isActionInteractionEnabled else { return }
+                    onToggleExperience()
+                }) {
                     Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
                         .font(.body)
                         .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
@@ -581,14 +586,20 @@ private struct WeaponRowCard: View {
                     .lineLimit(1)
                     .frame(width: 54, alignment: .trailing)
 
-                Button(action: onToggleExpanded) {
+                Button(action: {
+                    guard isActionInteractionEnabled else { return }
+                    onToggleExpanded()
+                }) {
                     DisclosureTriangle(isFilled: isExpanded)
                         .frame(width: 22, height: 22)
                 }
                 .buttonStyle(.plain)
             }
             .contentShape(Rectangle())
-            .onTapGesture(perform: onSelect)
+            .onTapGesture {
+                guard isActionInteractionEnabled else { return }
+                onSelect()
+            }
 
             detailContent
                 .opacity(detailOpacity)
@@ -747,7 +758,7 @@ private struct WeaponSwipeRow<Content: View>: View {
     let rowID: ObjectIdentifier
     @Binding var activeSwipeID: ObjectIdentifier?
     let onDelete: () -> Void
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder let content: (_ isActionInteractionEnabled: Bool) -> Content
 
     @State private var offset: CGFloat = 0
     @State private var dragStartOffset: CGFloat = 0
@@ -778,6 +789,10 @@ private struct WeaponSwipeRow<Content: View>: View {
         .spring(duration: 0.36, bounce: 0.24)
     }
 
+    private var isActionInteractionEnabled: Bool {
+        abs(offset) < 0.5
+    }
+
     var body: some View {
         ZStack(alignment: .trailing) {
             Button(role: .destructive, action: onDelete) {
@@ -795,7 +810,7 @@ private struct WeaponSwipeRow<Content: View>: View {
             .padding(.trailing, deleteTrailingPadding)
             .allowsHitTesting(deleteProgress > 0.95)
 
-            content()
+            content(isActionInteractionEnabled)
                 .offset(x: offset)
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 12, coordinateSpace: .local)
