@@ -140,6 +140,30 @@ final class RQSheetUITests: XCTestCase {
     }
 
     @MainActor
+    func testCombatWeaponsScrollVerticallyWhenDraggingOnRow() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing-seed-combat-weapons"]
+        openCombatTab(in: app)
+
+        let weaponsList = app.scrollViews["combat.weaponsList"]
+        XCTAssertTrue(weaponsList.waitForExistence(timeout: 12))
+
+        let topRow = app.otherElements["combat.weaponRow.Weapon 1"]
+        let lowerRow = app.otherElements["combat.weaponRow.Weapon 12"]
+        let addButton = app.buttons["combat.addWeapon"]
+
+        XCTAssertTrue(topRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(addButton.exists)
+        XCTAssertFalse(lowerRow.isHittable)
+
+        topRow.swipeUp()
+
+        XCTAssertTrue(lowerRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(lowerRow.isHittable)
+        XCTAssertFalse(addButton.isHittable)
+    }
+
+    @MainActor
     func testLaunchPerformance() throws {
         // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
@@ -178,5 +202,17 @@ final class RQSheetUITests: XCTestCase {
         let magicCell = app.tables.cells.staticTexts["Magic"]
         XCTAssertTrue(magicCell.waitForExistence(timeout: 5))
         magicCell.tap()
+    }
+
+    @MainActor
+    private func openCombatTab(in app: XCUIApplication) {
+        app.launch()
+
+        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
+            app.buttons["Create New Character"].tap()
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["Combat"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["Combat"].tap()
     }
 }

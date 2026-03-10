@@ -12,6 +12,7 @@ struct CombatView: View {
     @State private var presentedEditor: WeaponEditorSheet?
     @State private var pendingDeleteWeapon: Weapon?
     @State private var expandedWeaponIDs: Set<ObjectIdentifier> = []
+    @State private var swipedWeaponID: ObjectIdentifier?
 
     var character: RQCharacter? {
         characters.first
@@ -99,15 +100,15 @@ struct CombatView: View {
                 }
             }
         }
-        .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
-            Button("No", role: .cancel) {
+        .alert("Confirm delete", isPresented: isShowingDeleteAlert) {
+            Button("Cancel", role: .cancel) {
                 pendingDeleteWeapon = nil
             }
             Button("Yes", role: .destructive) {
                 confirmDelete()
             }
         } message: {
-            Text("Delete this weapon?")
+            Text("This cannot be undone")
         }
         .mainRuneBackground(runeName: "RuneDeath")
     }
@@ -153,45 +154,45 @@ struct CombatView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     ForEach(character.weapons) { weapon in
-                        WeaponRowCard(
-                            weapon: weapon,
-                            isExpanded: isExpanded(weapon),
-                            onSelect: {
-                                presentedEditor = .edit(weapon)
-                            },
-                            onToggleExperience: {
-                                weapon.experienceCheck.toggle()
-                            },
-                            onToggleExpanded: {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    toggleExpanded(weapon)
-                                }
-                            },
-                            onToggleEquipped: {
-                                weapon.isEquipped.toggle()
-                            }
-                        )
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
+                        let rowID = ObjectIdentifier(weapon)
+                        WeaponSwipeRow(
+                            rowID: rowID,
+                            activeSwipeID: $swipedWeaponID,
+                            onDelete: {
                                 pendingDeleteWeapon = weapon
-                            } label: {
-                                Label("Delete", systemImage: "trash")
                             }
+                        ) {
+                            WeaponRowCard(
+                                weapon: weapon,
+                                isExpanded: isExpanded(weapon),
+                                onSelect: {
+                                    presentedEditor = .edit(weapon)
+                                },
+                                onToggleExperience: {
+                                    weapon.experienceCheck.toggle()
+                                },
+                                onToggleExpanded: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        toggleExpanded(weapon)
+                                    }
+                                },
+                                onToggleEquipped: {
+                                    weapon.isEquipped.toggle()
+                                }
+                            )
                         }
                     }
                 }
 
-                Color.clear
-                    .frame(height: 96)
+                addWeaponButton
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
             }
             .padding(.horizontal, 10)
             .padding(.top, 4)
             .padding(.bottom, 8)
         }
-        .overlay(alignment: .bottom) {
-            addWeaponButton
-                .padding(.bottom, 8)
-        }
+        .accessibilityIdentifier("combat.weaponsList")
         .scrollIndicators(.hidden)
         .background(Color.clear)
     }
@@ -405,6 +406,9 @@ struct CombatView: View {
         if isExpanded(pendingDeleteWeapon) {
             expandedWeaponIDs.remove(ObjectIdentifier(pendingDeleteWeapon))
         }
+        if swipedWeaponID == ObjectIdentifier(pendingDeleteWeapon) {
+            swipedWeaponID = nil
+        }
         character?.weapons.removeAll { $0 == pendingDeleteWeapon }
         modelContext.delete(pendingDeleteWeapon)
         self.pendingDeleteWeapon = nil
@@ -487,7 +491,7 @@ private struct WeaponRowCard: View {
     }
 
     private var displayType: String {
-        weapon.type?.rawValue ?? "-"
+        weapon.type?.rawValue.capitalized ?? "-"
     }
 
     private var displayRange: String? {
@@ -499,7 +503,8 @@ private struct WeaponRowCard: View {
         weaponDetailTopPadding
         + weaponDetailDividerHeight
         + weaponDetailRowHeight
-        + (displayRange == nil ? 0 : weaponDetailVerticalSpacing + weaponDetailRowHeight)
+        + weaponDetailVerticalSpacing
+        + weaponDetailRowHeight
         + weaponDetailBottomPadding
     }
 
@@ -509,10 +514,7 @@ private struct WeaponRowCard: View {
                 .padding(.vertical, 8)
 
             detailPrimaryRow
-
-            if displayRange != nil {
-                detailSecondaryRow
-            }
+            detailSecondaryRow
         }
     }
 
@@ -521,22 +523,18 @@ private struct WeaponRowCard: View {
             WeaponDetailSlot(label: "HP", value: displayHP)
             WeaponDetailSlot(label: "ENC", value: displayENC)
             WeaponDetailSlot(label: "Type", value: displayType)
-            Button(action: onToggleEquipped) {
-                WeaponDetailSlot(label: "Equipped", value: weapon.isEquipped ? "Yes" : "No")
-            }
-            .buttonStyle(.plain)
         }
         .frame(height: weaponDetailRowHeight)
     }
 
     private var detailSecondaryRow: some View {
         HStack(spacing: 12) {
-            Color.clear
-                .frame(maxWidth: .infinity)
-            Color.clear
-                .frame(maxWidth: .infinity)
-            Color.clear
-                .frame(maxWidth: .infinity)
+            Button(action: onToggleEquipped) {
+                WeaponDetailSlot(label: "Equipped", value: weapon.isEquipped ? "Yes" : "No")
+            }
+            .buttonStyle(.plain)
+
+            WeaponDetailSlot(label: "", value: "", isVisible: false)
             WeaponDetailSlot(label: "Range", value: displayRange ?? "", isVisible: displayRange != nil)
         }
         .frame(height: weaponDetailRowHeight)
@@ -622,6 +620,8 @@ private struct WeaponRowCard: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .animation(.easeInOut(duration: 0.2), value: isExpanded)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("combat.weaponRow.\(displayName)")
     }
 
     private func scheduleDetailFadeIn() {
@@ -734,6 +734,125 @@ private struct HitPointsCombatChip: View {
         if currentHitpointsText != clamped {
             currentHitpointsText = clamped
         }
+    }
+}
+
+private struct WeaponSwipeRow<Content: View>: View {
+    private let deleteWidth: CGFloat = 92
+    private let overswipeLimit: CGFloat = 20
+    private let deleteTrailingPadding: CGFloat = 8
+
+    let rowID: ObjectIdentifier
+    @Binding var activeSwipeID: ObjectIdentifier?
+    let onDelete: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    @State private var offset: CGFloat = 0
+    @State private var dragStartOffset: CGFloat = 0
+    @State private var isHandlingHorizontalDrag = false
+
+    private var revealWidth: CGFloat {
+        deleteWidth + deleteTrailingPadding
+    }
+
+    private var deleteProgress: CGFloat {
+        min(1, max(0, -offset / revealWidth))
+    }
+
+    private var deleteOverswipeOffset: CGFloat {
+        min(0, offset + revealWidth)
+    }
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            Button(role: .destructive, action: onDelete) {
+                Label("Delete", systemImage: "trash")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: deleteWidth)
+                    .frame(height: 36)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
+            .background(.red.opacity(0.92), in: Capsule())
+            .scaleEffect(0.78 + (0.22 * deleteProgress))
+            .opacity(deleteProgress == 0 ? 0 : 0.5 + (0.5 * deleteProgress))
+            .offset(x: deleteOverswipeOffset)
+            .padding(.trailing, deleteTrailingPadding)
+            .allowsHitTesting(deleteProgress > 0.95)
+
+            content()
+                .offset(x: offset)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 12, coordinateSpace: .local)
+                        .onChanged { value in
+                            guard isHandlingHorizontalDrag || SwipeDirectionLock.isHorizontalSwipe(value.translation) else {
+                                return
+                            }
+
+                            if isHandlingHorizontalDrag == false {
+                                isHandlingHorizontalDrag = true
+                                handleSwipeBegan()
+                            }
+
+                            handleSwipeChanged(value.translation.width)
+                        }
+                        .onEnded { value in
+                            defer { isHandlingHorizontalDrag = false }
+                            guard isHandlingHorizontalDrag else { return }
+                            handleSwipeEnded(value.translation.width)
+                        }
+                )
+        }
+        .clipped()
+        .onChange(of: activeSwipeID) { _, newValue in
+            if newValue != rowID {
+                withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
+                    offset = 0
+                }
+            }
+        }
+    }
+
+    private func handleSwipeBegan() {
+        dragStartOffset = activeSwipeID == rowID ? offset : 0
+        if activeSwipeID != rowID {
+            activeSwipeID = rowID
+        }
+    }
+
+    private func handleSwipeChanged(_ translation: CGFloat) {
+        let proposed = dragStartOffset + translation
+        if proposed <= 0 {
+            offset = max(-(revealWidth + overswipeLimit), proposed)
+        } else {
+            offset = min(0, proposed)
+        }
+    }
+
+    private func handleSwipeEnded(_ translation: CGFloat) {
+        let finalOffset = dragStartOffset + translation
+
+        withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
+            if finalOffset <= -(revealWidth * 0.5) {
+                offset = -revealWidth
+                activeSwipeID = rowID
+            } else {
+                offset = 0
+                if activeSwipeID == rowID {
+                    activeSwipeID = nil
+                }
+            }
+        }
+    }
+}
+
+enum SwipeDirectionLock {
+    static func isHorizontalSwipe(_ translation: CGSize) -> Bool {
+        abs(translation.width) > (abs(translation.height) * 1.2)
+    }
+
+    static func isHorizontalSwipe(_ translation: CGPoint) -> Bool {
+        abs(translation.x) > (abs(translation.y) * 1.2)
     }
 }
 
