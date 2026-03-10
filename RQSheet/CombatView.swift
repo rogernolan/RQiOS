@@ -741,6 +741,8 @@ private struct WeaponSwipeRow<Content: View>: View {
     private let deleteWidth: CGFloat = 92
     private let overswipeLimit: CGFloat = 20
     private let deleteTrailingPadding: CGFloat = 8
+    private let revealGap: CGFloat = 15
+    private let pillOvershootLimit: CGFloat = 10
 
     let rowID: ObjectIdentifier
     @Binding var activeSwipeID: ObjectIdentifier?
@@ -751,16 +753,29 @@ private struct WeaponSwipeRow<Content: View>: View {
     @State private var dragStartOffset: CGFloat = 0
     @State private var isHandlingHorizontalDrag = false
 
-    private var revealWidth: CGFloat {
-        deleteWidth + deleteTrailingPadding
+    private var revealMetrics: SwipeRevealMetrics {
+        SwipeRevealMetrics(
+            deleteWidth: deleteWidth,
+            trailingPadding: deleteTrailingPadding,
+            revealGap: revealGap,
+            pillOvershootLimit: pillOvershootLimit
+        )
+    }
+
+    private var revealedRowOffset: CGFloat {
+        revealMetrics.revealedRowOffset
     }
 
     private var deleteProgress: CGFloat {
-        min(1, max(0, -offset / revealWidth))
+        revealMetrics.progress(forRowOffset: offset)
     }
 
     private var deleteOverswipeOffset: CGFloat {
-        min(0, offset + revealWidth)
+        revealMetrics.pillOffset(forRowOffset: offset)
+    }
+
+    private var swipeSpring: Animation {
+        .spring(duration: 0.36, bounce: 0.24)
     }
 
     var body: some View {
@@ -806,7 +821,7 @@ private struct WeaponSwipeRow<Content: View>: View {
         .clipped()
         .onChange(of: activeSwipeID) { _, newValue in
             if newValue != rowID {
-                withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
+                withAnimation(swipeSpring) {
                     offset = 0
                 }
             }
@@ -822,19 +837,15 @@ private struct WeaponSwipeRow<Content: View>: View {
 
     private func handleSwipeChanged(_ translation: CGFloat) {
         let proposed = dragStartOffset + translation
-        if proposed <= 0 {
-            offset = max(-(revealWidth + overswipeLimit), proposed)
-        } else {
-            offset = min(0, proposed)
-        }
+        offset = revealMetrics.rowOffset(forProposedOffset: proposed)
     }
 
     private func handleSwipeEnded(_ translation: CGFloat) {
         let finalOffset = dragStartOffset + translation
 
-        withAnimation(.spring(response: 0.24, dampingFraction: 0.82)) {
-            if finalOffset <= -(revealWidth * 0.5) {
-                offset = -revealWidth
+        withAnimation(swipeSpring) {
+            if finalOffset <= (revealedRowOffset * 0.5) {
+                offset = revealedRowOffset
                 activeSwipeID = rowID
             } else {
                 offset = 0
@@ -843,6 +854,35 @@ private struct WeaponSwipeRow<Content: View>: View {
                 }
             }
         }
+    }
+}
+
+struct SwipeRevealMetrics {
+    let deleteWidth: CGFloat
+    let trailingPadding: CGFloat
+    let revealGap: CGFloat
+    let pillOvershootLimit: CGFloat
+
+    var revealedRowOffset: CGFloat {
+        -(deleteWidth + trailingPadding + revealGap)
+    }
+
+    func rowOffset(forProposedOffset proposedOffset: CGFloat) -> CGFloat {
+        if proposedOffset <= 0 {
+            return proposedOffset
+        }
+
+        return min(0, proposedOffset)
+    }
+
+    func progress(forRowOffset rowOffset: CGFloat) -> CGFloat {
+        let revealAnimationDistance = max(1, deleteWidth * 0.6)
+        return min(1, max(0, -rowOffset / revealAnimationDistance))
+    }
+
+    func pillOffset(forRowOffset rowOffset: CGFloat) -> CGFloat {
+        let overdrag = max(0, abs(rowOffset) - abs(revealedRowOffset))
+        return -min(pillOvershootLimit, overdrag)
     }
 }
 
