@@ -20,61 +20,19 @@ struct StatsOverviewView: View {
         let metadataWidth: CGFloat
     }
 
-    @Environment(\.modelContext) private var modelContext
-    @Query private var characters: [RQCharacter]
+    let character: RQCharacter
 
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var isPresentingPassionEditor = false
     @State private var summaryScrollOffset: CGFloat = 0
-    @State private var summaryHeaderHeight: CGFloat = 48
 
     private let summaryProfileCollapseDistance: CGFloat = 140
 
-    private var character: RQCharacter? {
-        characters.first
-    }
-
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .topLeading) {
-                if let character {
-                    summaryContent(for: character)
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Button("Create New Character") {
-                                _ = SkillSeeder.createCharacter(in: modelContext)
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 70)
-                        .padding(.bottom, 120)
-                    }
-                    .scrollIndicators(.hidden)
-                    .ignoresSafeArea(edges: .bottom)
-                }
-
-                headerRow
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .onGeometryChange(for: CGFloat.self) { geometry in
-                        geometry.size.height
-                    } action: { _, newHeight in
-                        summaryHeaderHeight = newHeight
-                    }
-            }
+        summaryContent(for: character)
             .mainRuneBackground(runeName: "RuneMan")
-            .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $isPresentingPassionEditor) {
-                if let character {
-                    SummaryPassionEditorSheet { description, percentage in
-                        character.addPassion(description: description, percentage: percentage)
-                    }
-                }
-            }
             .onChange(of: selectedPhotoItem) { _, newItem in
-                guard let newItem, let character else { return }
+                guard let newItem else { return }
 
                 Task { @MainActor in
                     if let data = try? await newItem.loadTransferable(type: Data.self) {
@@ -83,37 +41,11 @@ struct StatsOverviewView: View {
                     selectedPhotoItem = nil
                 }
             }
-        }
-    }
-
-    private var headerRow: some View {
-        HStack(alignment: .center, spacing: 8) {
-            Text(summaryTitle)
-                .font(.title2)
-                .bold()
-
-            Spacer()
-
-            if let character {
-                NavigationLink {
-                    CharacterEditorView(character: character)
-                        .navigationBarTitleDisplayMode(.inline)
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                        .font(.headline)
+            .sheet(isPresented: $isPresentingPassionEditor) {
+                SummaryPassionEditorSheet { description, percentage in
+                    character.addPassion(description: description, percentage: percentage)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Edit character details")
             }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(.quaternary, lineWidth: 1)
-        }
-        .clipShape(.rect(cornerRadius: 14))
     }
 
     private func summaryContent(for character: RQCharacter) -> some View {
@@ -123,7 +55,7 @@ struct StatsOverviewView: View {
 
         return GeometryReader { geometry in
             let contentWidth = geometry.size.width - 32
-            let profileTopOffset = summaryHeaderHeight + 22
+            let profileTopOffset: CGFloat = 16
             let profileLayout = summaryProfileLayoutMetrics(availableWidth: contentWidth, collapseProgress: profileCollapseProgress)
             let effectiveProfileSpacerHeight = profileTopOffset + profileLayout.sectionHeight + min(summaryScrollOffset, summaryProfileCollapseDistance)
 
@@ -436,11 +368,6 @@ struct StatsOverviewView: View {
                 }
             }
         }
-    }
-
-    private var summaryTitle: String {
-        guard let character else { return "Summary" }
-        return character.name.isEmpty ? "Unnamed Character" : character.name
     }
 
     private func formattedBonus(_ value: Int) -> String {

@@ -28,9 +28,10 @@ struct CombatViewTests {
         let source = try combatViewSource()
 
         #expect(source.contains("private func weaponsList(for character: RQCharacter) -> some View {\n        ScrollView {"))
-        #expect(source.contains("LazyVStack(spacing: 8)"))
+        #expect(source.contains("LazyVStack(spacing: 0)"))
         #expect(source.contains("@State private var swipedWeaponID: ObjectIdentifier?"))
         #expect(source.contains("WeaponSwipeRow("))
+        #expect(source.contains(".padding(.bottom, 8)"))
         #expect(source.contains("WeaponRowCard("))
         #expect(source.contains("private struct WeaponSwipeRow<Content: View>: View"))
         #expect(source.contains("DragGesture(minimumDistance: 12, coordinateSpace: .local)"))
@@ -87,6 +88,21 @@ struct CombatViewTests {
         #expect(source.contains(".frame(width: 40, alignment: .trailing)") == false)
         #expect(source.contains("Text(\"Weapons\")") == false)
         #expect(source.contains("private var weaponsHeaderOverlay") == false)
+    }
+
+    @Test
+    func combatViewUsesReducedTopInsetBelowWorkspaceTitle() throws {
+        let source = try combatViewSource()
+
+        #expect(source.contains("let panelHeight = max(300, geometry.size.width * 0.82)"))
+        #expect(source.contains(".padding(.top, 4)"))
+        #expect(source.contains(".padding(.horizontal, 16)"))
+        #expect(source.contains(".padding(.bottom, 16)"))
+        #expect(source.contains("let panelHeight = max(360, geometry.size.width)") == false)
+        #expect(source.contains(".padding(.top, 8)") == false)
+        #expect(source.contains(".padding(16)\n            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)") == false)
+        #expect(source.contains("let yOffset: CGFloat = -28"))
+        #expect(source.contains(".frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)"))
     }
 
     @Test

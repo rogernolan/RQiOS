@@ -2,23 +2,11 @@ import SwiftData
 import SwiftUI
 
 struct SkillsView: View {
-    @Query private var characters: [RQCharacter]
-
-    private var character: RQCharacter? {
-        characters.first
-    }
+    let character: RQCharacter
 
     var body: some View {
-        Group {
-            if let character {
-                CharacterSkillsContentView(character: character)
-            } else {
-                Text("Create a character in Summary to view skills.")
-                    .foregroundStyle(.secondary)
-                    .padding()
-            }
-        }
-        .mainRuneBackground(runeName: "RuneMastery")
+        CharacterSkillsContentView(character: character)
+            .mainRuneBackground(runeName: "RuneMastery")
     }
 }
 
@@ -29,6 +17,7 @@ private struct CharacterSkillsContentView: View {
 
     @State private var viewModel: SkillsViewModel
     @State private var presentedEditor: SkillEditorSheet?
+    @State private var headerHeight: CGFloat = 44
 
     init(character: RQCharacter) {
         self.character = character
@@ -68,7 +57,7 @@ private struct CharacterSkillsContentView: View {
     private var skillsList: some View {
         List {
             Color.clear
-                .frame(height: 92)
+                .frame(height: headerHeight + 16)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -118,30 +107,29 @@ private struct CharacterSkillsContentView: View {
     }
 
     private var headerOverlay: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Skills")
-                .font(.title2)
-                .bold()
-
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search skills", text: $viewModel.searchText)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay {
-                Capsule()
-                    .stroke(Color.white.opacity(0.45), lineWidth: 0.7)
-            }
-            .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
-            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("Search skills", text: $viewModel.searchText)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay {
+            Capsule()
+                .stroke(Color.white.opacity(0.45), lineWidth: 0.7)
+        }
+        .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
+        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
         .padding(.top, 8)
+        .onGeometryChange(for: CGFloat.self) { geometry in
+            geometry.size.height
+        } action: { _, newHeight in
+            headerHeight = newHeight
+        }
     }
 
     private func groupHeader(for group: SkillGroup) -> some View {

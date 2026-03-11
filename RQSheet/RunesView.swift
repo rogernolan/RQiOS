@@ -7,21 +7,12 @@ import SwiftUI
 import SwiftData
 
 struct RunesView: View {
-    @Query private var characters: [RQCharacter]
-    @State private var isEditing = false
-
-    var character: RQCharacter? {
-        characters.first
-    }
+    let character: RQCharacter
+    @Binding var isEditing: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if let character = character {
-                RunicAffinitiesPentagramView(character: character, isEditing: $isEditing)
-            } else {
-                Text("Create a character in Summary to view runic affinities.")
-                    .foregroundColor(.secondary)
-            }
+            RunicAffinitiesPentagramView(character: character, isEditing: $isEditing)
             Spacer()
         }
         .padding(16)
@@ -35,24 +26,6 @@ struct RunicAffinitiesPentagramView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .center) {
-                Text("Elemental affinities")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Button {
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        isEditing.toggle()
-                    }
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                        .font(.headline)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isEditing ? "Finish editing runes" : "Edit runes")
-            }
-
             GeometryReader { geometry in
                 let width = geometry.size.width
                 let height = geometry.size.height
@@ -128,11 +101,6 @@ struct PairedRunesSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Power Affinities")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
             ZStack {
                 Rectangle()
                     .fill(Color.secondary.opacity(0.25))

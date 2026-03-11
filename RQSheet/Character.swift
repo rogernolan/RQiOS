@@ -212,6 +212,11 @@ final class RQCharacter {
         ]
     }
 
+    var displayName: String {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedName.isEmpty ? "Unnamed Character" : trimmedName
+    }
+
     func topSummaryRunes() -> [SummaryRuneDisplay] {
         let affinities = allRuneAffinities
         if affinities.contains(where: { isSummaryDefaultAffinity($0) == false }) {

@@ -26,8 +26,8 @@ struct StatsOverviewViewTests {
 
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
 
-        #expect(source.contains("(label: \"MP\", value: viewModel.magicPointsText, hasAlertBorder: false)"))
-        #expect(source.contains("(label: \"RP\", value: viewModel.runePointsText, hasAlertBorder: false)"))
+        #expect(source.contains("(label: \"MP\", value: viewModel.magicPointsText"))
+        #expect(source.contains("(label: \"RP\", value: viewModel.runePointsText"))
         #expect(source.contains("SummaryCard(title: \"Skill Bonuses\")"))
     }
 
@@ -70,7 +70,6 @@ struct StatsOverviewViewTests {
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
         let requiredSnippets = [
             "@State private var summaryScrollOffset: CGFloat = 0",
-            "@State private var summaryHeaderHeight: CGFloat = 48",
             "private let summaryProfileCollapseDistance: CGFloat = 140",
             "let profileCollapseProgress = profileCollapseProgress(for: summaryScrollOffset)",
             "let profileReleaseOffset = profileReleaseOffset(for: summaryScrollOffset)",

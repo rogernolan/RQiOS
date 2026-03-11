@@ -2,23 +2,11 @@ import SwiftData
 import SwiftUI
 
 struct EquipmentView: View {
-    @Query private var characters: [RQCharacter]
-
-    private var character: RQCharacter? {
-        characters.first
-    }
+    let character: RQCharacter
 
     var body: some View {
-        Group {
-            if let character {
-                CharacterEquipmentContentView(character: character)
-            } else {
-                Text("Create a character in Summary to manage equipment.")
-                    .foregroundStyle(.secondary)
-                    .padding()
-            }
-        }
-        .mainRuneBackground(runeName: "RuneTrade")
+        CharacterEquipmentContentView(character: character)
+            .mainRuneBackground(runeName: "RuneTrade")
     }
 }
 
@@ -29,6 +17,7 @@ private struct CharacterEquipmentContentView: View {
 
     @State private var viewModel: EquipmentViewModel
     @State private var presentedEditor: EquipmentEditorSheet?
+    @State private var headerHeight: CGFloat = 84
 
     init(character: RQCharacter) {
         self.character = character
@@ -72,7 +61,7 @@ private struct CharacterEquipmentContentView: View {
     private var equipmentList: some View {
         List {
             Color.clear
-                .frame(height: 92)
+                .frame(height: headerHeight + 16)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -116,10 +105,6 @@ private struct CharacterEquipmentContentView: View {
     private var headerOverlay: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
-                Text("Equipment")
-                    .font(.title2)
-                    .bold()
-
                 Spacer()
 
                 Text(viewModel.headerEncumbranceText)
@@ -158,6 +143,11 @@ private struct CharacterEquipmentContentView: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
+        .onGeometryChange(for: CGFloat.self) { geometry in
+            geometry.size.height
+        } action: { _, newHeight in
+            headerHeight = newHeight
+        }
     }
 
     private var addButtonRow: some View {

@@ -8,49 +8,38 @@ import SwiftData
 
 struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var characters: [RQCharacter]
+    let character: RQCharacter
     @State private var presentedEditor: WeaponEditorSheet?
     @State private var pendingDeleteWeapon: Weapon?
     @State private var expandedWeaponIDs: Set<ObjectIdentifier> = []
     @State private var swipedWeaponID: ObjectIdentifier?
 
-    var character: RQCharacter? {
-        characters.first
-    }
-
     var body: some View {
-        Group {
-            if let character {
-                GeometryReader { geometry in
-                    VStack(alignment: .leading, spacing: 12) {
-                        let panelHeight = max(360, geometry.size.width)
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 12) {
+                let panelHeight = max(300, geometry.size.width * 0.82)
 
-                        ZStack {
-                            Image("RuneMan")
-                                .resizable()
-                                .renderingMode(.template)
-                                .scaledToFit()
-                                .foregroundStyle(Color(.systemGray3))
-                                .frame(maxWidth: .infinity)
+                ZStack(alignment: .top) {
+                    Image("RuneMan")
+                        .resizable()
+                        .renderingMode(.template)
+                        .scaledToFit()
+                        .foregroundStyle(Color(.systemGray3))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-                            hitLocationOverlay(for: character)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: panelHeight)
-
-                        combatHeader(for: character)
-                            .padding(.top, 4)
-
-                        weaponsSection(for: character)
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    hitLocationOverlay(for: character)
                 }
-            } else {
-                Text("Create a character in Summary to manage combat weapons.")
-                    .foregroundColor(.secondary)
-                    .padding()
+                .frame(maxWidth: .infinity)
+                .frame(height: panelHeight)
+
+                combatHeader(for: character)
+
+                weaponsSection(for: character)
             }
+            .padding(.top, 4)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .sheet(item: $presentedEditor) { editor in
             WeaponEditorView(
@@ -82,7 +71,7 @@ struct CombatView: View {
                         range: range,
                         isEquipped: isEquipped
                     )
-                } else if let character {
+                } else {
                     addWeapon(
                         to: character,
                         name: name,
@@ -147,7 +136,7 @@ struct CombatView: View {
 
     private func weaponsList(for character: RQCharacter) -> some View {
         ScrollView {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: 0) {
                 if character.weapons.isEmpty {
                     Text("No weapons yet")
                         .foregroundStyle(.secondary)
@@ -182,6 +171,7 @@ struct CombatView: View {
                                 }
                             )
                         }
+                        .padding(.bottom, 8)
                     }
                 }
 
@@ -253,7 +243,7 @@ struct CombatView: View {
     private func hitLocationOverlay(for character: RQCharacter) -> some View {
         GeometryReader { geo in
             let locationsByType = Dictionary(uniqueKeysWithValues: character.hitLocations.map { ($0.location, $0) })
-            let yOffset: CGFloat = 20
+            let yOffset: CGFloat = -28
             ZStack {
                 hitLocationCard(locationsByType[.head])
                     .position(x: geo.size.width * 0.50, y: (geo.size.height * 0.15) + yOffset)
@@ -410,7 +400,7 @@ struct CombatView: View {
         if swipedWeaponID == ObjectIdentifier(pendingDeleteWeapon) {
             swipedWeaponID = nil
         }
-        character?.weapons.removeAll { $0 == pendingDeleteWeapon }
+        character.weapons.removeAll { $0 == pendingDeleteWeapon }
         modelContext.delete(pendingDeleteWeapon)
         self.pendingDeleteWeapon = nil
     }

@@ -8,7 +8,8 @@ struct MagicViewTests {
         let source = try magicViewSource()
 
         #expect(source.contains("Magic placeholder") == false)
-        #expect(source.contains("Text(\"Create a character in Summary to manage magic.\")"))
+        #expect(source.contains("Text(\"Create a character in Summary to manage magic.\")") == false)
+        #expect(source.contains("CharacterMagicContentView(character: character)"))
     }
 
     @Test

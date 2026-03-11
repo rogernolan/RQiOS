@@ -2,21 +2,11 @@ import SwiftData
 import SwiftUI
 
 struct NotesView: View {
-    @Query private var characters: [RQCharacter]
-
-    private var character: RQCharacter? {
-        characters.first
-    }
+    let character: RQCharacter
 
     var body: some View {
-        Group {
-            if let character {
-                CharacterNotesContentView(character: character)
-            } else {
-                NotesEmptyStateView()
-            }
-        }
-        .mainRuneBackground(runeName: "RuneTruth")
+        CharacterNotesContentView(character: character)
+            .mainRuneBackground(runeName: "RuneTruth")
     }
 }
 
@@ -28,65 +18,35 @@ private struct CharacterNotesContentView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            NotesHeaderView()
-
-            ZStack(alignment: .topLeading) {
-                if isShowingPlaceholder {
-                    Text("Add notes")
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 17)
-                        .padding(.vertical, 20)
-                        .allowsHitTesting(false)
-                }
-
-                TextEditor(text: $character.notes)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.clear)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        ZStack(alignment: .topLeading) {
+            if isShowingPlaceholder {
+                Text("Add notes")
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 17)
+                    .padding(.vertical, 20)
+                    .allowsHitTesting(false)
             }
-            .padding(.bottom, 24)
-            .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(.quaternary.opacity(0.75), lineWidth: 1)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
+
+            TextEditor(text: $character.notes)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-}
-
-private struct NotesEmptyStateView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            NotesHeaderView()
-
-            Text("Create a character in Summary to add notes.")
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-
-            Spacer()
+        .padding(.bottom, 24)
+        .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(.quaternary.opacity(0.75), lineWidth: 1)
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-}
-
-private struct NotesHeaderView: View {
-    var body: some View {
-        Text("Notes")
-            .font(.title2)
-            .bold()
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
     }
 }
 
 #Preview {
-    NotesView()
+    NotesView(character: RQCharacter())
         .modelContainer(
             for: [
                 RQCharacter.self,
