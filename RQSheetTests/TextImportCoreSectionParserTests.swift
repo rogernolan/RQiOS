@@ -47,6 +47,35 @@ struct TextImportCoreSectionParserTests {
     }
 
     @Test
+    func parsesFullOrnstalRuneBlock() throws {
+        let result = try parseExample(named: "Ornstal")
+        let expectedRunes: [RuneName: Int] = [
+            .air: 0,
+            .fire: 80,
+            .darkness: 0,
+            .water: 30,
+            .earth: 70,
+            .moon: 0,
+            .beast: 50,
+            .man: 50,
+            .fertility: 50,
+            .death: 50,
+            .harmony: 50,
+            .disorder: 50,
+            .truth: 75,
+            .illusion: 25,
+            .stasis: 25,
+            .movement: 75,
+        ]
+
+        #expect(result.runePercentages.count == expectedRunes.count)
+
+        for (rune, percentage) in expectedRunes {
+            #expect(result.runePercentages[rune] == percentage)
+        }
+    }
+
+    @Test
     func parsesSelinaFirstCultAndAdditionalWorships() throws {
         let result = try parseExample(named: "Selina")
 
