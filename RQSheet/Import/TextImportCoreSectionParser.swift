@@ -23,6 +23,7 @@ enum TextImportCoreSectionParser {
         result.coverage.foundRunes = result.runePercentages.count
 
         if let passionsText = sections.content(for: .passions) {
+            result.characterInfo.honor = parseHonor(from: passionsText)
             result.passions = parsePassions(from: passionsText)
         }
         result.coverage.foundPassions = result.passions.count
@@ -206,8 +207,34 @@ enum TextImportCoreSectionParser {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
 
                 guard !cleanedName.isEmpty else { return nil }
+                guard cleanedName.compare("Honor", options: .caseInsensitive) != .orderedSame else {
+                    return nil
+                }
                 return ParsedPassionEntry(name: cleanedName, percentage: percentage)
             }
+    }
+
+    private static func parseHonor(from section: String) -> Int? {
+        for line in section.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            guard trimmed.isEmpty == false else { continue }
+            guard let (nameText, percentageText) = firstMatchGroups(in: trimmed, pattern: #"^(.*?)([0-9]+)%"#),
+                  let percentage = Int(percentageText)
+            else {
+                continue
+            }
+
+            let cleanedName = nameText
+                .replacingOccurrences(of: ":", with: "")
+                .replacingOccurrences(of: "?", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if cleanedName.compare("Honor", options: .caseInsensitive) == .orderedSame {
+                return percentage
+            }
+        }
+
+        return nil
     }
 
     private static func parseCults(from lines: [String]) -> [String] {

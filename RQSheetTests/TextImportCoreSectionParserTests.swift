@@ -35,7 +35,8 @@ struct TextImportCoreSectionParserTests {
         #expect(result.runePercentages[.movement] == 75)
         #expect(result.runePercentages[.stasis] == 25)
 
-        #expect(result.passions.contains(where: { $0.name == "Honor" && $0.percentage == 60 }))
+        #expect(result.characterInfo.honor == 60)
+        #expect(result.passions.contains(where: { $0.name == "Honor" && $0.percentage == 60 }) == false)
         #expect(result.passions.contains(where: { $0.name == "Love (family)" && $0.percentage == 60 }))
         #expect(result.passions.contains(where: { $0.name == "Hate (House Vralaeo)" && $0.percentage == 60 }))
         #expect(result.coverage.foundAttributes == 7)

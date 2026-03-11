@@ -35,6 +35,7 @@ struct ParsedCharacterInfo: Equatable {
     var ransom: Int?
     var cult: String?
     var worships: [String] = []
+    var honor: Int?
 }
 
 struct ParsedPassionEntry: Equatable {

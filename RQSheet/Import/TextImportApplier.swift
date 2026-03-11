@@ -19,6 +19,9 @@ enum TextImportApplier {
         if let ransom = result.characterInfo.ransom {
             character.ransom = ransom
         }
+        if let honor = result.characterInfo.honor {
+            character.ensureHonorExists().percentage = honor
+        }
 
         let worships = [result.characterInfo.cult].compactMap { $0 } + result.characterInfo.worships
         if worships.isEmpty == false {
