@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     let character: RQCharacter
+    let onOpenCharacter: (RQCharacter) -> Void
 
     var body: some View {
         ScrollView {
@@ -17,7 +18,7 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
 
-                    TextImportView(character: character)
+                    TextImportView(character: character, onOpenCharacter: onOpenCharacter)
                 }
             }
             .padding(.horizontal, 16)

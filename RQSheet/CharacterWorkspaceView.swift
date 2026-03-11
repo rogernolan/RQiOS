@@ -46,6 +46,7 @@ struct CharacterWorkspaceView: View {
     @Environment(\.dismiss) private var dismiss
 
     let character: RQCharacter
+    let onOpenCharacter: (RQCharacter) -> Void
 
     @State private var selectedTab: WorkspaceTab = .summary
     @State private var selectedExtrasDestination: ExtrasDestination?
@@ -81,7 +82,8 @@ struct CharacterWorkspaceView: View {
                         CharacterMoreTabView(
                             character: character,
                             selectedDestination: $selectedExtrasDestination,
-                            onBack: dismissWorkspace
+                            onBack: dismissWorkspace,
+                            onOpenCharacter: onOpenCharacter
                         )
                     } label: {
                         Label("More", systemImage: "ellipsis.circle")
@@ -241,6 +243,7 @@ private struct CharacterMoreTabView: View {
     let character: RQCharacter
     @Binding var selectedDestination: CharacterWorkspaceView.ExtrasDestination?
     let onBack: () -> Void
+    let onOpenCharacter: (RQCharacter) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -269,7 +272,7 @@ private struct CharacterMoreTabView: View {
         case .notes:
             NotesView(character: character)
         case .settings:
-            SettingsView(character: character)
+            SettingsView(character: character, onOpenCharacter: onOpenCharacter)
         }
     }
 }

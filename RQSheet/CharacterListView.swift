@@ -5,8 +5,9 @@ struct CharacterListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \RQCharacter.name) private var characters: [RQCharacter]
 
-    @State private var createdCharacter: RQCharacter?
     @State private var pendingDeleteCharacter: RQCharacter?
+
+    let onOpenCharacter: (RQCharacter) -> Void
 
     var body: some View {
         List {
@@ -56,9 +57,6 @@ struct CharacterListView: View {
         } message: {
             Text("This cannot be undone.")
         }
-        .navigationDestination(item: $createdCharacter) { character in
-            CharacterWorkspaceView(character: character)
-        }
     }
 
     private var isShowingDeleteConfirmation: Binding<Bool> {
@@ -73,7 +71,7 @@ struct CharacterListView: View {
     }
 
     private func createCharacter() {
-        createdCharacter = SkillSeeder.createCharacter(in: modelContext)
+        onOpenCharacter(SkillSeeder.createCharacter(in: modelContext))
     }
 
     private func confirmDelete() {
@@ -134,7 +132,7 @@ private struct CharacterListRow: View {
 
 #Preview {
     NavigationStack {
-        CharacterListView()
+        CharacterListView { _ in }
     }
     .modelContainer(
         for: [

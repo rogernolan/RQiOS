@@ -10,11 +10,17 @@ import SwiftData
 import UIKit
 
 struct ContentView: View {
+    @State private var navigationPath: [RQCharacter] = []
+
     var body: some View {
-        NavigationStack {
-            CharacterListView()
+        NavigationStack(path: $navigationPath) {
+            CharacterListView { character in
+                navigationPath = [character]
+            }
                 .navigationDestination(for: RQCharacter.self) { character in
-                    CharacterWorkspaceView(character: character)
+                    CharacterWorkspaceView(character: character) { replacement in
+                        navigationPath = [replacement]
+                    }
                 }
         }
     }

@@ -7,18 +7,10 @@ struct TextImportSkillsParserTests {
     func parsesGroupedSkillsAndFlagsCustomVariantsFromOrnstal() throws {
         let result = try parseExample(named: "Ornstal")
 
-        #expect(result.skills.contains(where: {
-            $0.name == "Boat" && $0.groupName == "agility" && $0.percentage == 10 && $0.isCustom == false
-        }))
-        #expect(result.skills.contains(where: {
-            $0.name == "Ride high llama" && $0.groupName == "agility" && $0.percentage == 10 && $0.isCustom
-        }))
-        #expect(result.skills.contains(where: {
-            $0.name == "Speak Esrolian" && $0.groupName == "communication" && $0.percentage == 60 && $0.isCustom
-        }))
-        #expect(result.skills.contains(where: {
-            $0.name == "Meditate" && $0.groupName == "magic" && $0.percentage == 0 && $0.isCustom == false
-        }))
+        #expect(containsSkill(in: result, name: "Boat", group: "agility", percentage: 10, isCustom: false))
+        #expect(containsSkill(in: result, name: "Ride high llama", group: "agility", percentage: 10, isCustom: true))
+        #expect(containsSkill(in: result, name: "Speak Esrolian", group: "communication", percentage: 60, isCustom: true))
+        #expect(containsSkill(in: result, name: "Meditate", group: "magic", percentage: 0, isCustom: false))
         #expect(result.coverage.foundSkillGroups == 7)
         #expect(result.coverage.expectedSkillGroups == 7)
         #expect(result.coverage.unsupportedSkillGroups == 0)
@@ -28,15 +20,9 @@ struct TextImportSkillsParserTests {
     func skipsPlaceholderSkillRowsButParsesFilledSpecificSkillsFromSelina() throws {
         let result = try parseExample(named: "Selina")
 
-        #expect(result.skills.contains(where: {
-            $0.name == "Speak Troll" && $0.groupName == "communication" && $0.percentage == 35 && $0.isCustom
-        }))
-        #expect(result.skills.contains(where: {
-            $0.name == "Worship Issaries" && $0.groupName == "magic" && $0.percentage == 50 && $0.isCustom
-        }))
-        #expect(result.skills.contains(where: {
-            $0.name == "Spirit combat" && $0.groupName == "magic" && $0.percentage == 45 && $0.isCustom == false
-        }))
+        #expect(containsSkill(in: result, name: "Speak Troll", group: "communication", percentage: 35, isCustom: true))
+        #expect(containsSkill(in: result, name: "Worship Issaries", group: "magic", percentage: 50, isCustom: true))
+        #expect(containsSkill(in: result, name: "Spirit combat", group: "magic", percentage: 45, isCustom: false))
         #expect(result.skills.contains(where: { $0.name.contains("Ride ____") }) == false)
         #expect(result.skills.contains(where: { $0.name == "Alchemy" }) == false)
         #expect(result.skills.contains(where: { $0.name == "Craft _____" }) == false)
@@ -66,5 +52,20 @@ struct TextImportSkillsParserTests {
         let text = try String(contentsOfFile: "/Users/rog/Desktop/TXT characters/\(name).txt", encoding: .utf8)
         let sections = try TextImportSectionDetector.detect(in: text)
         return TextImportSkillsParser.parse(sections)
+    }
+
+    private func containsSkill(
+        in result: TextImportResult,
+        name: String,
+        group: String,
+        percentage: Int,
+        isCustom: Bool
+    ) -> Bool {
+        result.skills.contains { skill in
+            skill.name == name &&
+            skill.groupName == group &&
+            skill.percentage == percentage &&
+            skill.isCustom == isCustom
+        }
     }
 }

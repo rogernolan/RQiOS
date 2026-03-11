@@ -27,7 +27,7 @@ struct CharacterWorkspaceChromeTests {
         #expect(source.contains("return \"Settings\""))
         #expect(source.contains("return \"RuneDisorder\""))
         #expect(source.contains("case .settings:"))
-        #expect(source.contains("SettingsView(character: character)"))
+        #expect(source.contains("SettingsView(character: character, onOpenCharacter: onOpenCharacter)"))
         #expect(source.contains("notchInsetFromTrailingEdge: max(28, (geometry.size.width / 10) + 18)"))
         #expect(source.contains("let notchInsetFromTrailingEdge: CGFloat"))
         #expect(source.contains("let safeNotchCenterX = min("))
@@ -54,15 +54,20 @@ struct CharacterWorkspaceChromeTests {
         let settingsSource = try settingsSource()
         let textImportSource = try textImportSource()
 
-        #expect(workspaceSource.contains("SettingsView(character: character)"))
+        #expect(workspaceSource.contains("SettingsView(character: character, onOpenCharacter: onOpenCharacter)"))
         #expect(settingsSource.contains("struct SettingsView: View"))
-        #expect(settingsSource.contains("TextImportView(character: character)"))
+        #expect(settingsSource.contains("TextImportView(character: character, onOpenCharacter: onOpenCharacter)"))
         #expect(settingsSource.contains("Text(\"Settings\")"))
         #expect(settingsSource.contains("Text(\"Import Character\")"))
         #expect(textImportSource.contains("struct TextImportView: View"))
         #expect(textImportSource.contains("@State private var rawText = \"\""))
         #expect(textImportSource.contains("TextEditor(text: $rawText)"))
+        #expect(textImportSource.contains(".frame(height: 220)"))
         #expect(textImportSource.contains("Button(\"Import\")"))
+        #expect(textImportSource.contains("runImport()"))
+        #expect(textImportSource.contains("Text(\"Import Review\")"))
+        #expect(textImportSource.contains("TextImportPipeline.parse(rawText)"))
+        #expect(textImportSource.contains("TextImportApplier.apply(result: importResult, nameOverride: nameOverride, in: modelContext)"))
     }
 
     @Test

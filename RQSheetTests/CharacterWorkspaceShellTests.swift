@@ -13,7 +13,8 @@ struct CharacterWorkspaceShellTests {
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
 
         #expect(source.contains("NavigationStack"))
-        #expect(source.contains("CharacterListView()"))
+        #expect(source.contains("CharacterListView { character in"))
         #expect(source.contains("CharacterWorkspaceView(character: character)"))
+        #expect(source.contains("navigationPath = [replacement]"))
     }
 }
