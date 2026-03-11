@@ -14,6 +14,7 @@ struct CharacterWorkspaceView: View {
         case magic
         case equipment
         case notes
+        case settings
 
         var title: String {
             switch self {
@@ -23,6 +24,8 @@ struct CharacterWorkspaceView: View {
                 return "Equipment"
             case .notes:
                 return "Notes"
+            case .settings:
+                return "Settings"
             }
         }
 
@@ -34,6 +37,8 @@ struct CharacterWorkspaceView: View {
                 return "RuneTrade"
             case .notes:
                 return "RuneTruth"
+            case .settings:
+                return "RuneDisorder"
             }
         }
     }
@@ -263,6 +268,8 @@ private struct CharacterMoreTabView: View {
             EquipmentView(character: character)
         case .notes:
             NotesView(character: character)
+        case .settings:
+            SettingsView(character: character)
         }
     }
 }
