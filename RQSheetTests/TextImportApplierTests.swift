@@ -24,7 +24,7 @@ struct TextImportApplierTests {
         let container = try ModelContainer(for: schema, configurations: [configuration])
         let context = container.mainContext
 
-        let text = try String(contentsOfFile: "/Users/rog/Desktop/TXT characters/Ornstal.txt", encoding: .utf8)
+        let text = try TextImportFixtureLoader.text(named: "Ornstal")
         let result = try TextImportPipeline.parse(text)
 
         let character = try TextImportApplier.apply(result: result, nameOverride: "Imported Ornstal", in: context)

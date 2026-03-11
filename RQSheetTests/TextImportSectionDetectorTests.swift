@@ -63,6 +63,6 @@ struct TextImportSectionDetectorTests {
     }
 
     private func exampleText(named name: String) throws -> String {
-        try String(contentsOfFile: "/Users/rog/Desktop/TXT characters/\(name).txt", encoding: .utf8)
+        try TextImportFixtureLoader.text(named: name)
     }
 }

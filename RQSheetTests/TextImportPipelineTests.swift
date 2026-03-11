@@ -5,7 +5,7 @@ import Testing
 struct TextImportPipelineTests {
     @Test
     func pipelineCombinesParserSlicesForOrnstal() throws {
-        let text = try String(contentsOfFile: "/Users/rog/Desktop/TXT characters/Ornstal.txt", encoding: .utf8)
+        let text = try TextImportFixtureLoader.text(named: "Ornstal")
 
         let result = try TextImportPipeline.parse(text)
 

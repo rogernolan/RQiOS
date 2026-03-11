@@ -117,7 +117,7 @@ struct TextImportCoreSectionParserTests {
     }
 
     private func parseExample(named name: String) throws -> TextImportResult {
-        let text = try String(contentsOfFile: "/Users/rog/Desktop/TXT characters/\(name).txt", encoding: .utf8)
+        let text = try TextImportFixtureLoader.text(named: name)
         let sections = try TextImportSectionDetector.detect(in: text)
         return TextImportCoreSectionParser.parse(sections)
     }
