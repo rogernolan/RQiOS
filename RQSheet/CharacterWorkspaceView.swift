@@ -46,7 +46,6 @@ struct CharacterWorkspaceView: View {
     @State private var selectedExtrasDestination: ExtrasDestination?
     @State private var isShowingExtrasMenu = false
     @State private var lastMainTab: WorkspaceTab = .summary
-    @State private var isEditingRunes = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -68,7 +67,7 @@ struct CharacterWorkspaceView: View {
                         tabLabel("Skills", image: "RuneMastery")
                     }
                     Tab(value: WorkspaceTab.runes) {
-                        RunesView(character: character, isEditing: $isEditingRunes)
+                        RunesView(character: character)
                     } label: {
                         tabLabel("Runes", image: "RuneInfinity")
                     }
@@ -186,18 +185,7 @@ struct CharacterWorkspaceView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Edit character details")
-        case .runes:
-            Button {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isEditingRunes.toggle()
-                }
-            } label: {
-                Image(systemName: "square.and.pencil")
-                    .font(.headline)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isEditingRunes ? "Finish editing runes" : "Edit runes")
-        case .combat, .skills, .extras:
+        case .combat, .skills, .runes, .extras:
             EmptyView()
         }
     }

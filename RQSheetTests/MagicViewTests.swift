@@ -47,6 +47,29 @@ struct MagicViewTests {
         #expect(source.contains("Text(pointsText)"))
     }
 
+    @Test
+    func magicViewUsesSharedEditableChipForMpAndRp() throws {
+        let source = try magicViewSource()
+
+        #expect(source.contains("EditableChipValue("))
+        #expect(source.contains("mode: .currentOfMax"))
+        #expect(source.contains("readOnlySuffix: \"/ \\(maxPoints)\""))
+        #expect(source.contains("mode: .singleValue"))
+        #expect(source.contains("private struct MagicPointsEditor: View"))
+        #expect(source.contains("private struct RunePointsEditor: View"))
+        #expect(source.contains(".frame(minWidth: 108)") || source.contains(".frame(width: 108)"))
+        #expect(source.contains(".frame(minWidth: 74)") || source.contains(".frame(width: 74)"))
+    }
+
+    @Test
+    func magicViewScrollsEditorsBelowSearchHeaderInsteadOfToListTop() throws {
+        let source = try magicViewSource()
+
+        #expect(source.contains("private let editorScrollAnchor = UnitPoint(x: 0.5, y: 0.16)"))
+        #expect(source.contains("proxy.scrollTo(newAnchor, anchor: editorScrollAnchor)"))
+        #expect(source.contains("proxy.scrollTo(newAnchor, anchor: .top)") == false)
+    }
+
     private func magicViewSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

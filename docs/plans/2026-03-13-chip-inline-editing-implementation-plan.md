@@ -10,6 +10,19 @@
 
 ---
 
+## Follow-up Scope
+
+This pass tightens the first chip-editing implementation:
+
+- remove the rune workspace edit toggle
+- make rune chips always individually editable
+- move the editable marker into the rune chip title row
+- hide `%` while a rune value is actively editing
+- stabilize combat HP chip width across display/edit states
+- enlarge idle MP/RP chips so text fits without clipping
+- lower the magic scroll target so edited chips stop below the search bar
+- slightly increase the elemental pentagram radius if the larger rune value region needs more clearance
+
 ### Task 1: Add shared regression coverage for the new chip behavior
 
 **Files:**
@@ -25,6 +38,10 @@
 - Assert `CombatView` uses a split-value chip for HP rather than a raw top-level `TextField`.
 - Assert `MagicView` uses shared chip editing for MP and RP.
 - Assert rune chip layout still reserves stable width/height while editing.
+- Assert rune chips are individually editable without a workspace-level edit toggle.
+- Assert the rune marker is rendered in the title row rather than as a top-trailing overlay.
+- Assert the `%` suffix is hidden while actively editing a single-value chip.
+- Assert magic chip scrolling targets a safe anchor below the search overlay.
 
 **Step 2: Run test to verify it fails**
 
@@ -83,6 +100,7 @@ Expected:
   - marker rendering
   - green animated completion button
   - integer-only input handling
+  - explicit layout hooks for marker, value, suffix, and completion width so idle/edit states can share a stable footprint
 
 **Step 4: Run test to verify it passes**
 
@@ -119,6 +137,10 @@ Expected:
 
 - Replace the rune percentage region with the shared component in `singleValue` mode.
 - Preserve current experience check, rune label, and icon placement.
+- Remove reliance on a workspace-level rune edit toggle.
+- Move the marker into the chip title row.
+- Hide `%` while the field is actively editing.
+- If needed, increase the elemental pentagram radius slightly to keep larger chips from colliding.
 - Track active editing chip at the rune screen level for keyboard-aware scrolling.
 
 **Step 4: Run test to verify it passes**
@@ -155,6 +177,7 @@ Expected:
 
 - Replace the raw HP `TextField` logic with the shared component in `currentOfMax` mode.
 - Keep current HP clamping/sync behavior intact.
+- Reserve enough chip width for both idle and editing states.
 - Add combat-screen keyboard-aware scrolling for the active chip.
 
 **Step 4: Run test to verify it passes**
@@ -192,7 +215,8 @@ Expected:
 
 - Replace `MagicPointsEditor` and `RunePointsEditor` internals with the shared component.
 - Preserve existing labels and chip chrome.
-- Add magic-screen keyboard-aware scrolling for the active chip.
+- Reserve enough idle width for `MP current/max` and `RP current`.
+- Add magic-screen keyboard-aware scrolling for the active chip using an anchor that stops below the search bar.
 
 **Step 4: Run test to verify it passes**
 

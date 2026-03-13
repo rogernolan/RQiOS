@@ -61,4 +61,19 @@ struct RuneChipLayoutMetricsTests {
                 <= RuneChipLayoutMetrics.percentageSlotWidth(for: true)
         )
     }
+
+    @Test
+    func runeEditingChromeFitsWithoutGrowingTheChip() {
+        #expect(
+            RuneChipLayoutMetrics.percentageDisplayWidth
+                + RuneChipLayoutMetrics.checkboxSlotWidth
+                <= RuneChipLayoutMetrics.chipWidth
+        )
+    }
+
+    @Test
+    func runeChipLeavesRoomForInlineMarkerAndLargerValueSlot() {
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 48)
+        #expect(RuneChipLayoutMetrics.chipWidth >= 112)
+    }
 }

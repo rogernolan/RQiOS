@@ -115,3 +115,18 @@ Add source-level regression coverage first, then implement:
 - Keyboard avoidance can become brittle if attached to the wrong view layer.
 - If edit state is modeled separately in each screen without a small shared pattern, the behavior will drift quickly.
 - Split-value chips need to keep formatting and clamping logic separate from display logic, or they will be hard to reuse cleanly.
+
+## Follow-up Adjustments
+
+After the first implementation pass, the desired behavior is narrower and more specific:
+
+- Rune chips should always be individually editable.
+- The workspace-level rune edit button should be removed entirely.
+- The editable marker should move into the chip header row near the rune title instead of overlaying the value area.
+- The `%` suffix for rune chips should not render while the value field is actively editing.
+- The combat HP chip must reserve enough width for both the full `current/max` display and the editing affordance so it does not shrink in display mode or grow in edit mode.
+- The magic MP and RP chips should reserve enough display width for their idle text, with MP sized for the `/max` suffix and RP sized for the single value.
+- If enlarging the rune value region affects pentagram layout, the elemental rune nodes should move outward by increasing the pentagram radius slightly rather than letting chip chrome collide.
+- Magic chip scrolling should stop below the fixed search bar rather than aligning the edited row to the very top of the list.
+
+These are refinements to the shared-editor approach, not a new architecture. The shared component remains the right base, but it needs more explicit layout slots so marker, value, suffix, and completion button do not compete for the same space.

@@ -175,6 +175,17 @@ struct CombatViewTests {
         #expect(source.contains(".opacity(deleteProgress == 0 ? 0 : 0.5 + (0.5 * deleteProgress))"))
     }
 
+    @Test
+    func combatViewUsesSharedEditableChipForCurrentAndMaxHitPoints() throws {
+        let source = try combatViewSource()
+
+        #expect(source.contains("EditableChipValue("))
+        #expect(source.contains("mode: .currentOfMax"))
+        #expect(source.contains("readOnlySuffix: \"/\\(character.maxHitpoints)\""))
+        #expect(source.contains("TextField(\"\", text: $currentHitpointsText)") == false)
+        #expect(source.contains(".frame(minWidth: 104)") || source.contains(".frame(width: 104)"))
+    }
+
     private func combatViewSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
