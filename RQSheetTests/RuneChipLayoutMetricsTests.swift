@@ -76,4 +76,20 @@ struct RuneChipLayoutMetricsTests {
         #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 48)
         #expect(RuneChipLayoutMetrics.chipWidth >= 112)
     }
+
+    @Test
+    func runePentagramUsesExpandedRadiusForWiderChips() {
+        #expect(RuneChipLayoutMetrics.elementalRadiusMultiplier >= 0.44)
+    }
+
+    @Test
+    func upperSideRunesShiftSlightlyHigherThanBaseRing() {
+        #expect(RuneChipLayoutMetrics.upperSideNodeVerticalOffset < .zero)
+    }
+
+    @Test
+    func idleRunePercentageWidthClearsThreeDigitDisplayWithoutClipping() {
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 52)
+        #expect(RuneChipLayoutMetrics.percentageSlotWidth(for: false) >= 69)
+    }
 }

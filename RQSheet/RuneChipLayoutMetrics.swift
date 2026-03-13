@@ -5,6 +5,8 @@ enum RuneChipLayoutMetrics {
     static let chipHeight: CGFloat = 58
     static let chipHorizontalPadding: CGFloat = 6
     static let chipVerticalPadding: CGFloat = 5
+    static let elementalRadiusMultiplier: CGFloat = 0.44
+    static let upperSideNodeVerticalOffset: CGFloat = -8
 
     static let titleSpacing: CGFloat = 4
     static let checkboxSlotWidth: CGFloat = 16
@@ -14,12 +16,12 @@ enum RuneChipLayoutMetrics {
     static let runeIconSize: CGFloat = 26
 
     static let percentageContentLeadingInset: CGFloat = 5
-    static let percentageDisplayWidth: CGFloat = 48
-    static let percentageEditorWidth: CGFloat = 48
+    static let percentageDisplayWidth: CGFloat = 52
+    static let percentageEditorWidth: CGFloat = 52
     static let percentageEditorHeight: CGFloat = 28
     static let percentageEditorHorizontalInset: CGFloat = 2
 
-    private static let sharedPercentageSlotWidth: CGFloat = 65
+    private static let sharedPercentageSlotWidth: CGFloat = 70
 
     static func percentageSlotWidth(for _: Bool) -> CGFloat {
         sharedPercentageSlotWidth

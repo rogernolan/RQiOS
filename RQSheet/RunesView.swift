@@ -51,13 +51,15 @@ struct RunicAffinitiesPentagramView: View {
                 let width = geometry.size.width
                 let height = geometry.size.height
                 let center = CGPoint(x: width / 2, y: height / 2)
-                let radius = min(width, height) * 0.41
+                let radius = min(width, height) * RuneChipLayoutMetrics.elementalRadiusMultiplier
 
                 let top = point(center: center, radius: radius, angleDegrees: -90)
                 let upperRight = point(center: center, radius: radius, angleDegrees: -18)
+                    .offsetBy(dy: RuneChipLayoutMetrics.upperSideNodeVerticalOffset)
                 let lowerRight = point(center: center, radius: radius, angleDegrees: 54)
                 let lowerLeft = point(center: center, radius: radius, angleDegrees: 126)
                 let upperLeft = point(center: center, radius: radius, angleDegrees: 198)
+                    .offsetBy(dy: RuneChipLayoutMetrics.upperSideNodeVerticalOffset)
 
                 ZStack {
                     Path { path in
@@ -141,6 +143,12 @@ struct RunicAffinitiesPentagramView: View {
             x: center.x + CGFloat(cos(radians)) * radius,
             y: center.y + CGFloat(sin(radians)) * radius
         )
+    }
+}
+
+private extension CGPoint {
+    func offsetBy(dx: CGFloat = 0, dy: CGFloat = 0) -> CGPoint {
+        CGPoint(x: x + dx, y: y + dy)
     }
 }
 
