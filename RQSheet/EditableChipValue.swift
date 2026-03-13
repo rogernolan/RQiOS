@@ -28,8 +28,17 @@ struct EditableChipValue: View {
     @FocusState private var isFieldFocused: Bool
     @State private var draftValue: String = ""
     @State private var isEditingValue = false
+    @State private var showsCompletionButton = false
+    @State private var completionButtonScale: CGFloat = 0.25
+    @State private var completionButtonOpacity: Double = 0.25
+    @State private var valueContentOffset: CGFloat = 0
 
     private let accessoryWidth: CGFloat = 18
+    private let completionButtonStartScale: CGFloat = 0.25
+    private let completionButtonOvershootScale: CGFloat = 1.1
+    private let completionButtonRestScale: CGFloat = 1
+    private let completionButtonStartOpacity: Double = 0.25
+    private let completionButtonTravel: CGFloat = 14
 
     init(
         mode: Mode,
@@ -63,33 +72,16 @@ struct EditableChipValue: View {
                 accessorySlot
             }
 
-            if isEditingValue {
-                TextField("", text: $draftValue)
-                    .font(valueFont)
-                    .monospacedDigit()
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.numberPad)
-                    .frame(minWidth: textFieldWidth)
-                    .focused($isFieldFocused)
-                    .onChange(of: draftValue) { _, newValue in
-                        applyDraft(newValue)
-                    }
-
-                suffixView(isEditing: true)
-            } else {
-                displayValue
-            }
+            editableValueContent
+                .offset(x: valueContentOffset)
 
             if markerPlacement != .inlineLeading {
                 accessorySlot
             }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            beginEditingIfEnabled()
-        }
         .onAppear {
             syncDraft()
+            resetCompletionButtonVisuals()
         }
         .onChange(of: value) { _, _ in
             guard isEditingValue == false else { return }
@@ -110,14 +102,17 @@ struct EditableChipValue: View {
     @ViewBuilder
     private var accessorySlot: some View {
         Group {
-            if isEditingValue {
+            if showsCompletionButton {
                 Button {
-                    finishEditing()
+                    completeEditingFromButton()
                 } label: {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 }
                 .buttonStyle(.plain)
+                .scaleEffect(completionButtonScale)
+                .opacity(completionButtonOpacity)
+                .allowsHitTesting(isEditingValue)
             } else if isEnabled && markerPlacement != .hidden {
                 Image(systemName: "square.and.pencil")
                     .font(.system(size: 10, weight: .semibold))
@@ -127,6 +122,32 @@ struct EditableChipValue: View {
             }
         }
         .frame(width: accessoryWidth, alignment: .center)
+    }
+
+    @ViewBuilder
+    private var editableValueContent: some View {
+        Group {
+            if isEditingValue {
+                TextField("", text: $draftValue)
+                    .font(valueFont)
+                    .monospacedDigit()
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.numberPad)
+                    .frame(minWidth: textFieldWidth)
+                    .focused($isFieldFocused)
+                    .onChange(of: draftValue) { _, newValue in
+                        applyDraft(newValue)
+                    }
+
+                suffixView(isEditing: true)
+            } else {
+                displayValue
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            beginEditingIfEnabled()
+        }
     }
 
     private var displayValue: some View {
@@ -158,11 +179,10 @@ struct EditableChipValue: View {
     }
 
     private func beginEditingIfEnabled() {
-        guard isEnabled else { return }
+        guard isEnabled, isEditingValue == false else { return }
         syncDraft()
-        withAnimation(.easeInOut(duration: 0.18)) {
-            isEditingValue = true
-        }
+        isEditingValue = true
+        showCompletionButtonAnimated()
         onBeginEditing()
         DispatchQueue.main.async {
             isFieldFocused = true
@@ -172,11 +192,14 @@ struct EditableChipValue: View {
     private func finishEditing() {
         applyDraft(draftValue)
         syncDraft()
-        withAnimation(.easeInOut(duration: 0.18)) {
-            isEditingValue = false
-        }
+        isEditingValue = false
         isFieldFocused = false
+        hideCompletionButtonAnimated()
         onEndEditing()
+    }
+
+    private func completeEditingFromButton() {
+        finishEditing()
     }
 
     private func syncDraft() {
@@ -194,5 +217,43 @@ struct EditableChipValue: View {
         } else if let parsedValue = Int(digitsOnly) {
             value = parsedValue
         }
+    }
+
+    private func showCompletionButtonAnimated() {
+        showsCompletionButton = true
+        resetCompletionButtonVisuals()
+
+        withAnimation(.spring(duration: 0.34, bounce: 0.42)) {
+            completionButtonScale = completionButtonOvershootScale
+            completionButtonOpacity = 1
+            valueContentOffset = -completionButtonTravel
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+            guard showsCompletionButton else { return }
+
+            withAnimation(.spring(duration: 0.18, bounce: 0.12)) {
+                completionButtonScale = completionButtonRestScale
+            }
+        }
+    }
+
+    private func hideCompletionButtonAnimated() {
+        withAnimation(.spring(duration: 0.24, bounce: 0.1)) {
+            completionButtonScale = completionButtonStartScale
+            completionButtonOpacity = completionButtonStartOpacity
+            valueContentOffset = 0
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            guard isEditingValue == false else { return }
+            showsCompletionButton = false
+        }
+    }
+
+    private func resetCompletionButtonVisuals() {
+        completionButtonScale = completionButtonStartScale
+        completionButtonOpacity = completionButtonStartOpacity
+        valueContentOffset = 0
     }
 }
