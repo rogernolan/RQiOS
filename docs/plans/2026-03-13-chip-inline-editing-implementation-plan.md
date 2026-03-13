@@ -23,6 +23,13 @@ This pass tightens the first chip-editing implementation:
 - lower the magic scroll target so edited chips stop below the search bar
 - slightly increase the elemental pentagram radius if the larger rune value region needs more clearance
 
+This follow-up also adds animation polish to the shared editor:
+
+- animate the completion button in with a spring overshoot from `25%` scale / `25%` opacity to `110%`, then settle at `100%`
+- animate the text field/value region left while editing to create real space for the button
+- animate the button away and the display value plus suffix back into place when editing completes
+- prevent the completion button path from triggering a second parent scroll jump
+
 ### Task 1: Add shared regression coverage for the new chip behavior
 
 **Files:**
@@ -257,6 +264,55 @@ Run:
 
 Expected:
 - Only intended chip-editing files changed.
+
+### Task 7: Add completion-button animation and no-rescroll behavior
+
+**Files:**
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/EditableChipValue.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/RunesView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/CombatView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/MagicView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/EditableChipValueTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/MagicViewTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/CombatViewTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/RuneChipLayoutMetricsTests.swift`
+
+**Step 1: Write the failing tests**
+
+- Assert `EditableChipValue` contains explicit animation hooks for:
+  - button start scale `0.25`
+  - button overshoot scale near `1.1`
+  - opacity transition from `0.25` to full
+  - animated value-offset/layout change while editing
+- Assert the completion path is distinct from generic focus loss so screens can avoid rescrolling on button tap.
+- Assert the parent screens do not directly scroll on `onEndEditing` or any completion callback.
+
+**Step 2: Run test to verify it fails**
+
+Run:
+`xcodebuild test -project /Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet.xcodeproj -scheme RQSheet -destination 'id=00006000-001810893A62801E' -only-testing:RQSheetTests/EditableChipValueTests -only-testing:RQSheetTests/MagicViewTests -only-testing:RQSheetTests/CombatViewTests -only-testing:RQSheetTests/RuneChipLayoutMetricsTests`
+
+Expected:
+- Fail because the shared editor lacks the new animation constants and completion handling.
+
+**Step 3: Write minimal implementation**
+
+- Add a dedicated animated completion-button phase in `EditableChipValue`.
+- Keep the button center fixed at its final location while scale/opacity animate.
+- Animate the value/text-field region horizontally to make space for the button.
+- Add a completion callback path that lets parent screens clear editor state without re-triggering a scroll.
+- Update the chip-owning screens only as needed to use the non-rescrolling completion callback.
+
+**Step 4: Run test to verify it passes**
+
+Run the same command and confirm the animation/source regression tests pass.
+
+**Step 5: Commit**
+
+```bash
+git add RQSheet/EditableChipValue.swift RQSheet/RunesView.swift RQSheet/CombatView.swift RQSheet/MagicView.swift RQSheetTests/EditableChipValueTests.swift RQSheetTests/MagicViewTests.swift RQSheetTests/CombatViewTests.swift RQSheetTests/RuneChipLayoutMetricsTests.swift
+git commit -m "feat: animate inline chip completion"
+```
 
 **Step 4: Commit**
 

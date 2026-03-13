@@ -130,3 +130,21 @@ After the first implementation pass, the desired behavior is narrower and more s
 - Magic chip scrolling should stop below the fixed search bar rather than aligning the edited row to the very top of the list.
 
 These are refinements to the shared-editor approach, not a new architecture. The shared component remains the right base, but it needs more explicit layout slots so marker, value, suffix, and completion button do not compete for the same space.
+
+## Animation Follow-up
+
+The completion affordance should now feel like part of the chip transition rather than a static control that appears once editing starts.
+
+- When editing begins, the numeric content should animate left to make space for the completion button.
+- The completion button should appear with its center fixed in the final resting position.
+- The button animation should start at `25%` opacity and `25%` scale, spring past the final size to roughly `110%`, then settle back to `100%`.
+- The text field should not jump; it should animate into its editing position as the button arrives.
+- When the green completion button is tapped, the keyboard should dismiss, the button should animate away, and the display text with suffix should animate back into its idle position.
+
+This behavior should be owned by `EditableChipValue` so all chip integrations stay visually consistent.
+
+## Scroll Behavior Follow-up
+
+The green completion button should finish editing locally without causing a second parent scroll jump.
+
+The parent screens should still scroll when editing begins, but they should not treat completion-button dismissal as a new “active editor selected” event. In practice this means the shared chip component needs a distinct completion path that ends editing without re-triggering the parent screen’s scroll-to-anchor behavior.
