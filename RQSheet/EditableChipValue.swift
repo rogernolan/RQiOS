@@ -80,7 +80,7 @@ struct EditableChipValue: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 4) {
+        HStack(alignment: .center, spacing: 4) {
             if markerPlacement == .inlineLeading {
                 accessorySlot
             }
@@ -142,7 +142,7 @@ struct EditableChipValue: View {
 
     @ViewBuilder
     private var editableValueContent: some View {
-        Group {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
             if isEditingValue {
                 TextField("", text: $draftValue)
                     .font(valueFont)
@@ -154,11 +154,11 @@ struct EditableChipValue: View {
                     .onChange(of: draftValue) { _, newValue in
                         applyDraft(newValue)
                     }
-
-                suffixView(isEditing: true)
             } else {
                 displayValue
             }
+
+            suffixView(isEditing: isEditingValue)
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -167,13 +167,9 @@ struct EditableChipValue: View {
     }
 
     private var displayValue: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
-            Text("\(value)")
-                .font(valueFont)
-                .monospacedDigit()
-
-            suffixView(isEditing: false)
-        }
+        Text("\(value)")
+            .font(valueFont)
+            .monospacedDigit()
     }
 
     @ViewBuilder

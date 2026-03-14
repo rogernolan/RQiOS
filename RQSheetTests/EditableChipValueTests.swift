@@ -72,6 +72,16 @@ struct EditableChipValueTests {
         #expect(source.contains("completionButtonTravel: CGFloat = 14"))
     }
 
+    @Test
+    func sharedEditableChipValueUsesTheSameVerticalTrackForDisplayAndEditing() throws {
+        let source = try editableChipValueSource()
+
+        #expect(source.contains("HStack(alignment: .center, spacing: 4)"))
+        #expect(source.contains("private var editableValueContent: some View {\n        HStack(alignment: .firstTextBaseline, spacing: 2)"))
+        #expect(source.contains("suffixView(isEditing: isEditingValue)"))
+        #expect(source.contains("private var displayValue: some View {\n        Text(\"\\\\(value)\")"))
+    }
+
     private func editableChipValueSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
