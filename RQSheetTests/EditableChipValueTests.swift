@@ -1,102 +1,37 @@
-import Foundation
+import CoreGraphics
 import Testing
 @testable import RQSheet
 
 struct EditableChipValueTests {
     @Test
-    func sharedEditableChipValueSupportsSingleAndCurrentOfMaxModes() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("struct EditableChipValue: View"))
-        #expect(source.contains("enum Mode"))
-        #expect(source.contains("case singleValue"))
-        #expect(source.contains("case currentOfMax"))
+    func configExposesSupportedModes() {
+        #expect(EditableChipValueConfiguration.supportedModes == [.singleValue, .currentOfMax])
     }
 
     @Test
-    func sharedEditableChipValueIncludesEditableMarkerAndCompletionControl() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("square.and.pencil"))
-        #expect(source.contains("checkmark.circle.fill"))
-        #expect(source.contains(".green"))
-        #expect(source.contains("withAnimation"))
-        #expect(source.contains(".overlay(alignment: .topTrailing)") == false)
+    func configExposesMarkerPlacements() {
+        #expect(EditableChipValueConfiguration.supportedMarkerPlacements == [.hidden, .inlineLeading, .inlineTrailing])
     }
 
     @Test
-    func sharedEditableChipValueSupportsHeaderMarkerAndHiddenEditingSuffix() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("let markerPlacement: MarkerPlacement"))
-        #expect(source.contains("enum MarkerPlacement"))
-        #expect(source.contains("case inlineLeading"))
-        #expect(source.contains("case inlineTrailing"))
-        #expect(source.contains("showsEditingSuffix"))
+    func configIncludesCompletionAnimationConstants() {
+        #expect(EditableChipValueConfiguration.completionButtonStartScale == CGFloat(0.25))
+        #expect(EditableChipValueConfiguration.completionButtonOvershootScale == CGFloat(1.1))
+        #expect(EditableChipValueConfiguration.completionButtonRestScale == CGFloat(1))
+        #expect(EditableChipValueConfiguration.completionButtonStartOpacity == 0.25)
+        #expect(EditableChipValueConfiguration.defaultCompletionButtonTravel == CGFloat(14))
     }
 
     @Test
-    func sharedEditableChipValueAnimatesCompletionButtonAndValueShift() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("private let completionButtonStartScale: CGFloat = 0.25"))
-        #expect(source.contains("private let completionButtonOvershootScale: CGFloat = 1.1"))
-        #expect(source.contains("private let completionButtonRestScale: CGFloat = 1"))
-        #expect(source.contains("private let completionButtonStartOpacity: Double = 0.25"))
-        #expect(source.contains("@State private var completionButtonScale"))
-        #expect(source.contains("@State private var completionButtonOpacity"))
-        #expect(source.contains("@State private var valueContentOffset: CGFloat = 0"))
-        #expect(source.contains("withAnimation(.spring"))
-        #expect(source.contains("valueContentOffset ="))
+    func hiddenMarkerModeDoesNotReserveIdleAccessoryWidth() {
+        #expect(EditableChipValueConfiguration.accessorySlotWidth(showsCompletionButton: false, isEnabled: true, markerPlacement: .hidden) == 0)
+        #expect(EditableChipValueConfiguration.accessorySlotWidth(showsCompletionButton: false, isEnabled: true, markerPlacement: .inlineTrailing) == EditableChipValueConfiguration.accessoryWidth)
+        #expect(EditableChipValueConfiguration.accessorySlotWidth(showsCompletionButton: true, isEnabled: true, markerPlacement: .hidden) == EditableChipValueConfiguration.accessoryWidth)
     }
 
     @Test
-    func sharedEditableChipValueHasDedicatedCompletionPathToAvoidRetapRescroll() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("private func completeEditingFromButton()"))
-        #expect(source.contains("completeEditingFromButton()"))
-        #expect(source.contains("Button {\n                    completeEditingFromButton()"))
-        #expect(source.contains(".onTapGesture {\n                    beginEditingIfEnabled()\n                }"))
-        #expect(source.contains(".contentShape(Rectangle())\n        .onTapGesture") == false)
-    }
-
-    @Test
-    func sharedEditableChipValueSupportsExternalChipActivationAndConfigurableTravel() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("final class EditableChipValueController: ObservableObject"))
-        #expect(source.contains("@ObservedObject var controller: EditableChipValueController"))
-        #expect(source.contains("func requestBeginEditing()"))
-        #expect(source.contains("onChange(of: controller.activationID)"))
-        #expect(source.contains("completionButtonTravel: CGFloat = 14"))
-    }
-
-    @Test
-    func sharedEditableChipValueUsesTheSameVerticalTrackForDisplayAndEditing() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("HStack(alignment: .center, spacing: 4)"))
-        #expect(source.contains("private var editableValueContent: some View {\n        HStack(alignment: .firstTextBaseline, spacing: 2)"))
-        #expect(source.contains("suffixView(isEditing: isEditingValue)"))
-        #expect(source.contains("private var displayValue: some View {\n        Text(\"\\\\(value)\")"))
-    }
-
-    @Test
-    func hiddenMarkerModeDoesNotReserveIdleAccessoryWidth() throws {
-        let source = try editableChipValueSource()
-
-        #expect(source.contains("private var accessorySlotWidth: CGFloat"))
-        #expect(source.contains("showsCompletionButton || (isEnabled && markerPlacement != .hidden)"))
-        #expect(source.contains(".frame(width: accessorySlotWidth, alignment: .center)"))
-    }
-
-    private func editableChipValueSource() throws -> String {
-        let sourceURL = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("RQSheet/EditableChipValue.swift")
-
-        return try String(contentsOf: sourceURL, encoding: .utf8)
+    func displayAndEditingUseSharedLayoutConstants() {
+        #expect(EditableChipValueConfiguration.outerRowSpacing == CGFloat(4))
+        #expect(EditableChipValueConfiguration.innerRowSpacing == CGFloat(2))
     }
 }

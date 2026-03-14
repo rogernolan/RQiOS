@@ -6,6 +6,57 @@
 import SwiftUI
 import SwiftData
 
+enum CombatViewConfiguration {
+    static let minimumPanelHeight: CGFloat = 300
+    static let panelHeightMultiplier: CGFloat = 0.82
+    static let topPadding: CGFloat = 4
+    static let horizontalPadding: CGFloat = 16
+    static let minimumBottomPadding: CGFloat = 16
+    static let hitLocationVerticalOffset: CGFloat = -28
+}
+
+enum CombatWeaponRowConfiguration {
+    static let listHorizontalPadding: CGFloat = 10
+    static let listTopPadding: CGFloat = 4
+    static let listBottomPadding: CGFloat = 8
+    static let rowSpacing: CGFloat = 5
+    static let basePercentageWidth: CGFloat = 38
+    static let experienceCheckWidth: CGFloat = 24
+    static let strikeRankWidth: CGFloat = 56
+    static let damageWidth: CGFloat = 54
+    static let disclosureSize: CGFloat = 22
+}
+
+enum CombatHitPointsConfiguration {
+    static let completionButtonTravel: CGFloat = 8
+    static let minWidth: CGFloat = 104
+}
+
+enum CombatViewFormatting {
+    static func weaponTypeText(_ weapon: Weapon) -> String {
+        weapon.type?.rawValue ?? "-"
+    }
+
+    static func weaponHPText(_ weapon: Weapon) -> String {
+        guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return "-" }
+        return "\(hpMax)/\(hpCurrent)"
+    }
+
+    static func weaponEncText(_ weapon: Weapon) -> String {
+        guard let enc = weapon.enc else { return "-" }
+        return "\(enc)"
+    }
+
+    static func weaponStrikeRankText(_ weapon: Weapon) -> String {
+        weapon.strikeRank.isEmpty ? "-" : weapon.strikeRank
+    }
+
+    static func weaponRangeText(_ weapon: Weapon) -> String? {
+        let trimmed = weapon.range.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
 struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
     let character: RQCharacter
@@ -21,7 +72,10 @@ struct CombatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        let panelHeight = max(300, geometry.size.width * 0.82)
+                        let panelHeight = max(
+                            CombatViewConfiguration.minimumPanelHeight,
+                            geometry.size.width * CombatViewConfiguration.panelHeightMultiplier
+                        )
 
                         ZStack(alignment: .top) {
                             Image("RuneMan")
@@ -40,9 +94,9 @@ struct CombatView: View {
 
                         weaponsSection(for: character)
                     }
-                    .padding(.top, 4)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, max(16, keyboard.contentInset))
+                    .padding(.top, CombatViewConfiguration.topPadding)
+                    .padding(.horizontal, CombatViewConfiguration.horizontalPadding)
+                    .padding(.bottom, max(CombatViewConfiguration.minimumBottomPadding, keyboard.contentInset))
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
                 .scrollDismissesKeyboard(.interactively)
@@ -197,9 +251,9 @@ struct CombatView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 24)
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 4)
-            .padding(.bottom, 8)
+            .padding(.horizontal, CombatWeaponRowConfiguration.listHorizontalPadding)
+            .padding(.top, CombatWeaponRowConfiguration.listTopPadding)
+            .padding(.bottom, CombatWeaponRowConfiguration.listBottomPadding)
         }
         .accessibilityIdentifier("combat.weaponsList")
         .scrollIndicators(.hidden)
@@ -236,32 +290,29 @@ struct CombatView: View {
     }
 
     private func weaponTypeText(for weapon: Weapon) -> String {
-        weapon.type?.rawValue ?? "-"
+        CombatViewFormatting.weaponTypeText(weapon)
     }
 
     private func weaponHPText(for weapon: Weapon) -> String {
-        guard let hpMax = weapon.hpMax, let hpCurrent = weapon.hpCurrent else { return "-" }
-        return "\(hpMax)/\(hpCurrent)"
+        CombatViewFormatting.weaponHPText(weapon)
     }
 
     private func weaponEncText(for weapon: Weapon) -> String {
-        guard let enc = weapon.enc else { return "-" }
-        return "\(enc)"
+        CombatViewFormatting.weaponEncText(weapon)
     }
 
     private func weaponStrikeRankText(for weapon: Weapon) -> String {
-        return weapon.strikeRank.isEmpty ? "-" : weapon.strikeRank
+        return CombatViewFormatting.weaponStrikeRankText(weapon)
     }
 
     private func weaponRangeText(for weapon: Weapon) -> String? {
-        let trimmed = weapon.range.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+        CombatViewFormatting.weaponRangeText(weapon)
     }
 
     private func hitLocationOverlay(for character: RQCharacter) -> some View {
         GeometryReader { geo in
             let locationsByType = Dictionary(uniqueKeysWithValues: character.hitLocations.map { ($0.location, $0) })
-            let yOffset: CGFloat = -28
+            let yOffset = CombatViewConfiguration.hitLocationVerticalOffset
             ZStack {
                 hitLocationCard(locationsByType[.head])
                     .position(x: geo.size.width * 0.50, y: (geo.size.height * 0.15) + yOffset)
@@ -556,7 +607,7 @@ private struct WeaponRowCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 5) {
+            HStack(spacing: CombatWeaponRowConfiguration.rowSpacing) {
                 Text(displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
@@ -566,7 +617,7 @@ private struct WeaponRowCard: View {
                 Text("\(weapon.basePercentage)%")
                     .font(.subheadline)
                     .monospacedDigit()
-                    .frame(width: 38, alignment: .trailing)
+                    .frame(width: CombatWeaponRowConfiguration.basePercentageWidth, alignment: .trailing)
 
                 Button(action: {
                     guard isActionInteractionEnabled else { return }
@@ -577,7 +628,7 @@ private struct WeaponRowCard: View {
                         .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
                 }
                 .buttonStyle(.plain)
-                .frame(width: 24, alignment: .center)
+                .frame(width: CombatWeaponRowConfiguration.experienceCheckWidth, alignment: .center)
 
                 HStack(spacing: 2) {
                     Text("SR")
@@ -590,20 +641,20 @@ private struct WeaponRowCard: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                .frame(width: 56, alignment: .leading)
+                .frame(width: CombatWeaponRowConfiguration.strikeRankWidth, alignment: .leading)
 
                 Text(weapon.damage)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .frame(width: 54, alignment: .trailing)
+                    .frame(width: CombatWeaponRowConfiguration.damageWidth, alignment: .trailing)
 
                 Button(action: {
                     guard isActionInteractionEnabled else { return }
                     onToggleExpanded()
                 }) {
                     DisclosureTriangle(isFilled: isExpanded)
-                        .frame(width: 22, height: 22)
+                        .frame(width: CombatWeaponRowConfiguration.disclosureSize, height: CombatWeaponRowConfiguration.disclosureSize)
                 }
                 .buttonStyle(.plain)
             }
@@ -722,13 +773,13 @@ private struct HitPointsCombatChip: View {
                 ),
                 readOnlySuffix: "/\(character.maxHitpoints)",
                 textFieldWidth: 24,
-                completionButtonTravel: 8,
+                completionButtonTravel: CombatHitPointsConfiguration.completionButtonTravel,
                 valueFont: .body.weight(.semibold),
                 controller: editorController,
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
-            .frame(minWidth: 104, alignment: .leading)
+            .frame(minWidth: CombatHitPointsConfiguration.minWidth, alignment: .leading)
         }
         .contentShape(Rectangle())
         .onTapGesture {

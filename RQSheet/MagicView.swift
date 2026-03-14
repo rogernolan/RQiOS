@@ -1,6 +1,20 @@
 import SwiftData
 import SwiftUI
 
+enum MagicViewConfiguration {
+    static let editorScrollAnchor = UnitPoint(x: 0.5, y: 0.16)
+    static let searchPlaceholder = "Search magic"
+    static let sectionTitles = ["Spirit Magic", "Rune Spells", "Common Rune Spells"]
+    static let deleteConfirmationTitle = "This cannot be undone"
+    static let magicPointsMinWidth: CGFloat = 108
+    static let runePointsMinWidth: CGFloat = 74
+
+    static func displayPage(for page: String) -> String {
+        let trimmed = page.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "p-" : "p\(trimmed)"
+    }
+}
+
 struct MagicView: View {
     let character: RQCharacter
 
@@ -12,7 +26,7 @@ struct MagicView: View {
 
 private struct CharacterMagicContentView: View {
     @Environment(\.modelContext) private var modelContext
-    private let editorScrollAnchor = UnitPoint(x: 0.5, y: 0.16)
+    private let editorScrollAnchor = MagicViewConfiguration.editorScrollAnchor
 
     let character: RQCharacter
 
@@ -54,7 +68,7 @@ private struct CharacterMagicContentView: View {
                 }
             }
         }
-        .alert("This cannot be undone", isPresented: isShowingDeleteAlert) {
+        .alert(MagicViewConfiguration.deleteConfirmationTitle, isPresented: isShowingDeleteAlert) {
             Button("No", role: .cancel) {
                 viewModel.cancelDelete()
             }
@@ -133,7 +147,7 @@ private struct CharacterMagicContentView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Search magic", text: $viewModel.searchText)
+            TextField(MagicViewConfiguration.searchPlaceholder, text: $viewModel.searchText)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
         }
@@ -158,7 +172,7 @@ private struct CharacterMagicContentView: View {
     private var spiritSectionHeaderRow: some View {
         sectionRow {
             SpellSectionHeader(
-                title: "Spirit Magic",
+                title: MagicViewConfiguration.sectionTitles[0],
                 subtitle: viewModel.spiritCastingPercentageText,
                 trailingControl: {
                     MagicPointsEditor(
@@ -179,7 +193,7 @@ private struct CharacterMagicContentView: View {
     private var runeSectionHeaderRow: some View {
         sectionRow {
             SpellSectionHeader(
-                title: "Rune Spells",
+                title: MagicViewConfiguration.sectionTitles[1],
                 subtitle: nil,
                 trailingControl: {
                     RunePointsEditor(
@@ -199,7 +213,7 @@ private struct CharacterMagicContentView: View {
     private var commonSectionHeaderRow: some View {
         sectionRow {
             SpellSectionHeader(
-                title: "Common Rune Spells",
+                title: MagicViewConfiguration.sectionTitles[2],
                 subtitle: nil
             ) {
                 EmptyView()
@@ -393,7 +407,7 @@ private struct MagicPointsEditor: View {
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
-            .frame(minWidth: 108, alignment: .leading)
+            .frame(minWidth: MagicViewConfiguration.magicPointsMinWidth, alignment: .leading)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -430,7 +444,7 @@ private struct RunePointsEditor: View {
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
-            .frame(minWidth: 74, alignment: .leading)
+            .frame(minWidth: MagicViewConfiguration.runePointsMinWidth, alignment: .leading)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -458,8 +472,7 @@ private struct SpellRowCard: View {
     }
 
     private var displayPage: String {
-        let trimmed = page.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "p-" : "p\(trimmed)"
+        MagicViewConfiguration.displayPage(for: page)
     }
 
     var body: some View {

@@ -1,6 +1,32 @@
 import Combine
 import SwiftUI
 
+enum EditableChipValueConfiguration {
+    static let supportedModes: [EditableChipValue.Mode] = [.singleValue, .currentOfMax]
+    static let supportedMarkerPlacements: [EditableChipValue.MarkerPlacement] = [.hidden, .inlineLeading, .inlineTrailing]
+
+    static let outerRowSpacing: CGFloat = 4
+    static let innerRowSpacing: CGFloat = 2
+    static let accessoryWidth: CGFloat = 18
+    static let completionButtonStartScale: CGFloat = 0.25
+    static let completionButtonOvershootScale: CGFloat = 1.1
+    static let completionButtonRestScale: CGFloat = 1
+    static let completionButtonStartOpacity: Double = 0.25
+    static let defaultCompletionButtonTravel: CGFloat = 14
+
+    static func accessorySlotWidth(
+        showsCompletionButton: Bool,
+        isEnabled: Bool,
+        markerPlacement: EditableChipValue.MarkerPlacement
+    ) -> CGFloat {
+        if showsCompletionButton || (isEnabled && markerPlacement != .hidden) {
+            accessoryWidth
+        } else {
+            0
+        }
+    }
+}
+
 final class EditableChipValueController: ObservableObject {
     @Published private(set) var activationID = 0
 
@@ -44,11 +70,6 @@ struct EditableChipValue: View {
     @State private var completionButtonOpacity: Double = 0.25
     @State private var valueContentOffset: CGFloat = 0
 
-    private let accessoryWidth: CGFloat = 18
-    private let completionButtonStartScale: CGFloat = 0.25
-    private let completionButtonOvershootScale: CGFloat = 1.1
-    private let completionButtonRestScale: CGFloat = 1
-    private let completionButtonStartOpacity: Double = 0.25
     init(
         mode: Mode,
         value: Binding<Int>,
@@ -80,7 +101,7 @@ struct EditableChipValue: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 4) {
+        HStack(alignment: .center, spacing: EditableChipValueConfiguration.outerRowSpacing) {
             if markerPlacement == .inlineLeading {
                 accessorySlot
             }
@@ -140,17 +161,9 @@ struct EditableChipValue: View {
         .frame(width: accessorySlotWidth, alignment: .center)
     }
 
-    private var accessorySlotWidth: CGFloat {
-        if showsCompletionButton || (isEnabled && markerPlacement != .hidden) {
-            accessoryWidth
-        } else {
-            0
-        }
-    }
-
     @ViewBuilder
     private var editableValueContent: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
+        HStack(alignment: .firstTextBaseline, spacing: EditableChipValueConfiguration.innerRowSpacing) {
             if isEditingValue {
                 TextField("", text: $draftValue)
                     .font(valueFont)
@@ -244,7 +257,7 @@ struct EditableChipValue: View {
         resetCompletionButtonVisuals()
 
         withAnimation(.spring(duration: 0.34, bounce: 0.42)) {
-            completionButtonScale = completionButtonOvershootScale
+            completionButtonScale = EditableChipValueConfiguration.completionButtonOvershootScale
             completionButtonOpacity = 1
             valueContentOffset = -completionButtonTravel
         }
@@ -253,15 +266,15 @@ struct EditableChipValue: View {
             guard showsCompletionButton else { return }
 
             withAnimation(.spring(duration: 0.18, bounce: 0.12)) {
-                completionButtonScale = completionButtonRestScale
+                completionButtonScale = EditableChipValueConfiguration.completionButtonRestScale
             }
         }
     }
 
     private func hideCompletionButtonAnimated() {
         withAnimation(.spring(duration: 0.24, bounce: 0.1)) {
-            completionButtonScale = completionButtonStartScale
-            completionButtonOpacity = completionButtonStartOpacity
+            completionButtonScale = EditableChipValueConfiguration.completionButtonStartScale
+            completionButtonOpacity = EditableChipValueConfiguration.completionButtonStartOpacity
             valueContentOffset = 0
         }
 
@@ -272,8 +285,16 @@ struct EditableChipValue: View {
     }
 
     private func resetCompletionButtonVisuals() {
-        completionButtonScale = completionButtonStartScale
-        completionButtonOpacity = completionButtonStartOpacity
+        completionButtonScale = EditableChipValueConfiguration.completionButtonStartScale
+        completionButtonOpacity = EditableChipValueConfiguration.completionButtonStartOpacity
         valueContentOffset = 0
+    }
+
+    private var accessorySlotWidth: CGFloat {
+        EditableChipValueConfiguration.accessorySlotWidth(
+            showsCompletionButton: showsCompletionButton,
+            isEnabled: isEnabled,
+            markerPlacement: markerPlacement
+        )
     }
 }

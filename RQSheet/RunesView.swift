@@ -6,6 +6,12 @@
 import SwiftUI
 import SwiftData
 
+enum RuneViewConfiguration {
+    static let horizontalPadding: CGFloat = 16
+    static let topPadding: CGFloat = 8
+    static let scrollAnchor: UnitPoint = .center
+}
+
 struct RunesView: View {
     let character: RQCharacter
     @StateObject private var keyboard = KeyboardHeightObserver()
@@ -20,8 +26,8 @@ struct RunesView: View {
                         activeEditorAnchor: $activeEditorAnchor
                     )
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.horizontal, RuneViewConfiguration.horizontalPadding)
+                .padding(.top, RuneViewConfiguration.topPadding)
                 .padding(.bottom, keyboard.contentInset)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -29,7 +35,7 @@ struct RunesView: View {
             .onChange(of: activeEditorAnchor) { _, newAnchor in
                 guard let newAnchor else { return }
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    proxy.scrollTo(newAnchor, anchor: .center)
+                    proxy.scrollTo(newAnchor, anchor: RuneViewConfiguration.scrollAnchor)
                 }
             }
         }

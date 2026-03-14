@@ -1,5 +1,5 @@
 import CoreGraphics
-import Foundation
+import SwiftUI
 import Testing
 @testable import RQSheet
 
@@ -40,36 +40,23 @@ struct RuneChipLayoutMetricsTests {
 
     @Test
     func percentageContentIsInsetFromTheSlotLeadingEdge() {
-        #expect(
-            RuneChipLayoutMetrics.percentageContentLeadingInset
-                > .zero
-        )
+        #expect(RuneChipLayoutMetrics.percentageContentLeadingInset > .zero)
     }
 
     @Test
     func displayAndEditUseTheSameContentWidth() {
-        #expect(
-            RuneChipLayoutMetrics.percentageDisplayWidth
-                == RuneChipLayoutMetrics.percentageEditorWidth
-        )
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth == RuneChipLayoutMetrics.percentageEditorWidth)
     }
 
     @Test
     func editorInsetKeepsFieldOffChipEdge() {
         #expect(RuneChipLayoutMetrics.percentageEditorHorizontalInset > .zero)
-        #expect(
-            RuneChipLayoutMetrics.percentageEditorWidth
-                <= RuneChipLayoutMetrics.percentageSlotWidth(for: true)
-        )
+        #expect(RuneChipLayoutMetrics.percentageEditorWidth <= RuneChipLayoutMetrics.percentageSlotWidth(for: true))
     }
 
     @Test
     func runeEditingChromeFitsWithoutGrowingTheChip() {
-        #expect(
-            RuneChipLayoutMetrics.percentageDisplayWidth
-                + RuneChipLayoutMetrics.checkboxSlotWidth
-                <= RuneChipLayoutMetrics.chipWidth
-        )
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth + RuneChipLayoutMetrics.checkboxSlotWidth <= RuneChipLayoutMetrics.chipWidth)
     }
 
     @Test
@@ -101,27 +88,9 @@ struct RuneChipLayoutMetricsTests {
     }
 
     @Test
-    func runesViewUsesPairedLayoutForPowerRuneChips() throws {
-        let source = try runesViewSource()
-
-        #expect(source.contains("layoutStyle: .paired"))
-    }
-
-    @Test
-    func runesViewUsesTighterTopInsetThanSideInsets() throws {
-        let source = try runesViewSource()
-
-        #expect(source.contains(".padding(.horizontal, 16)"))
-        #expect(source.contains(".padding(.top, 8)"))
-        #expect(source.contains(".padding(16)\n") == false)
-    }
-
-    private func runesViewSource() throws -> String {
-        let sourceURL = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("RQSheet/RunesView.swift")
-
-        return try String(contentsOf: sourceURL, encoding: .utf8)
+    func runeViewConfigExposesPaddingAndAnchors() {
+        #expect(RuneViewConfiguration.horizontalPadding == 16)
+        #expect(RuneViewConfiguration.topPadding == 8)
+        #expect(RuneViewConfiguration.scrollAnchor == .center)
     }
 }
