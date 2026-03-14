@@ -20,7 +20,8 @@ struct RunesView: View {
                         activeEditorAnchor: $activeEditorAnchor
                     )
                 }
-                .padding(16)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, keyboard.contentInset)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

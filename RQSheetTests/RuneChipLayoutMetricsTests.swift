@@ -107,6 +107,15 @@ struct RuneChipLayoutMetricsTests {
         #expect(source.contains("layoutStyle: .paired"))
     }
 
+    @Test
+    func runesViewUsesTighterTopInsetThanSideInsets() throws {
+        let source = try runesViewSource()
+
+        #expect(source.contains(".padding(.horizontal, 16)"))
+        #expect(source.contains(".padding(.top, 8)"))
+        #expect(source.contains(".padding(16)\n") == false)
+    }
+
     private func runesViewSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
