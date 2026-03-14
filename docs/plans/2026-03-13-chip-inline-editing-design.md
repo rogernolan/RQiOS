@@ -148,3 +148,13 @@ This behavior should be owned by `EditableChipValue` so all chip integrations st
 The green completion button should finish editing locally without causing a second parent scroll jump.
 
 The parent screens should still scroll when editing begins, but they should not treat completion-button dismissal as a new “active editor selected” event. In practice this means the shared chip component needs a distinct completion path that ends editing without re-triggering the parent screen’s scroll-to-anchor behavior.
+
+## Hit Target And Sizing Follow-up
+
+The editor is now behaving correctly overall, but a few integration issues remain:
+
+- the lower paired rune chips such as `Man` and `Fertility` need more horizontal room than the elemental chips
+- the full visible chip, not just the numeric subview, should be tappable to begin editing
+- the combat HP chip should use a shorter edit-travel distance than the larger rune and magic chips so it does not feel bloated in edit mode
+
+These should stay local to the chip families that need them. The shared editor remains the right place for the animation and input behavior, but outer chip containers should own full-chip hit testing, and the rune layout metrics should support a wider paired-chip variant instead of widening all rune chips globally.

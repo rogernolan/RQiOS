@@ -30,6 +30,12 @@ This follow-up also adds animation polish to the shared editor:
 - animate the button away and the display value plus suffix back into place when editing completes
 - prevent the completion button path from triggering a second parent scroll jump
 
+This follow-up also fixes integration gaps:
+
+- widen the lower paired rune chips and their idle value slot so `Man`, `Fertility`, and similar chips do not truncate idle values
+- make the full visible chip tappable for `Runes`, `HP`, `MP`, and `RP`
+- give combat HP a shorter edit-travel distance than rune/magic chips so it does not look too wide in edit mode
+
 ### Task 1: Add shared regression coverage for the new chip behavior
 
 **Files:**
@@ -312,6 +318,53 @@ Run the same command and confirm the animation/source regression tests pass.
 ```bash
 git add RQSheet/EditableChipValue.swift RQSheet/RunesView.swift RQSheet/CombatView.swift RQSheet/MagicView.swift RQSheetTests/EditableChipValueTests.swift RQSheetTests/MagicViewTests.swift RQSheetTests/CombatViewTests.swift RQSheetTests/RuneChipLayoutMetricsTests.swift
 git commit -m "feat: animate inline chip completion"
+```
+
+### Task 8: Widen paired rune chips and move tap ownership to chip containers
+
+**Files:**
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/RuneChipLayoutMetrics.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/RunesView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/CombatView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/MagicView.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet/EditableChipValue.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/RuneChipLayoutMetricsTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/EditableChipValueTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/CombatViewTests.swift`
+- Modify: `/Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheetTests/MagicViewTests.swift`
+
+**Step 1: Write the failing tests**
+
+- Assert rune metrics expose a wider paired-chip width and slot than the elemental chips.
+- Assert `RunesView` uses the wider paired-chip layout for the lower/power rune set.
+- Assert outer chip containers own tap-to-edit by exposing a chip-level tap callback rather than relying only on the inner editor tap target.
+- Assert `EditableChipValue` supports configurable edit travel.
+- Assert combat HP uses a shorter edit travel than the shared default.
+
+**Step 2: Run test to verify it fails**
+
+Run:
+`xcodebuild test -project /Users/rog/Development/RQSheet/.worktrees/codex-chip-editing/RQSheet.xcodeproj -scheme RQSheet -destination 'platform=macOS,arch=arm64,variant=Designed for [iPad,iPhone],id=00006000-001810893A62801E' -only-testing:RQSheetTests/RuneChipLayoutMetricsTests -only-testing:RQSheetTests/EditableChipValueTests -only-testing:RQSheetTests/CombatViewTests -only-testing:RQSheetTests/MagicViewTests`
+
+Expected:
+- Fail because the new paired-chip metrics, chip-level tap hooks, and compact HP travel do not exist yet.
+
+**Step 3: Write minimal implementation**
+
+- Add wider paired-rune chip metrics and use them for the lower/power rune chip family.
+- Move chip tap handling to the outer containers for rune, HP, MP, and RP integrations.
+- Add configurable edit travel to `EditableChipValue`.
+- Apply a shorter travel distance to the combat HP chip.
+
+**Step 4: Run test to verify it passes**
+
+Run the same command and confirm the focused tests pass.
+
+**Step 5: Commit**
+
+```bash
+git add RQSheet/RuneChipLayoutMetrics.swift RQSheet/RunesView.swift RQSheet/CombatView.swift RQSheet/MagicView.swift RQSheet/EditableChipValue.swift RQSheetTests/RuneChipLayoutMetricsTests.swift RQSheetTests/EditableChipValueTests.swift RQSheetTests/CombatViewTests.swift RQSheetTests/MagicViewTests.swift
+git commit -m "fix: refine chip tap targets and sizing"
 ```
 
 **Step 4: Commit**
