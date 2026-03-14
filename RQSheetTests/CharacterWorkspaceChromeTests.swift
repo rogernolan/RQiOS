@@ -77,6 +77,9 @@ struct CharacterWorkspaceChromeTests {
         #expect(source.contains("Text(currentTitle)"))
         #expect(source.contains("\"New character\""))
         #expect(source.contains("\"Rune affinities\""))
+        #expect(source.contains("case .runes:\n            Button {") == false)
+        #expect(source.contains("isEditingRunes.toggle()") == false)
+        #expect(source.contains("Finish editing runes") == false)
     }
 
     private func workspaceSource() throws -> String {

@@ -12,12 +12,15 @@ struct MagicView: View {
 
 private struct CharacterMagicContentView: View {
     @Environment(\.modelContext) private var modelContext
+    private let editorScrollAnchor = UnitPoint(x: 0.5, y: 0.16)
 
     let character: RQCharacter
 
+    @StateObject private var keyboard = KeyboardHeightObserver()
     @State private var viewModel: MagicViewModel
     @State private var presentedEditor: SpellEditorSheet?
     @State private var headerHeight: CGFloat = 44
+    @State private var activeEditorAnchor: MagicEditorAnchor?
 
     init(character: RQCharacter) {
         self.character = character
@@ -25,9 +28,17 @@ private struct CharacterMagicContentView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            spellList
-            headerOverlay
+        ScrollViewReader { proxy in
+            ZStack(alignment: .top) {
+                spellList
+                headerOverlay
+            }
+            .onChange(of: activeEditorAnchor) { _, newAnchor in
+                guard let newAnchor else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    proxy.scrollTo(newAnchor, anchor: editorScrollAnchor)
+                }
+            }
         }
         .sheet(item: $presentedEditor) { editor in
             SpellEditorView(
@@ -111,7 +122,11 @@ private struct CharacterMagicContentView: View {
         .scrollContentBackground(.hidden)
         .background(Color.clear)
         .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .ignoresSafeArea(edges: .bottom)
+        .safeAreaInset(edge: .bottom) {
+            Color.clear.frame(height: keyboard.contentInset)
+        }
     }
 
     private var headerOverlay: some View {
@@ -151,11 +166,14 @@ private struct CharacterMagicContentView: View {
                             get: { character.currentMagicPoints },
                             set: { viewModel.updateCurrentMagicPoints($0) }
                         ),
-                        maxPoints: character.maxMagicPoints
+                        maxPoints: character.maxMagicPoints,
+                        onBeginEditing: { activeEditorAnchor = .spiritMagic },
+                        onEndEditing: { activeEditorAnchor = nil }
                     )
                 }
             )
         }
+        .id(MagicEditorAnchor.spiritMagic)
     }
 
     private var runeSectionHeaderRow: some View {
@@ -168,11 +186,14 @@ private struct CharacterMagicContentView: View {
                         value: Binding(
                             get: { character.runePoints },
                             set: { viewModel.updateRunePoints($0) }
-                        )
+                        ),
+                        onBeginEditing: { activeEditorAnchor = .runeSpells },
+                        onEndEditing: { activeEditorAnchor = nil }
                     )
                 }
             )
         }
+        .id(MagicEditorAnchor.runeSpells)
     }
 
     private var commonSectionHeaderRow: some View {
@@ -272,6 +293,11 @@ private struct CharacterMagicContentView: View {
     }
 }
 
+private enum MagicEditorAnchor: String, Hashable {
+    case spiritMagic
+    case runeSpells
+}
+
 private struct SpellEditorSheet: Identifiable {
     let id: UUID
     let spell: CharacterSpell?
@@ -347,6 +373,9 @@ private struct SpellSectionHeader<TrailingControl: View>: View {
 private struct MagicPointsEditor: View {
     @Binding var current: Int
     let maxPoints: Int
+    let onBeginEditing: () -> Void
+    let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         HStack(spacing: 6) {
@@ -354,16 +383,17 @@ private struct MagicPointsEditor: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("", value: $current, format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
-                .frame(width: 30)
-
-            Text("/ \(maxPoints)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
+            EditableChipValue(
+                mode: .currentOfMax,
+                value: $current,
+                readOnlySuffix: "/ \(maxPoints)",
+                textFieldWidth: 24,
+                valueFont: .caption.weight(.semibold),
+                controller: editorController,
+                onBeginEditing: onBeginEditing,
+                onEndEditing: onEndEditing
+            )
+            .frame(minWidth: 108, alignment: .leading)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -372,11 +402,18 @@ private struct MagicPointsEditor: View {
             Capsule()
                 .stroke(.quaternary, lineWidth: 1)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
+        }
     }
 }
 
 private struct RunePointsEditor: View {
     @Binding var value: Int
+    let onBeginEditing: () -> Void
+    let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         HStack(spacing: 6) {
@@ -384,11 +421,16 @@ private struct RunePointsEditor: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
 
-            TextField("", value: $value, format: .number)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .monospacedDigit()
-                .frame(width: 30)
+            EditableChipValue(
+                mode: .singleValue,
+                value: $value,
+                textFieldWidth: 24,
+                valueFont: .caption.weight(.semibold),
+                controller: editorController,
+                onBeginEditing: onBeginEditing,
+                onEndEditing: onEndEditing
+            )
+            .frame(minWidth: 74, alignment: .leading)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -396,6 +438,10 @@ private struct RunePointsEditor: View {
         .overlay {
             Capsule()
                 .stroke(.quaternary, lineWidth: 1)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
         }
     }
 }

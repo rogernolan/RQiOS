@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import Testing
 @testable import RQSheet
 
@@ -60,5 +61,67 @@ struct RuneChipLayoutMetricsTests {
             RuneChipLayoutMetrics.percentageEditorWidth
                 <= RuneChipLayoutMetrics.percentageSlotWidth(for: true)
         )
+    }
+
+    @Test
+    func runeEditingChromeFitsWithoutGrowingTheChip() {
+        #expect(
+            RuneChipLayoutMetrics.percentageDisplayWidth
+                + RuneChipLayoutMetrics.checkboxSlotWidth
+                <= RuneChipLayoutMetrics.chipWidth
+        )
+    }
+
+    @Test
+    func runeChipLeavesRoomForInlineMarkerAndLargerValueSlot() {
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 48)
+        #expect(RuneChipLayoutMetrics.chipWidth >= 112)
+    }
+
+    @Test
+    func runePentagramUsesExpandedRadiusForWiderChips() {
+        #expect(RuneChipLayoutMetrics.elementalRadiusMultiplier >= 0.44)
+    }
+
+    @Test
+    func upperSideRunesShiftSlightlyHigherThanBaseRing() {
+        #expect(RuneChipLayoutMetrics.upperSideNodeVerticalOffset < .zero)
+    }
+
+    @Test
+    func idleRunePercentageWidthClearsThreeDigitDisplayWithoutClipping() {
+        #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 52)
+        #expect(RuneChipLayoutMetrics.percentageSlotWidth(for: false) >= 69)
+    }
+
+    @Test
+    func pairedPowerRuneChipsReserveMoreWidthThanElementalChips() {
+        #expect(RuneChipLayoutMetrics.pairedChipWidth > RuneChipLayoutMetrics.chipWidth)
+        #expect(RuneChipLayoutMetrics.pairedPercentageSlotWidth(for: false) > RuneChipLayoutMetrics.percentageSlotWidth(for: false))
+    }
+
+    @Test
+    func runesViewUsesPairedLayoutForPowerRuneChips() throws {
+        let source = try runesViewSource()
+
+        #expect(source.contains("layoutStyle: .paired"))
+    }
+
+    @Test
+    func runesViewUsesTighterTopInsetThanSideInsets() throws {
+        let source = try runesViewSource()
+
+        #expect(source.contains(".padding(.horizontal, 16)"))
+        #expect(source.contains(".padding(.top, 8)"))
+        #expect(source.contains(".padding(16)\n") == false)
+    }
+
+    private func runesViewSource() throws -> String {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("RQSheet/RunesView.swift")
+
+        return try String(contentsOf: sourceURL, encoding: .utf8)
     }
 }

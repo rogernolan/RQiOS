@@ -9,37 +9,50 @@ import SwiftData
 struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
     let character: RQCharacter
+    @StateObject private var keyboard = KeyboardHeightObserver()
     @State private var presentedEditor: WeaponEditorSheet?
     @State private var pendingDeleteWeapon: Weapon?
     @State private var expandedWeaponIDs: Set<ObjectIdentifier> = []
     @State private var swipedWeaponID: ObjectIdentifier?
+    @State private var isEditingHitPoints = false
 
     var body: some View {
         GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 12) {
-                let panelHeight = max(300, geometry.size.width * 0.82)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        let panelHeight = max(300, geometry.size.width * 0.82)
 
-                ZStack(alignment: .top) {
-                    Image("RuneMan")
-                        .resizable()
-                        .renderingMode(.template)
-                        .scaledToFit()
-                        .foregroundStyle(Color(.systemGray3))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        ZStack(alignment: .top) {
+                            Image("RuneMan")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .foregroundStyle(Color(.systemGray3))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-                    hitLocationOverlay(for: character)
+                            hitLocationOverlay(for: character)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: panelHeight)
+
+                        combatHeader(for: character)
+
+                        weaponsSection(for: character)
+                    }
+                    .padding(.top, 4)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, max(16, keyboard.contentInset))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: panelHeight)
-
-                combatHeader(for: character)
-
-                weaponsSection(for: character)
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: isEditingHitPoints) { _, isEditing in
+                    guard isEditing else { return }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(CombatEditorAnchor.hitPoints, anchor: .center)
+                    }
+                }
             }
-            .padding(.top, 4)
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .sheet(item: $presentedEditor) { editor in
             WeaponEditorView(
@@ -121,7 +134,12 @@ struct CombatView: View {
 
     private func combatHeader(for character: RQCharacter) -> some View {
         HStack(alignment: .center, spacing: 12) {
-            HitPointsCombatChip(character: character)
+            HitPointsCombatChip(
+                character: character,
+                onBeginEditing: { isEditingHitPoints = true },
+                onEndEditing: { isEditingHitPoints = false }
+            )
+            .id(CombatEditorAnchor.hitPoints)
 
             Spacer(minLength: 0)
 
@@ -444,6 +462,10 @@ struct CombatView: View {
     }
 }
 
+private enum CombatEditorAnchor: String, Hashable {
+    case hitPoints
+}
+
 private struct WeaponRowCard: View {
     private let weaponDetailRowHeight: CGFloat = 34
     private let weaponDetailVerticalSpacing: CGFloat = 8
@@ -686,54 +708,31 @@ private struct CombatHeaderChip: View {
 
 private struct HitPointsCombatChip: View {
     let character: RQCharacter
-    @State private var currentHitpointsText: String = ""
+    let onBeginEditing: () -> Void
+    let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         CombatHeaderChip(label: "HP") {
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                TextField("", text: $currentHitpointsText)
-                    .font(.body.weight(.semibold))
-                    .monospacedDigit()
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.numberPad)
-                    .frame(minWidth: 28)
-                    .onChange(of: currentHitpointsText) { _, newValue in
-                        applyHitPointInput(newValue)
-                    }
-
-                Text("/\(character.maxHitpoints)")
-                    .font(.body.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-            }
+            EditableChipValue(
+                mode: .currentOfMax,
+                value: Binding(
+                    get: { character.currentHitpoints },
+                    set: { character.currentHitpoints = $0 }
+                ),
+                readOnlySuffix: "/\(character.maxHitpoints)",
+                textFieldWidth: 24,
+                completionButtonTravel: 8,
+                valueFont: .body.weight(.semibold),
+                controller: editorController,
+                onBeginEditing: onBeginEditing,
+                onEndEditing: onEndEditing
+            )
+            .frame(minWidth: 104, alignment: .leading)
         }
-        .onAppear {
-            syncCurrentHitpointsText()
-        }
-        .onChange(of: character.currentHitpoints) { _, _ in
-            syncCurrentHitpointsText()
-        }
-        .onChange(of: character.maxHitpoints) { _, _ in
-            syncCurrentHitpointsText()
-        }
-    }
-
-    private func applyHitPointInput(_ input: String) {
-        let digits = input.filter(\.isNumber)
-        if digits != input {
-            currentHitpointsText = digits
-            return
-        }
-
-        guard let value = Int(digits) else { return }
-        character.currentHitpoints = value
-        syncCurrentHitpointsText()
-    }
-
-    private func syncCurrentHitpointsText() {
-        let clamped = String(character.currentHitpoints)
-        if currentHitpointsText != clamped {
-            currentHitpointsText = clamped
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
         }
     }
 }
