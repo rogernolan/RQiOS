@@ -82,6 +82,15 @@ struct EditableChipValueTests {
         #expect(source.contains("private var displayValue: some View {\n        Text(\"\\\\(value)\")"))
     }
 
+    @Test
+    func hiddenMarkerModeDoesNotReserveIdleAccessoryWidth() throws {
+        let source = try editableChipValueSource()
+
+        #expect(source.contains("private var accessorySlotWidth: CGFloat"))
+        #expect(source.contains("showsCompletionButton || (isEnabled && markerPlacement != .hidden)"))
+        #expect(source.contains(".frame(width: accessorySlotWidth, alignment: .center)"))
+    }
+
     private func editableChipValueSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

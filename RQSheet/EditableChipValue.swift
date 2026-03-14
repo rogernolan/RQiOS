@@ -137,7 +137,15 @@ struct EditableChipValue: View {
                 Color.clear
             }
         }
-        .frame(width: accessoryWidth, alignment: .center)
+        .frame(width: accessorySlotWidth, alignment: .center)
+    }
+
+    private var accessorySlotWidth: CGFloat {
+        if showsCompletionButton || (isEnabled && markerPlacement != .hidden) {
+            accessoryWidth
+        } else {
+            0
+        }
     }
 
     @ViewBuilder
