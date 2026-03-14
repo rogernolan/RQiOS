@@ -375,6 +375,7 @@ private struct MagicPointsEditor: View {
     let maxPoints: Int
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         HStack(spacing: 6) {
@@ -388,6 +389,7 @@ private struct MagicPointsEditor: View {
                 readOnlySuffix: "/ \(maxPoints)",
                 textFieldWidth: 24,
                 valueFont: .caption.weight(.semibold),
+                controller: editorController,
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
@@ -400,6 +402,10 @@ private struct MagicPointsEditor: View {
             Capsule()
                 .stroke(.quaternary, lineWidth: 1)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
+        }
     }
 }
 
@@ -407,6 +413,7 @@ private struct RunePointsEditor: View {
     @Binding var value: Int
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         HStack(spacing: 6) {
@@ -419,6 +426,7 @@ private struct RunePointsEditor: View {
                 value: $value,
                 textFieldWidth: 24,
                 valueFont: .caption.weight(.semibold),
+                controller: editorController,
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
@@ -430,6 +438,10 @@ private struct RunePointsEditor: View {
         .overlay {
             Capsule()
                 .stroke(.quaternary, lineWidth: 1)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
         }
     }
 }

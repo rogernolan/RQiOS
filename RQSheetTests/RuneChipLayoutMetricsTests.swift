@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import Testing
 @testable import RQSheet
 
@@ -91,5 +92,27 @@ struct RuneChipLayoutMetricsTests {
     func idleRunePercentageWidthClearsThreeDigitDisplayWithoutClipping() {
         #expect(RuneChipLayoutMetrics.percentageDisplayWidth >= 52)
         #expect(RuneChipLayoutMetrics.percentageSlotWidth(for: false) >= 69)
+    }
+
+    @Test
+    func pairedPowerRuneChipsReserveMoreWidthThanElementalChips() {
+        #expect(RuneChipLayoutMetrics.pairedChipWidth > RuneChipLayoutMetrics.chipWidth)
+        #expect(RuneChipLayoutMetrics.pairedPercentageSlotWidth(for: false) > RuneChipLayoutMetrics.percentageSlotWidth(for: false))
+    }
+
+    @Test
+    func runesViewUsesPairedLayoutForPowerRuneChips() throws {
+        let source = try runesViewSource()
+
+        #expect(source.contains("layoutStyle: .paired"))
+    }
+
+    private func runesViewSource() throws -> String {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("RQSheet/RunesView.swift")
+
+        return try String(contentsOf: sourceURL, encoding: .utf8)
     }
 }

@@ -182,6 +182,10 @@ struct CombatViewTests {
         #expect(source.contains("EditableChipValue("))
         #expect(source.contains("mode: .currentOfMax"))
         #expect(source.contains("readOnlySuffix: \"/\\(character.maxHitpoints)\""))
+        #expect(source.contains("completionButtonTravel: 8"))
+        #expect(source.contains("@StateObject private var editorController = EditableChipValueController()"))
+        #expect(source.contains(".contentShape(Rectangle())"))
+        #expect(source.contains(".onTapGesture {\n            editorController.requestBeginEditing()\n        }"))
         #expect(source.contains("TextField(\"\", text: $currentHitpointsText)") == false)
         #expect(source.contains(".frame(minWidth: 104)") || source.contains(".frame(width: 104)"))
     }

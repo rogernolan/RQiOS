@@ -61,6 +61,17 @@ struct EditableChipValueTests {
         #expect(source.contains(".contentShape(Rectangle())\n        .onTapGesture") == false)
     }
 
+    @Test
+    func sharedEditableChipValueSupportsExternalChipActivationAndConfigurableTravel() throws {
+        let source = try editableChipValueSource()
+
+        #expect(source.contains("final class EditableChipValueController: ObservableObject"))
+        #expect(source.contains("@ObservedObject var controller: EditableChipValueController"))
+        #expect(source.contains("func requestBeginEditing()"))
+        #expect(source.contains("onChange(of: controller.activationID)"))
+        #expect(source.contains("completionButtonTravel: CGFloat = 14"))
+    }
+
     private func editableChipValueSource() throws -> String {
         let sourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

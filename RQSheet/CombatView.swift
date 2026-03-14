@@ -710,6 +710,7 @@ private struct HitPointsCombatChip: View {
     let character: RQCharacter
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         CombatHeaderChip(label: "HP") {
@@ -721,11 +722,17 @@ private struct HitPointsCombatChip: View {
                 ),
                 readOnlySuffix: "/\(character.maxHitpoints)",
                 textFieldWidth: 24,
+                completionButtonTravel: 8,
                 valueFont: .body.weight(.semibold),
+                controller: editorController,
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
             .frame(minWidth: 104, alignment: .leading)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
         }
     }
 }

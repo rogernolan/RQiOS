@@ -85,6 +85,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.fireAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -92,6 +93,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.darknessAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -99,6 +101,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.earthAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -106,6 +109,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.waterAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -113,6 +117,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.airAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -120,6 +125,7 @@ struct RunicAffinitiesPentagramView: View {
 
                     RunicAffinityNodeView(
                         rune: character.moonAffinity,
+                        layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -166,6 +172,7 @@ struct PairedRunesSectionView: View {
                 VStack(spacing: 8) {
                     RunicAffinityNodeView(
                         rune: character.manAffinity,
+                        layoutStyle: .paired,
                         onBeginEditing: { activeEditorAnchor = .power },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -194,6 +201,7 @@ struct PairedRunesSectionView: View {
 
                     RunicAffinityNodeView(
                         rune: character.beastAffinity,
+                        layoutStyle: .paired,
                         onBeginEditing: { activeEditorAnchor = .power },
                         onEndEditing: { activeEditorAnchor = nil }
                     )
@@ -213,6 +221,7 @@ struct PairRuneRowView: View {
         HStack(spacing: 0) {
             RunicAffinityNodeView(
                 rune: leftRune,
+                layoutStyle: .paired,
                 onBeginEditing: { activeEditorAnchor = .power },
                 onEndEditing: { activeEditorAnchor = nil }
             )
@@ -224,6 +233,7 @@ struct PairRuneRowView: View {
 
             RunicAffinityNodeView(
                 rune: rightRune,
+                layoutStyle: .paired,
                 onBeginEditing: { activeEditorAnchor = .power },
                 onEndEditing: { activeEditorAnchor = nil }
             )
@@ -233,9 +243,16 @@ struct PairRuneRowView: View {
 }
 
 struct RunicAffinityNodeView: View {
+    enum LayoutStyle {
+        case elemental
+        case paired
+    }
+
     @Bindable var rune: RuneAffinity
+    let layoutStyle: LayoutStyle
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
+    @StateObject private var editorController = EditableChipValueController()
 
     var body: some View {
         VStack(spacing: 4) {
@@ -280,14 +297,14 @@ struct RunicAffinityNodeView: View {
 
                 percentageView
                     .frame(height: RuneChipLayoutMetrics.percentageEditorHeight, alignment: .trailing)
-                    .frame(width: RuneChipLayoutMetrics.percentageSlotWidth(for: true), alignment: .trailing)
+                    .frame(width: percentageSlotWidth, alignment: .trailing)
             }
             .frame(maxWidth: .infinity, minHeight: RuneChipLayoutMetrics.percentageEditorHeight)
         }
         .padding(.horizontal, RuneChipLayoutMetrics.chipHorizontalPadding)
         .padding(.vertical, RuneChipLayoutMetrics.chipVerticalPadding)
         .frame(
-            width: RuneChipLayoutMetrics.chipWidth,
+            width: chipWidth,
             height: RuneChipLayoutMetrics.chipHeight,
             alignment: .topLeading
         )
@@ -297,6 +314,10 @@ struct RunicAffinityNodeView: View {
                 .stroke(Color(.systemGray4), lineWidth: 1)
         )
         .clipShape(.rect(cornerRadius: 8))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            editorController.requestBeginEditing()
+        }
     }
 
     @ViewBuilder
@@ -313,15 +334,43 @@ struct RunicAffinityNodeView: View {
             textFieldWidth: 28,
             valueFont: .callout,
             markerPlacement: .hidden,
+            controller: editorController,
             onBeginEditing: onBeginEditing,
             onEndEditing: onEndEditing
         )
-        .frame(width: RuneChipLayoutMetrics.percentageDisplayWidth, alignment: .trailing)
+        .frame(width: percentageDisplayWidth, alignment: .trailing)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, RuneChipLayoutMetrics.percentageContentLeadingInset)
     }
 
     private var runeAssetName: String {
         "Rune\(rune.name.rawValue)"
+    }
+
+    private var chipWidth: CGFloat {
+        switch layoutStyle {
+        case .elemental:
+            RuneChipLayoutMetrics.chipWidth
+        case .paired:
+            RuneChipLayoutMetrics.pairedChipWidth
+        }
+    }
+
+    private var percentageDisplayWidth: CGFloat {
+        switch layoutStyle {
+        case .elemental:
+            RuneChipLayoutMetrics.percentageDisplayWidth
+        case .paired:
+            RuneChipLayoutMetrics.pairedPercentageDisplayWidth
+        }
+    }
+
+    private var percentageSlotWidth: CGFloat {
+        switch layoutStyle {
+        case .elemental:
+            RuneChipLayoutMetrics.percentageSlotWidth(for: true)
+        case .paired:
+            RuneChipLayoutMetrics.pairedPercentageSlotWidth(for: true)
+        }
     }
 }

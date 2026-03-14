@@ -1,4 +1,13 @@
+import Combine
 import SwiftUI
+
+final class EditableChipValueController: ObservableObject {
+    @Published private(set) var activationID = 0
+
+    func requestBeginEditing() {
+        activationID += 1
+    }
+}
 
 struct EditableChipValue: View {
     enum Mode {
@@ -20,11 +29,13 @@ struct EditableChipValue: View {
     let showsEditingSuffix: Bool
     let isEnabled: Bool
     let textFieldWidth: CGFloat
+    let completionButtonTravel: CGFloat
     let valueFont: Font
     let markerPlacement: MarkerPlacement
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
 
+    @ObservedObject var controller: EditableChipValueController
     @FocusState private var isFieldFocused: Bool
     @State private var draftValue: String = ""
     @State private var isEditingValue = false
@@ -38,8 +49,6 @@ struct EditableChipValue: View {
     private let completionButtonOvershootScale: CGFloat = 1.1
     private let completionButtonRestScale: CGFloat = 1
     private let completionButtonStartOpacity: Double = 0.25
-    private let completionButtonTravel: CGFloat = 14
-
     init(
         mode: Mode,
         value: Binding<Int>,
@@ -48,8 +57,10 @@ struct EditableChipValue: View {
         showsEditingSuffix: Bool = true,
         isEnabled: Bool = true,
         textFieldWidth: CGFloat = 28,
+        completionButtonTravel: CGFloat = 14,
         valueFont: Font = .body.weight(.semibold),
         markerPlacement: MarkerPlacement = .inlineTrailing,
+        controller: EditableChipValueController = EditableChipValueController(),
         onBeginEditing: @escaping () -> Void = {},
         onEndEditing: @escaping () -> Void = {}
     ) {
@@ -60,8 +71,10 @@ struct EditableChipValue: View {
         self.showsEditingSuffix = showsEditingSuffix
         self.isEnabled = isEnabled
         self.textFieldWidth = textFieldWidth
+        self.completionButtonTravel = completionButtonTravel
         self.valueFont = valueFont
         self.markerPlacement = markerPlacement
+        self._controller = ObservedObject(wrappedValue: controller)
         self.onBeginEditing = onBeginEditing
         self.onEndEditing = onEndEditing
     }
@@ -96,6 +109,9 @@ struct EditableChipValue: View {
             if isFocused == false, isEditingValue {
                 finishEditing()
             }
+        }
+        .onChange(of: controller.activationID) { _, _ in
+            beginEditingIfEnabled()
         }
     }
 
