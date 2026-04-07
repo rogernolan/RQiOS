@@ -1,1 +1,19 @@
 .worktrees/
+
+# macOS
+.DS_Store
+
+# Xcode user data
+xcuserdata/
+*.xcuserstate
+
+# Xcode and SwiftPM build output
+DerivedData/
+build/
+.build/
+
+# Swift Package Manager
+.swiftpm/
+
+# Xcode recovery files
+*.moved-aside
