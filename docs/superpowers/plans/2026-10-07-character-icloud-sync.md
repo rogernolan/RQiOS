@@ -27,7 +27,7 @@
 
 **Produces:** RQSchemaV2.schema (Schema), RQMigrationPlan (SchemaMigrationPlan); optional persisted rune links and safe views.
 
-- [ ] Capture a populated unversioned store through the unchanged model before changing production code. Include every entity, portrait, custom skill, equipment, magic, notes, check flags and asymmetric rune pairs. Save original model entity hashes and fixture creation evidence.
+- [ ] Capture a populated unversioned store through the unchanged model before changing production code. Include every entity, portrait, custom skill, equipment, magic, notes, check flags and distinct elemental rune values. Record that ten tuple-declared paired rune slots are absent from the old persisted schema; migrate those absent slots to the old 50/50 defaults and verify asymmetric pair values survive subsequent saves/reopen. Save original model entity hashes and fixture creation evidence.
 - [ ] Write and run failing CloudKit schema tests: for every entity assert no uniqueness constraints; for every attribute assert optional or defaultValue != nil; for every relationship assert optional, inverse present and deleteRule != denyDeleteRule.
 - [ ] Freeze the original schema without changing entity hashes. Introduce version 2 and an explicit lightweight/custom migration stage proven against the original fixture.
 - [ ] Add scalar defaults, optional persisted links and explicit inverses. Preserve old names through renaming identifiers if backing collections change. Use cascade for character-owned children and nullify for shared definitions and paired rune links.

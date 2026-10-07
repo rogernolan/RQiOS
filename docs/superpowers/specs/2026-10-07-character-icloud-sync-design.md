@@ -14,7 +14,9 @@ The inspected project already enables CloudKit and remote notifications, but its
 
 ## Records and relationships
 
-Sync identity, characteristics, notes, portrait data, runes, skills and skill definitions, weapons, hit locations, equipment, spells, honor and passions. Preserve percentages, experience checks, ordering, pair relationships and ownership links during migration.
+Sync identity, characteristics, notes, portrait data, runes, skills and skill definitions, weapons, hit locations, equipment, spells, honor and passions. Preserve persisted percentages, experience checks, ordering and ownership links during migration.
+
+Legacy-store capture found that the tuple-declared ten paired rune slots are absent from the actual persisted schema. The old app does not preserve their changed values across launches. Migration initializes these missing pairs at the old 50/50 defaults and stores real relationships for subsequent edits; it cannot recover values never saved by the old app. Preserve any genuinely stored orphan records without guessing which character owns them.
 
 Give required scalar fields appropriate declared defaults, and make persisted relationships optional with unambiguous inverses. Keep collection access convenient through computed accessors where useful. Update rune consumers to tolerate missing links while records arrive. Reading an incomplete imported character must not insert replacement runes or other child records that could compete with incoming data. Create the full initial graph explicitly when creating a new character.
 
@@ -44,7 +46,7 @@ Update the deletion confirmation to explain that deletion applies to synced devi
 
 Before implementation, run the existing unit suite in the worktree. Then add tests for the CloudKit-compatible schema, migration of a populated legacy store, graph preservation across reopen, repeated launch, failed migration recovery, duplicate skill-definition arrivals and deletion ownership. Exercise missing rune and child links without creating new records during reads.
 
-The migration fixture must include every model type, portrait data, notes, custom skills, equipment, magic, experience checks and unequal rune-pair values. Compare values, record counts and relationships before and after migration. Verify that the schema can initialize a CloudKit-backed store; a local in-memory test alone cannot establish compatibility.
+The migration fixture must include every model type, portrait data, notes, custom skills, equipment, magic, experience checks and distinct elemental rune values. After migration, set unequal rune-pair values and verify that they persist across reopen. Compare values, record counts and relationships before and after migration. Verify that the schema can initialize a CloudKit-backed store; a local in-memory test alone cannot establish compatibility.
 
 Build for iPhone and iPad and inspect signed entitlements and the provisioned container. Check the Development schema and promote it to Production before a Production or TestFlight release. Debug and distribution use different CloudKit environments; test both devices with matching environments.
 
