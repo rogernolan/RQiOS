@@ -19,7 +19,7 @@ struct SummaryPersistenceIntegrationTests {
             CharacterEquipmentItem.self,
         ])
 
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: [configuration])
         let context = container.mainContext
 
@@ -55,7 +55,7 @@ struct SummaryPersistenceIntegrationTests {
             CharacterPassion.self,
         ])
 
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: [configuration])
         let context = container.mainContext
 
@@ -86,7 +86,7 @@ struct SummaryPersistenceIntegrationTests {
             CharacterPassion.self,
         ])
 
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         let container = try ModelContainer(for: schema, configurations: [configuration])
         let context = container.mainContext
 

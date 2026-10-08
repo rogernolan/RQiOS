@@ -47,19 +47,5 @@ private struct CharacterNotesContentView: View {
 
 #Preview {
     NotesView(character: RQCharacter())
-        .modelContainer(
-            for: [
-                RQCharacter.self,
-                CharacterEquipmentItem.self,
-                CharacterSpell.self,
-                RuneAffinity.self,
-                SkillDefinition.self,
-                CharacterSkill.self,
-                Weapon.self,
-                CharacterHitLocation.self,
-                CharacterHonor.self,
-                CharacterPassion.self,
-            ],
-            inMemory: true
-        )
+        .modelContainer(try! AppPersistence.makeContainer(inMemory: true, cloudKitEnabled: false))
 }

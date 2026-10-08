@@ -17,3 +17,6 @@ build/
 
 # Xcode recovery files
 *.moved-aside
+
+# Local agent handoff scratch
+.superpowers/

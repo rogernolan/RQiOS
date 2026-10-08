@@ -10,6 +10,8 @@ struct SettingsView: View {
                 Text("Settings")
                     .font(.title2.weight(.semibold))
 
+                CloudSyncSettingsView()
+
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Import Character")
                         .font(.headline)
