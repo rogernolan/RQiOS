@@ -4,8 +4,6 @@ struct EditorSocialSectionView: View {
     @Bindable var viewModel: CharacterEditorViewModel
 
     var body: some View {
-        let honor = viewModel.character.ensureHonorExists()
-
         return VStack(alignment: .leading, spacing: 10) {
             EditorIntegerFieldRow(
                 label: "Reputation",
@@ -20,8 +18,8 @@ struct EditorSocialSectionView: View {
                 label: "Honor",
                 placeholder: "Honor %",
                 value: Binding(
-                    get: { honor.percentage },
-                    set: { honor.percentage = $0 }
+                    get: { viewModel.character.honor?.percentage ?? 0 },
+                    set: { viewModel.character.ensureHonorExists().percentage = $0 }
                 )
             )
 

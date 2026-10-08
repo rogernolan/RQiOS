@@ -12,9 +12,9 @@ final class CharacterSkill {
 
     var definition: SkillDefinition?
 
-    private(set) var successPercentage: Int
-    var experienceCheck: Bool
-    var customName: String
+    private(set) var successPercentage: Int = 0
+    var experienceCheck: Bool = false
+    var customName: String = ""
     var customGroup: SkillGroup?
 
     init(

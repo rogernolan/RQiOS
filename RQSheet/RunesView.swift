@@ -90,7 +90,7 @@ struct RunicAffinitiesPentagramView: View {
                     }
                     .stroke(Color.secondary.opacity(0.25), lineWidth: 3)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.fireAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -98,7 +98,7 @@ struct RunicAffinitiesPentagramView: View {
                     )
                         .position(top)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.darknessAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -106,7 +106,7 @@ struct RunicAffinitiesPentagramView: View {
                     )
                         .position(upperRight)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.earthAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -114,7 +114,7 @@ struct RunicAffinitiesPentagramView: View {
                     )
                         .position(lowerRight)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.waterAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -122,7 +122,7 @@ struct RunicAffinitiesPentagramView: View {
                     )
                         .position(lowerLeft)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.airAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -130,7 +130,7 @@ struct RunicAffinitiesPentagramView: View {
                     )
                         .position(upperLeft)
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.moonAffinity,
                         layoutStyle: .elemental,
                         onBeginEditing: { activeEditorAnchor = .elemental },
@@ -177,7 +177,7 @@ struct PairedRunesSectionView: View {
                     .frame(width: 3, height: 246)
 
                 VStack(spacing: 8) {
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.manAffinity,
                         layoutStyle: .paired,
                         onBeginEditing: { activeEditorAnchor = .power },
@@ -206,7 +206,7 @@ struct PairedRunesSectionView: View {
                         activeEditorAnchor: $activeEditorAnchor
                     )
 
-                    RunicAffinityNodeView(
+                    OptionalRunicAffinityNodeView(
                         rune: character.beastAffinity,
                         layoutStyle: .paired,
                         onBeginEditing: { activeEditorAnchor = .power },
@@ -220,13 +220,13 @@ struct PairedRunesSectionView: View {
 }
 
 struct PairRuneRowView: View {
-    @Bindable var leftRune: RuneAffinity
-    @Bindable var rightRune: RuneAffinity
+    let leftRune: RuneAffinity?
+    let rightRune: RuneAffinity?
     @Binding var activeEditorAnchor: RuneEditorAnchor?
 
     var body: some View {
         HStack(spacing: 0) {
-            RunicAffinityNodeView(
+            OptionalRunicAffinityNodeView(
                 rune: leftRune,
                 layoutStyle: .paired,
                 onBeginEditing: { activeEditorAnchor = .power },
@@ -238,7 +238,7 @@ struct PairRuneRowView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 3)
 
-            RunicAffinityNodeView(
+            OptionalRunicAffinityNodeView(
                 rune: rightRune,
                 layoutStyle: .paired,
                 onBeginEditing: { activeEditorAnchor = .power },
@@ -378,6 +378,21 @@ struct RunicAffinityNodeView: View {
             RuneChipLayoutMetrics.percentageSlotWidth(for: true)
         case .paired:
             RuneChipLayoutMetrics.pairedPercentageSlotWidth(for: true)
+        }
+    }
+}
+
+/// A missing link can occur while CloudKit is delivering the rest of a character.
+struct OptionalRunicAffinityNodeView: View {
+    let rune: RuneAffinity?
+    let layoutStyle: RunicAffinityNodeView.LayoutStyle
+    let onBeginEditing: () -> Void
+    let onEndEditing: () -> Void
+
+    @ViewBuilder var body: some View {
+        if let rune {
+            RunicAffinityNodeView(rune: rune, layoutStyle: layoutStyle,
+                                  onBeginEditing: onBeginEditing, onEndEditing: onEndEditing)
         }
     }
 }

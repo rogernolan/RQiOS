@@ -35,7 +35,7 @@ struct TextImportApplierTests {
         #expect(character.occupation == "Scribe")
         #expect(character.worships.contains("LHANKOR MHY"))
         #expect(character.pow == 17)
-        #expect(character.truthAffinity.percentage == 75)
+        #expect(character.truthAffinity?.percentage == 75)
         #expect(character.ensureHonorExists().percentage == 60)
         #expect(character.passions.contains(where: { $0.descriptionText == "Honor" && $0.percentage == 60 }) == false)
         #expect(character.skills.contains(where: { $0.displayName == "Ride high llama" }))

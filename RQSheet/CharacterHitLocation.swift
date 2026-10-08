@@ -19,9 +19,9 @@ enum HitLocation: String, Codable, CaseIterable {
 @Model
 final class CharacterHitLocation {
     var character: RQCharacter?
-    var location: HitLocation
+    var location: HitLocation = HitLocation.head
 
-    var maxHP: Int {
+    var maxHP: Int = 1 {
         didSet {
             if maxHP < 1 {
                 maxHP = 1
@@ -32,7 +32,7 @@ final class CharacterHitLocation {
         }
     }
 
-    var currentHP: Int {
+    var currentHP: Int = 0 {
         didSet {
             if currentHP < 0 {
                 currentHP = 0
@@ -43,7 +43,7 @@ final class CharacterHitLocation {
         }
     }
 
-    var armour: Int {
+    var armour: Int = 0 {
         didSet {
             if armour < 0 {
                 armour = 0

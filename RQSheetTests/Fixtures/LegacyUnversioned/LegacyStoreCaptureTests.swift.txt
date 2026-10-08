@@ -1,0 +1,44 @@
+import Foundation
+import SwiftData
+import CoreData
+import Testing
+@testable import RQSheet
+
+struct LegacyStoreCaptureTests {
+    static let schema = Schema([RQCharacter.self, RuneAffinity.self, SkillDefinition.self, CharacterSkill.self, Weapon.self, CharacterHitLocation.self, CharacterHonor.self, CharacterPassion.self, CharacterEquipmentItem.self, CharacterSpell.self])
+
+    @Test @MainActor
+    func captureUnchangedLegacyStore() throws {
+        let directory = URL(fileURLWithPath: "/private/tmp/rq-legacy-fixture", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appendingPathComponent("legacy.store")
+        for suffix in ["", "-wal", "-shm"] { try? FileManager.default.removeItem(atPath: url.path + suffix) }
+        let configuration = ModelConfiguration(schema: Self.schema, url: url, cloudKitDatabase: .none)
+        let container = try ModelContainer(for: Self.schema, configurations: configuration)
+        let context = container.mainContext
+        let character = RQCharacter(name: "Legacy Arkat", worships: "Orlanth", reputation: 43, notes: "Preserved legacy notes", occupation: "Warrior", sol: "Free", income: "120 L", ransom: 1500, powExperienceCheck: true, move: 8, maxHitpoints: 17, currentHitpoints: 12, healingRate: 3, dateOfBirth: "1598", family: "House of Arkat", patron: "Kallyr", portraitData: Data([0, 1, 127, 255]), currentMagicPoints: 4, runePoints: 7)
+        character.str = 15; character.con = 14; character.siz = 13; character.dex = 12; character.int = 16; character.pow = 17; character.cha = 11
+        let honor = character.ensureHonorExists(); honor.descriptionText = "Oath kept"; honor.percentage = 61; honor.experienceCheck = true
+        character.addPassion(description: "Loyalty (Clan)", percentage: 73)
+        _ = character.addEquipmentItem(name: "Bronze shield", encumbrance: 2, notes: "Dented", isCurrentlyEquipped: true)
+        _ = character.addSpell(name: "Heal", points: 2, page: "RQ 262", kind: .spiritMagic)
+        _ = character.addSpell(name: "Flight", points: 3, page: "RQ 330", kind: .runeSpell)
+        let skill = character.addSkill(name: "Legacy custom", percentage: 67, group: .knowledge); skill.experienceCheck = true
+        character.weapons.append(Weapon(character: character, name: "Sword", basePercentage: 71, experienceCheck: true, damage: "1D8+1", hpMax: 12, hpCurrent: 9, enc: 1, strikeRank: "3", type: .slashing, range: "Melee", isEquipped: true))
+        for (index, rune) in character.allRuneAffinities.enumerated() { rune.setPercentage(20 + index * 3); rune.experienceCheck = index % 2 == 0 }
+        character.hitLocations.first?.armour = 4
+        character.hitLocations.first?.currentHP = 2
+        context.insert(character)
+        try context.save()
+        let model = try #require(NSManagedObjectModel.makeManagedObjectModel(for: Self.schema))
+        let hashes = model.entityVersionHashesByName.mapValues { $0.base64EncodedString() }
+        try JSONSerialization.data(withJSONObject: hashes, options: [.prettyPrinted, .sortedKeys]).write(to: directory.appendingPathComponent("entity-hashes.json"))
+        let rows = model.entities.map { entity in
+            "\(entity.name ?? "?"): attributes=\(entity.attributesByName.map { "\($0.key):optional=\($0.value.isOptional),default=\(String(describing: $0.value.defaultValue))" }.sorted()); relationships=\(entity.relationshipsByName.map { "\($0.key):optional=\($0.value.isOptional),inverse=\($0.value.inverseRelationship?.name ?? "nil")" }.sorted())"
+        }
+        try rows.sorted().joined(separator: "\n").write(to: directory.appendingPathComponent("model-inspection.txt"), atomically: true, encoding: .utf8)
+        #expect(try context.fetchCount(FetchDescriptor<RQCharacter>()) == 1)
+        #expect(try context.fetchCount(FetchDescriptor<RuneAffinity>()) == 6)
+        print("LEGACY_FIXTURE_CAPTURED \(directory.path)")
+    }
+}

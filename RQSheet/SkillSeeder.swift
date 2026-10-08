@@ -21,9 +21,7 @@ enum SkillSeeder {
     @MainActor
     private static func ensureSkillDefinitions(in context: ModelContext) {
         let existingDefinitions = (try? context.fetch(FetchDescriptor<SkillDefinition>())) ?? []
-        if !existingDefinitions.isEmpty {
-            return
-        }
+        var existingKeys = Set(existingDefinitions.map(\.key))
 
         guard let skillSeed = loadJSON(SartarSkillsSeed.self, resource: "SartarSkills") else {
             return
@@ -34,6 +32,7 @@ enum SkillSeeder {
 
             for item in skills where item.base.lowercased() != "base value" {
                 let key = "\(group.rawValue)-\(slugify(item.name))"
+                guard existingKeys.insert(key).inserted else { continue }
                 let definition = SkillDefinition(key: key, name: item.name, group: group, baseRule: item.base)
                 context.insert(definition)
             }
@@ -43,7 +42,9 @@ enum SkillSeeder {
     @MainActor
     private static func seedSkills(for character: RQCharacter, in context: ModelContext) {
         let definitions = (try? context.fetch(FetchDescriptor<SkillDefinition>())) ?? []
-        for definition in definitions {
+        var seededKeys = Set<String>()
+        for definition in definitions.sorted(by: { $0.key < $1.key }) {
+            guard seededKeys.insert(definition.key).inserted else { continue }
             let effective = (definition.baseValue(for: character) + character.bonus(for: definition.group)).clampedPercentage
             if effective > 0 {
                 let characterSkill = CharacterSkill(character: character, definition: definition, successPercentage: 0)

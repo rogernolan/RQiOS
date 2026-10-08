@@ -8,17 +8,17 @@ enum SpellKind: String, Codable, CaseIterable {
 
 @Model
 final class CharacterSpell {
-    var name: String
-    var points: Int {
+    var name: String = ""
+    var points: Int = 0 {
         didSet {
             if points < 0 {
                 points = 0
             }
         }
     }
-    var page: String
-    var kindRawValue: String
-    var sortOrder: Int
+    var page: String = ""
+    var kindRawValue: String = SpellKind.spiritMagic.rawValue
+    var sortOrder: Int = 0
     var character: RQCharacter?
 
     var kind: SpellKind {
