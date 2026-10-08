@@ -24,8 +24,19 @@ struct NotesViewTests {
         #expect(source.contains("RuneTruth"))
         #expect(source.contains("dismissWorkspace"))
         #expect(source.contains(".pickerStyle(.segmented)") == false)
-        #expect(source.contains("Menu {") == false)
-        #expect(source.contains("NavigationLink {") == false)
+        // Match the Menu token rather than the suffix of isShowingExtrasMenu.
+        #expect(source.range(of: #"\bMenu\s*\{"#, options: .regularExpression) == nil)
+        let moreStart = try #require(source.range(of: "private struct CharacterMoreTabView: View"))
+        let headerStart = try #require(source.range(of: "private struct WorkspaceInlineHeader: View"))
+        let moreRoute = String(source[moreStart.lowerBound..<headerStart.lowerBound])
+        #expect(moreRoute.contains("case .notes:\n            NotesView(character: character)"))
+        #expect(moreRoute.contains("destinationView(for: selectedDestination)"))
+        #expect(moreRoute.contains("NavigationLink") == false)
+        let popupStart = try #require(source.range(of: "private struct MorePopupMenu: View"))
+        let shapeStart = try #require(source.range(of: "private struct MorePopupBubbleShape: Shape"))
+        let popup = String(source[popupStart.lowerBound..<shapeStart.lowerBound])
+        #expect(popup.contains("Button {\n                    onSelect(destination)"))
+        #expect(popup.contains("NavigationLink") == false)
         #expect(source.contains(".confirmationDialog(\"More\"") == false)
     }
 
