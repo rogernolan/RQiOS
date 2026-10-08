@@ -10,40 +10,41 @@ import SwiftData
 
 @main
 struct RQSheetApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let isRunningUnderTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-        let launchArguments = ProcessInfo.processInfo.arguments
-        let schema = Schema([
-            RQCharacter.self,
-            CharacterEquipmentItem.self,
-            CharacterSpell.self,
-            RuneAffinity.self,
-            SkillDefinition.self,
-            CharacterSkill.self,
-            Weapon.self,
-            CharacterHitLocation.self,
-            CharacterHonor.self,
-            CharacterPassion.self,
-            CharacterEquipmentItem.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isRunningUnderTests)
-
-        do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            if launchArguments.contains("-ui-testing-seed-combat-weapons") {
-                seedCombatWeaponsIfNeeded(in: container)
-            }
-            return container
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @State private var sharedModelContainer: ModelContainer?
+    @State private var startupError: String?
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if let sharedModelContainer {
+                    ContentView().modelContainer(sharedModelContainer)
+                } else if let startupError {
+                    VStack(spacing: 16) {
+                        Text("Unable to Open Characters").font(.title2)
+                        Text("Your stored records and available recovery evidence have been preserved.")
+                        Text(startupError).font(.caption)
+                        Button("Retry", action: openStore)
+                    }.padding()
+                } else {
+                    ProgressView("Opening characters…")
+                }
+            }
+            .task { if sharedModelContainer == nil && startupError == nil { openStore() } }
         }
-        .modelContainer(sharedModelContainer)
+    }
+
+    private func openStore() {
+        do {
+            let isRunningUnderTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            let container = try AppPersistence.makeContainer(inMemory: isRunningUnderTests)
+            if ProcessInfo.processInfo.arguments.contains("-ui-testing-seed-combat-weapons") {
+                Self.seedCombatWeaponsIfNeeded(in: container)
+            }
+            sharedModelContainer = container
+            startupError = nil
+        } catch {
+            startupError = error.localizedDescription
+        }
     }
 
     private static func seedCombatWeaponsIfNeeded(in container: ModelContainer) {
