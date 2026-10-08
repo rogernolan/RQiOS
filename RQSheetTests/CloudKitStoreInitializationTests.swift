@@ -24,6 +24,7 @@ struct CloudKitStoreInitializationTests {
         try await Task.sleep(for: .seconds(1))
         let cloudEvents = diagnostics.events.filter { [.cloudSetup, .cloudImport, .cloudExport].contains($0.name) }
         print("CloudKit probe observed \(cloudEvents.count) public events: \(cloudEvents.map { $0.name.rawValue + ":" + $0.stage.rawValue }.joined(separator: ", "))")
+        #expect(cloudEvents.contains { $0.name == .cloudSetup })
         #expect(monitor.isRunning)
     }
 }
