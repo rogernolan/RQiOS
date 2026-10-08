@@ -33,26 +33,47 @@ enum CloudSyncAvailability: Equatable {
 final class CloudSyncStatus {
     private(set) var availability: CloudSyncAvailability = .checking
     private(set) var isRefreshing = false
-    private var needsAnotherRefresh = false
+    private var pendingReason: SyncDiagnostics.Reason?
+    private let diagnostics: SyncDiagnostics
     private let accountStatus: () async throws -> CKAccountStatus
 
-    init(accountStatus: @escaping () async throws -> CKAccountStatus = {
+    init(diagnostics: SyncDiagnostics = .shared, accountStatus: @escaping () async throws -> CKAccountStatus = {
         try await CKContainer(identifier: AppPersistence.cloudKitContainerIdentifier).accountStatus()
     }) {
         self.accountStatus = accountStatus
+        self.diagnostics = diagnostics
     }
 
-    func refresh() async {
+    func refresh(reason: SyncDiagnostics.Reason = .manual) async {
         guard !isRefreshing else {
-            needsAnotherRefresh = true
+            pendingReason = reason
             return
         }
         isRefreshing = true
         defer { isRefreshing = false }
+        var currentReason = reason
         repeat {
-            needsAnotherRefresh = false
-            do { availability = CloudSyncAvailability(accountStatus: try await accountStatus()) }
-            catch { availability = .unknown }
-        } while needsAnotherRefresh
+            pendingReason = nil
+            let start = Date()
+            diagnostics.record(.accountCheck, stage: .started, reason: currentReason)
+            do {
+                availability = CloudSyncAvailability(accountStatus: try await accountStatus())
+                diagnostics.record(.accountCheck, stage: .completed, success: true, duration: Date().timeIntervalSince(start), reason: currentReason, account: diagnosticAccount)
+            } catch {
+                availability = .unknown
+                diagnostics.record(.accountCheck, stage: .completed, success: false, duration: Date().timeIntervalSince(start), reason: currentReason, account: .unknown, error: error)
+            }
+            if let pendingReason { currentReason = pendingReason }
+        } while pendingReason != nil
+    }
+
+    private var diagnosticAccount: SyncDiagnostics.Account {
+        switch availability {
+        case .available: .available
+        case .noAccount: .noAccount
+        case .restricted: .restricted
+        case .temporarilyUnavailable: .temporarilyUnavailable
+        case .checking, .unknown: .unknown
+        }
     }
 }

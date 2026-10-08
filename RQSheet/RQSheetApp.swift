@@ -12,6 +12,14 @@ import SwiftData
 struct RQSheetApp: App {
     @State private var sharedModelContainer: ModelContainer?
     @State private var startupError: String?
+    private let eventMonitor: CloudSyncEventMonitor
+
+    init() {
+        let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+        eventMonitor = CloudSyncEventMonitor(diagnostics: isTesting ? .none : .shared)
+        if !isTesting { eventMonitor.start() }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -36,7 +44,8 @@ struct RQSheetApp: App {
     private func openStore() {
         do {
             let isRunningUnderTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-            let container = try AppPersistence.makeContainer(inMemory: isRunningUnderTests)
+                || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            let container = try AppPersistence.makeContainer(inMemory: isRunningUnderTests, diagnostics: isRunningUnderTests ? .none : .shared)
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-seed-combat-weapons") {
                 Self.seedCombatWeaponsIfNeeded(in: container)
             }

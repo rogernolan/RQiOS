@@ -18,7 +18,7 @@ struct CloudSyncStatusTests {
 
     @Test func refreshUpdatesAccountStatusAndRecoversAfterAnError() async {
         var fails = true
-        let status = CloudSyncStatus {
+        let status = CloudSyncStatus(diagnostics: .none) {
             if fails { throw CKError(.networkUnavailable) }
             return .available
         }
@@ -33,7 +33,7 @@ struct CloudSyncStatusTests {
     @Test func refreshDuringAnAccountCheckRechecksInsteadOfLosingTheChange() async {
         var checks = 0
         var pending: CheckedContinuation<CKAccountStatus, Never>?
-        let status = CloudSyncStatus {
+        let status = CloudSyncStatus(diagnostics: .none) {
             checks += 1
             if checks == 1 {
                 return await withCheckedContinuation { pending = $0 }
