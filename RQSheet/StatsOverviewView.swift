@@ -6,6 +6,7 @@
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct StatsOverviewView: View {
     private struct SummaryProfileLayoutMetrics {
@@ -29,7 +30,13 @@ struct StatsOverviewView: View {
     private let summaryProfileCollapseDistance: CGFloat = 140
 
     var body: some View {
-        summaryContent(for: character)
+        Group {
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                tabletSummaryContent
+            } else {
+                summaryContent(for: character)
+            }
+        }
             .mainRuneBackground(runeName: "RuneMan")
             .onChange(of: selectedPhotoItem) { _, newItem in
                 guard let newItem else { return }
@@ -46,6 +53,69 @@ struct StatsOverviewView: View {
                     character.addPassion(description: description, percentage: percentage)
                 }
             }
+    }
+
+    private var tabletSummaryContent: some View {
+        let viewModel = SummaryViewModel(character: character)
+
+        return GeometryReader { geometry in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    tabletProfile(viewModel: viewModel, availableWidth: geometry.size.width - 32)
+                    characteristicsCard(character: character, viewModel: viewModel)
+                    derivedStatsCard(viewModel: viewModel)
+                    honorCard(character: character)
+                    passionsCard(character: character)
+                    topRunesCard(viewModel: viewModel)
+                    skillBonusesCard(viewModel: viewModel)
+                }
+                .padding(16)
+            }
+            .scrollIndicators(.hidden)
+        }
+    }
+
+    private func tabletProfile(viewModel: SummaryViewModel, availableWidth: CGFloat) -> some View {
+        let layout = IPadSummaryProfileLayout(availableWidth: availableWidth)
+        let container = layout.usesHorizontalLayout
+            ? AnyLayout(HStackLayout(alignment: .center, spacing: 20))
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+
+        return container {
+            SummaryPortraitView(
+                portraitData: character.portraitData,
+                width: layout.portraitSize,
+                height: layout.portraitSize,
+                cornerRadius: 16,
+                fallbackPadding: 18
+            )
+            .overlay(alignment: .topTrailing) {
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Image(systemName: "camera.fill")
+                        .font(.footnote)
+                        .padding(8)
+                        .background(.thinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change portrait")
+                .padding(8)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                SummaryValueRow(label: "Family", value: viewModel.familyText)
+                SummaryValueRow(label: "Patron", value: viewModel.patronText)
+                SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground).opacity(0.52), in: .rect(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12).stroke(.quaternary, lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("summary.ipadProfile")
     }
 
     private func summaryContent(for character: RQCharacter) -> some View {

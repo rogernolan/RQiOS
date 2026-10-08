@@ -2,128 +2,177 @@ import SwiftUI
 import UIKit
 
 struct CharacterWorkspaceView: View {
-    private enum WorkspaceTab: Hashable {
-        case summary
-        case combat
-        case skills
-        case runes
-        case extras
-    }
-
-    enum ExtrasDestination: String, CaseIterable, Hashable {
-        case magic
-        case equipment
-        case notes
-        case settings
-
-        var title: String {
-            switch self {
-            case .magic:
-                return "Magic"
-            case .equipment:
-                return "Equipment"
-            case .notes:
-                return "Notes"
-            case .settings:
-                return "Settings"
-            }
-        }
-
-        var runeName: String {
-            switch self {
-            case .magic:
-                return "RuneMagic"
-            case .equipment:
-                return "RuneTrade"
-            case .notes:
-                return "RuneTruth"
-            case .settings:
-                return "RuneDisorder"
-            }
-        }
-    }
-
     @Environment(\.dismiss) private var dismiss
 
     let character: RQCharacter
     let onOpenCharacter: (RQCharacter) -> Void
 
-    @State private var selectedTab: WorkspaceTab = .summary
-    @State private var selectedExtrasDestination: ExtrasDestination?
+    @State private var navigation = WorkspaceNavigation()
     @State private var isShowingExtrasMenu = false
-    @State private var lastMainTab: WorkspaceTab = .summary
+    @State private var isShowingSectionMenu = false
+
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
     var body: some View {
+        Group {
+            if isPad {
+                tabletWorkspace
+            } else {
+                phoneWorkspace
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(isPad || navigation.phoneTab != .extras ? .visible : .hidden, for: .navigationBar)
+        .toolbar {
+            if isPad || navigation.phoneTab != .extras {
+                ToolbarItem(placement: .principal) {
+                    Text(currentTitle)
+                        .font(.headline)
+                        .foregroundStyle(isPlaceholderTitle ? .secondary : .primary)
+                }
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if isPad {
+                        sectionMenuButton
+                    }
+                    if navigation.section == .summary {
+                        NavigationLink {
+                            CharacterEditorView(character: character)
+                                .navigationBarTitleDisplayMode(.inline)
+                        } label: {
+                            Image(systemName: "square.and.pencil")
+                                .font(.headline)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Edit character details")
+                    }
+                }
+            }
+        }
+        .toolbarBackground(.hidden, for: .navigationBar)
+    }
+
+    private var tabletWorkspace: some View {
+        GeometryReader { geometry in
+            // The hidden tab host retains each section's draft and scroll state.
+            TabView(selection: sectionSelection) {
+                ForEach(WorkspaceSection.allCases, id: \.self) { section in
+                    Tab(value: section) {
+                        sectionView(section)
+                            .frame(width: WorkspaceLayout.contentWidth(availableWidth: geometry.size.width, isPad: true))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .toolbar(.hidden, for: .tabBar)
+                    } label: {
+                        Text(section.title)
+                    }
+                }
+            }
+            .toolbar(.hidden, for: .tabBar)
+        }
+    }
+
+    private var sectionSelection: Binding<WorkspaceSection> {
+        Binding(get: { navigation.section }, set: { navigation.select($0) })
+    }
+
+    private var sectionMenuButton: some View {
+        Button {
+            isShowingSectionMenu = true
+        } label: {
+            Label("Sections", systemImage: "line.3.horizontal")
+        }
+        .accessibilityLabel("Choose section")
+        .accessibilityValue(navigation.section.title)
+        .accessibilityIdentifier("workspace.sectionMenu")
+        .popover(isPresented: $isShowingSectionMenu, arrowEdge: .top) {
+            ScrollView {
+                VStack(spacing: 2) {
+                    ForEach(WorkspaceSection.allCases, id: \.self) { section in
+                        Button {
+                            navigation.select(section)
+                            isShowingSectionMenu = false
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(section.runeName)
+                                    .resizable()
+                                    .renderingMode(.template)
+                                    .scaledToFit()
+                                    .frame(width: 22, height: 22)
+                                Text(section.title)
+                                Spacer(minLength: 0)
+                                if section == navigation.section {
+                                    Image(systemName: "checkmark")
+                                        .font(.body.weight(.semibold))
+                                }
+                            }
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("workspace.section.\(section.rawValue)")
+                        .accessibilityAddTraits(section == navigation.section ? .isSelected : [])
+                    }
+                }
+                .padding(8)
+            }
+            .frame(width: 280, height: 410)
+            .presentationCompactAdaptation(.popover)
+        }
+    }
+
+    private var phoneWorkspace: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomTrailing) {
                 TabView(selection: tabSelection) {
                     Tab(value: WorkspaceTab.summary) {
-                        StatsOverviewView(character: character)
+                        sectionView(.summary)
                     } label: {
                         tabLabel("Summary", image: "RuneMan")
                     }
                     Tab(value: WorkspaceTab.combat) {
-                        CombatView(character: character)
+                        sectionView(.combat)
                     } label: {
                         tabLabel("Combat", image: "RuneDeath")
                     }
                     Tab(value: WorkspaceTab.skills) {
-                        SkillsView(character: character)
+                        sectionView(.skills)
                     } label: {
                         tabLabel("Skills", image: "RuneMastery")
                     }
                     Tab(value: WorkspaceTab.runes) {
-                        RunesView(character: character)
+                        sectionView(.runes)
                     } label: {
                         tabLabel("Runes", image: "RuneInfinity")
                     }
                     Tab(value: WorkspaceTab.extras) {
-                        CharacterMoreTabView(
-                            character: character,
-                            selectedDestination: $selectedExtrasDestination,
-                            onBack: dismissWorkspace,
-                            onOpenCharacter: onOpenCharacter
-                        )
+                        VStack(spacing: 0) {
+                            if let section = navigation.extrasSection {
+                                WorkspaceInlineHeader(title: section.title, onBack: { dismiss() })
+                                sectionView(section)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            }
+                        }
                     } label: {
                         Label("More", systemImage: "ellipsis.circle")
                     }
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar(selectedTab == .extras ? .hidden : .visible, for: .navigationBar)
-                .toolbar {
-                    if selectedTab != .extras {
-                        ToolbarItem(placement: .principal) {
-                            Text(currentTitle)
-                                .font(.headline)
-                                .foregroundStyle(isPlaceholderTitle ? .secondary : .primary)
-                        }
-
-                        ToolbarItem(placement: .topBarTrailing) {
-                            trailingToolbarItem
-                        }
-                    }
-                }
-                .toolbarBackground(.hidden, for: .navigationBar)
 
                 if isShowingExtrasMenu {
                     Color.black.opacity(0.001)
                         .ignoresSafeArea()
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            isShowingExtrasMenu = false
-                        }
+                        .onTapGesture { isShowingExtrasMenu = false }
 
                     MorePopupMenu(
                         notchInsetFromTrailingEdge: max(28, (geometry.size.width / 10) + 18),
-                        destinations: ExtrasDestination.allCases,
-                        onSelect: { destination in
-                            selectedExtrasDestination = destination
-                            selectedTab = .extras
+                        destinations: WorkspaceSection.extras,
+                        onSelect: { section in
+                            navigation.select(section)
                             isShowingExtrasMenu = false
                         },
-                        onDismiss: {
-                            isShowingExtrasMenu = false
-                        }
+                        onDismiss: { isShowingExtrasMenu = false }
                     )
                     .padding(.trailing, 4)
                     .padding(.bottom, 58)
@@ -131,7 +180,7 @@ struct CharacterWorkspaceView: View {
                     .zIndex(2)
                 }
 
-                MoreTabProxyButton(width: geometry.size.width / 5) {
+                MoreTabProxyButton(width: geometry.size.width / 5 + 32) {
                     isShowingExtrasMenu = true
                 }
                 .zIndex(3)
@@ -142,59 +191,33 @@ struct CharacterWorkspaceView: View {
 
     private var tabSelection: Binding<WorkspaceTab> {
         Binding(
-            get: { selectedTab },
-            set: { newValue in
-                if newValue == .extras {
-                    guard selectedExtrasDestination != nil else {
-                        isShowingExtrasMenu = true
-                        selectedTab = lastMainTab
-                        return
-                    }
-                    selectedTab = .extras
-                } else {
-                    selectedTab = newValue
-                    lastMainTab = newValue
+            get: { navigation.phoneTab },
+            set: { tab in
+                if navigation.selectPhoneTab(tab) {
+                    isShowingExtrasMenu = true
                 }
             }
         )
     }
 
     private var currentTitle: String {
-        switch selectedTab {
+        switch navigation.section {
         case .summary:
-            let trimmedName = character.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmedName.isEmpty ? "New character" : trimmedName
-        case .combat:
-            return "Combat"
-        case .skills:
-            return "Skills"
+            let name = character.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? "New character" : name
         case .runes:
             return "Rune affinities"
-        case .extras:
-            return selectedExtrasDestination?.title ?? "More"
+        default:
+            return navigation.section.title
         }
     }
 
     private var isPlaceholderTitle: Bool {
-        selectedTab == .summary && character.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        navigation.section == .summary && character.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    @ViewBuilder
-    private var trailingToolbarItem: some View {
-        switch selectedTab {
-        case .summary:
-            NavigationLink {
-                CharacterEditorView(character: character)
-                    .navigationBarTitleDisplayMode(.inline)
-            } label: {
-                Image(systemName: "square.and.pencil")
-                    .font(.headline)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Edit character details")
-        case .combat, .skills, .runes, .extras:
-            EmptyView()
-        }
+    private func sectionView(_ section: WorkspaceSection) -> some View {
+        WorkspaceSectionView(character: character, section: section, onOpenCharacter: onOpenCharacter)
     }
 
     @ViewBuilder
@@ -203,64 +226,40 @@ struct CharacterWorkspaceView: View {
             Label {
                 Text(title)
             } icon: {
-                Image(uiImage: uiImage)
-                    .renderingMode(.template)
+                Image(uiImage: uiImage).renderingMode(.template)
             }
         } else {
             Label(title, systemImage: "circle")
         }
     }
 
-    private func dismissWorkspace() {
-        dismiss()
-    }
-
     private func resizedTabIcon(named name: String, size: CGSize = CGSize(width: 22, height: 22)) -> UIImage? {
         guard let original = UIImage(named: name) else { return nil }
         let format = UIGraphicsImageRendererFormat.default()
         format.opaque = false
-        let renderer = UIGraphicsImageRenderer(size: size, format: format)
-        let image = renderer.image { _ in
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
             original.draw(in: CGRect(origin: .zero, size: size))
-        }
-        return image.withRenderingMode(.alwaysTemplate)
+        }.withRenderingMode(.alwaysTemplate)
     }
 }
 
-private struct CharacterMoreTabView: View {
+private struct WorkspaceSectionView: View {
     let character: RQCharacter
-    @Binding var selectedDestination: CharacterWorkspaceView.ExtrasDestination?
-    let onBack: () -> Void
+    let section: WorkspaceSection
     let onOpenCharacter: (RQCharacter) -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            if let selectedDestination {
-                WorkspaceInlineHeader(
-                    title: selectedDestination.title,
-                    onBack: onBack
-                )
-
-                destinationView(for: selectedDestination)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            } else {
-                Color.clear
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+        Group {
+            switch section {
+            case .summary: StatsOverviewView(character: character)
+            case .combat: CombatView(character: character)
+            case .skills: SkillsView(character: character)
+            case .runes: RunesView(character: character)
+            case .magic: MagicView(character: character)
+            case .equipment: EquipmentView(character: character)
+            case .notes: NotesView(character: character)
+            case .settings: SettingsView(character: character, onOpenCharacter: onOpenCharacter)
             }
-        }
-    }
-
-    @ViewBuilder
-    private func destinationView(for destination: CharacterWorkspaceView.ExtrasDestination) -> some View {
-        switch destination {
-        case .magic:
-            MagicView(character: character)
-        case .equipment:
-            EquipmentView(character: character)
-        case .notes:
-            NotesView(character: character)
-        case .settings:
-            SettingsView(character: character, onOpenCharacter: onOpenCharacter)
         }
     }
 }
@@ -279,10 +278,8 @@ private struct WorkspaceInlineHeader: View {
                     .background(.ultraThinMaterial, in: Circle())
             }
             .buttonStyle(.plain)
-
-            Text(title)
-                .font(.headline)
-
+            .accessibilityLabel("Back to characters")
+            Text(title).font(.headline)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
@@ -293,8 +290,8 @@ private struct WorkspaceInlineHeader: View {
 
 private struct MorePopupMenu: View {
     let notchInsetFromTrailingEdge: CGFloat
-    let destinations: [CharacterWorkspaceView.ExtrasDestination]
-    let onSelect: (CharacterWorkspaceView.ExtrasDestination) -> Void
+    let destinations: [WorkspaceSection]
+    let onSelect: (WorkspaceSection) -> Void
     let onDismiss: () -> Void
 
     var body: some View {
@@ -405,10 +402,12 @@ private struct MoreTabProxyButton: View {
 
             Button(action: action) {
                 Color.clear
-                    .frame(width: width, height: 70)
+                    .frame(width: width, height: 100)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("More sections")
+            .accessibilityIdentifier("workspace.moreMenu")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         .ignoresSafeArea(edges: .bottom)

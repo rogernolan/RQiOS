@@ -26,7 +26,8 @@ struct RQSheetApp: App {
             CharacterPassion.self,
             CharacterEquipmentItem.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: isRunningUnderTests)
+        let usesInMemoryStore = isRunningUnderTests || launchArguments.contains("-ui-testing-in-memory")
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: usesInMemoryStore)
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])

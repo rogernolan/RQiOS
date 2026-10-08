@@ -21,6 +21,7 @@ struct ContentView: View {
                     CharacterWorkspaceView(character: character) { replacement in
                         navigationPath = [replacement]
                     }
+                    .id(character.persistentModelID)
                 }
         }
     }
