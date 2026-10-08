@@ -4,6 +4,14 @@ import Testing
 
 struct CharacterWorkspaceChromeTests {
     @Test
+    func workspaceStartsOnSummary() {
+        let navigation = WorkspaceNavigation()
+        #expect(navigation.section == .summary)
+        #expect(navigation.phoneTab == .summary)
+        #expect(navigation.extrasSection == nil)
+    }
+
+    @Test
     func workspaceOwnsNavigationChromeAndUsesExplicitMoreTabForExtras() throws {
         let source = try workspaceSource()
 

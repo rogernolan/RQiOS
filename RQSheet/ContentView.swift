@@ -30,6 +30,7 @@ struct ContentView: View {
                     } else {
                         EmptyView()
                     }
+                    .id(character.persistentModelID)
                 }
         }
         .onChange(of: visibleCharacterIDs) { _, visibleCharacterIDs in
