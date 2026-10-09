@@ -10,18 +10,30 @@ import SwiftData
 import UIKit
 
 struct ContentView: View {
-    @State private var navigationPath: [RQCharacter] = []
+    @Query private var characters: [RQCharacter]
+    @State private var navigationPath: [PersistentIdentifier] = []
+
+    private var visibleCharacterIDs: Set<PersistentIdentifier> {
+        Set(characters.map(\.persistentModelID))
+    }
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
             CharacterListView { character in
-                navigationPath = [character]
+                navigationPath = [character.persistentModelID]
             }
-                .navigationDestination(for: RQCharacter.self) { character in
-                    CharacterWorkspaceView(character: character) { replacement in
-                        navigationPath = [replacement]
+                .navigationDestination(for: PersistentIdentifier.self) { characterID in
+                    if let character = characters.first(where: { $0.persistentModelID == characterID }) {
+                        CharacterWorkspaceView(character: character) { replacement in
+                            navigationPath = [replacement.persistentModelID]
+                        }
+                    } else {
+                        EmptyView()
                     }
                 }
+        }
+        .onChange(of: visibleCharacterIDs) { _, visibleCharacterIDs in
+            navigationPath.removeAll { !visibleCharacterIDs.contains($0) }
         }
     }
 }
