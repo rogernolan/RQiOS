@@ -159,6 +159,38 @@ final class WorkspaceNavigationUITests: XCTestCase {
     }
 
     @MainActor
+    func testCompactIPadMorePageUsesInlineHeaderWithoutNavigationBar() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
+        let app = openNewCharacter(resizeTesting: true)
+
+        app.buttons["workspace.testResize"].tap()
+        let moreSections = app.buttons["workspace.moreMenu"]
+        XCTAssertTrue(moreSections.waitForExistence(timeout: 3))
+        moreSections.tap()
+        app.buttons["Magic"].tap()
+
+        XCTAssertTrue(app.buttons["Back to characters"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.navigationBars.firstMatch.isHittable)
+        XCTAssertFalse(app.navigationBars.firstMatch.staticTexts["Magic"].exists)
+    }
+
+    @MainActor
+    func testIPadRuneEditorScrollsFocusedNodeAboveKeyboard() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
+        let app = openPopulatedCharacter()
+        let runeTile = app.otherElements["tile.runes"]
+        let lastRune = runeTile.staticTexts["Beast"].firstMatch
+        scrollTo(lastRune, in: app)
+        lastRune.tap()
+
+        let editor = runeTile.textFields.firstMatch
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        XCTAssertTrue(keyboard.waitForExistence(timeout: 3))
+        XCTAssertLessThan(editor.frame.maxY, keyboard.frame.minY)
+    }
+
+    @MainActor
     func testIPadLongListsAndGrowingNotesUseThePageScroll() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
         let app = openPopulatedCharacter()
@@ -310,10 +342,11 @@ final class WorkspaceNavigationUITests: XCTestCase {
     }
 
     @MainActor
-    private func openNewCharacter() -> XCUIApplication {
+    private func openNewCharacter(resizeTesting: Bool = false) -> XCUIApplication {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication()
         app.launchArguments += ["-ui-testing-in-memory"]
+        if resizeTesting { app.launchArguments += ["-ui-testing-enable-resize"] }
         app.launch()
         let create = app.buttons["Create New Character"]
         XCTAssertTrue(create.waitForExistence(timeout: 10))

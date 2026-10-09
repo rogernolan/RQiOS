@@ -49,7 +49,7 @@ nonisolated struct IPadTileArrangement {
 }
 
 nonisolated enum IPadColumnPartition {
-    static func partition(heights: [CGFloat], columnCount: Int) -> [Range<Int>] {
+    static func partition(heights: [CGFloat], columnCount: Int, spacing: CGFloat = 0) -> [Range<Int>] {
         guard !heights.isEmpty else { return [] }
 
         let count = min(max(columnCount, 1), heights.count)
@@ -63,6 +63,7 @@ nonisolated enum IPadColumnPartition {
                 let candidate = ranges + [finalRange]
                 let totals = candidate.map { range in
                     range.reduce(CGFloat.zero) { $0 + heights[$1] }
+                        + spacing * CGFloat(max(0, range.count - 1))
                 }
                 let difference = (totals.max() ?? 0) - (totals.min() ?? 0)
                 if difference < bestDifference {
@@ -132,7 +133,7 @@ struct IPadTileLayout: Layout {
     }
 
     private func ranges(for heights: [CGFloat]) -> [Range<Int>] {
-        IPadColumnPartition.partition(heights: heights, columnCount: columnCount)
+        IPadColumnPartition.partition(heights: heights, columnCount: columnCount, spacing: spacing)
     }
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

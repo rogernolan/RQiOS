@@ -50,6 +50,16 @@ struct IPadTileLayoutTests {
         #expect(ranges.count == 3)
     }
 
+    @Test func columnPartitionIncludesInterTileSpacingWhenBalancing() {
+        let heights: [CGFloat] = [10, 10, 20, 80, 10]
+
+        let withoutSpacing = IPadColumnPartition.partition(heights: heights, columnCount: 3)
+        let withSpacing = IPadColumnPartition.partition(heights: heights, columnCount: 3, spacing: 16)
+
+        #expect(withoutSpacing == [0..<2, 2..<3, 3..<5])
+        #expect(withSpacing == [0..<3, 3..<4, 4..<5])
+    }
+
     @Test func skillAreasSplitDynamicallyForUnevenCounts() {
         let split = IPadSkillGroupPartition.split(skillCounts: [
             .agility: 9,

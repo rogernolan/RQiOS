@@ -79,15 +79,14 @@ struct RunicAffinitiesPentagramView: View {
         let compact = width < 340
         return IntrinsicRuneTileLayout(isCompact: compact) {
             ForEach(Array((elementalRunes + pairedRunes).enumerated()), id: \.offset) { index, rune in
+                let scrollID = rune.map { AnyHashable($0.id) } ?? AnyHashable(index)
                 OptionalRunicAffinityNodeView(
                     rune: rune,
                     layoutStyle: index < 6 ? .elemental : .paired,
-                    onBeginEditing: {
-                        if let rune { scrollToEditor(AnyHashable(rune.id)) }
-                    },
+                    onBeginEditing: { scrollToEditor(scrollID) },
                     onEndEditing: {}
                 )
-                .id(index)
+                .id(scrollID)
             }
         }
         .background {

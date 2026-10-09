@@ -27,34 +27,34 @@ struct CharacterWorkspaceView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(isPad || navigation.phoneTab != .extras ? .visible : .hidden, for: .navigationBar)
+        .toolbar(showsTiles || navigation.phoneTab != .extras ? .visible : .hidden, for: .navigationBar)
         .toolbar {
-            if isPad || navigation.phoneTab != .extras {
+            if showsTiles || navigation.phoneTab != .extras {
                 ToolbarItem(placement: .principal) {
                     Text(currentTitle)
                         .font(.headline)
                         .foregroundStyle(isPlaceholderTitle ? .secondary : .primary)
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if isPad {
-                        if ProcessInfo.processInfo.arguments.contains("-ui-testing-in-memory") && ProcessInfo.processInfo.arguments.contains("-ui-testing-enable-resize") {
-                            Button("Resize") {
-                                testViewportWidth = testViewportWidth == nil ? 500 : nil
-                                testViewportHeight = nil
-                            }
-                            .accessibilityIdentifier("workspace.testResize")
-                            Button("Narrow landscape") {
-                                testViewportWidth = 700
-                                testViewportHeight = 400
-                            }
-                            .accessibilityIdentifier("workspace.testNarrowLandscape")
+                    if isPad && ProcessInfo.processInfo.arguments.contains("-ui-testing-in-memory") && ProcessInfo.processInfo.arguments.contains("-ui-testing-enable-resize") {
+                        Button("Resize") {
+                            testViewportWidth = testViewportWidth == nil ? 500 : nil
+                            testViewportHeight = nil
                         }
+                        .accessibilityIdentifier("workspace.testResize")
+                        Button("Narrow landscape") {
+                            testViewportWidth = 700
+                            testViewportHeight = 400
+                        }
+                        .accessibilityIdentifier("workspace.testNarrowLandscape")
+                    }
+                    if showsTiles {
                         Button { dismissKeyboard(); isShowingTabletSettings = true } label: {
                             Label("Settings", systemImage: "gearshape")
                         }
                         .accessibilityIdentifier("workspace.settings")
                     }
-                    if isPad || navigation.section == .summary {
+                    if showsTiles || navigation.section == .summary {
                         NavigationLink {
                             CharacterEditorView(character: character)
                                 .navigationBarTitleDisplayMode(.inline)
