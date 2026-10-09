@@ -17,6 +17,8 @@ struct RQSheetApp: App {
     init() {
         let isTesting = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
             || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("-ui-testing")
+            || ProcessInfo.processInfo.environment["RQ_SHEET_UI_TESTING"] == "1"
         eventMonitor = CloudSyncEventMonitor(diagnostics: isTesting ? .none : .shared)
         if !isTesting { eventMonitor.start() }
     }
@@ -45,6 +47,8 @@ struct RQSheetApp: App {
         do {
             let isRunningUnderTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
                 || ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+                || ProcessInfo.processInfo.arguments.contains("-ui-testing")
+                || ProcessInfo.processInfo.environment["RQ_SHEET_UI_TESTING"] == "1"
             let container = try AppPersistence.makeContainer(inMemory: isRunningUnderTests, diagnostics: isRunningUnderTests ? .none : .shared)
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-seed-combat-weapons") {
                 Self.seedCombatWeaponsIfNeeded(in: container)
