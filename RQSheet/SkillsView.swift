@@ -12,6 +12,7 @@ struct SkillsView: View {
 
 private struct CharacterSkillsContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var storedSkills: [CharacterSkill]
 
     let character: RQCharacter
 
@@ -63,7 +64,7 @@ private struct CharacterSkillsContentView: View {
                 .listRowBackground(Color.clear)
 
             ForEach(SkillGroup.allCases, id: \.rawValue) { group in
-                let groupSkills = viewModel.filteredSkills(for: group)
+                let groupSkills = viewModel.filteredSkills(for: group, in: currentCharacterSkills)
                 Section {
                     if viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false && groupSkills.isEmpty {
                         Text("No matches")
@@ -104,6 +105,10 @@ private struct CharacterSkillsContentView: View {
         .background(Color.clear)
         .scrollIndicators(.hidden)
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    private var currentCharacterSkills: [CharacterSkill] {
+        storedSkills.filter { $0.character?.persistentModelID == character.persistentModelID }
     }
 
     private var headerOverlay: some View {

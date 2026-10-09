@@ -8,12 +8,17 @@ import SwiftData
 
 @Model
 final class SkillDefinition {
-    @Attribute(.unique) var key: String
-    var name: String
-    var group: SkillGroup
-    var baseRule: String
+    var key: String = ""
+    var name: String = ""
+    var group: SkillGroup = SkillGroup.agility
+    var baseRule: String = "0"
 
-    var characterSkills: [CharacterSkill] = []
+    @Relationship(deleteRule: .nullify, originalName: "characterSkills", inverse: \CharacterSkill.definition)
+    private var storedCharacterSkills: [CharacterSkill]? = []
+    var characterSkills: [CharacterSkill] {
+        get { storedCharacterSkills ?? [] }
+        set { storedCharacterSkills = newValue }
+    }
 
     init(key: String, name: String, group: SkillGroup, baseRule: String = "0") {
         self.key = key

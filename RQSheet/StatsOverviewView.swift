@@ -317,14 +317,14 @@ struct StatsOverviewView: View {
     }
 
     private func honorCard(character: RQCharacter) -> some View {
-        let honor = character.ensureHonorExists()
+        let honor = character.honor
 
         return SummaryCard {
             HStack(alignment: .center, spacing: 8) {
                 Text("Honor")
 
                 Spacer()
-                Text("\(honor.percentage)")
+                Text("\(honor?.percentage ?? 0)")
                 .monospacedDigit()
 
                 Text("%")

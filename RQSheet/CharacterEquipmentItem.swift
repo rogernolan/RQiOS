@@ -3,17 +3,17 @@ import SwiftData
 
 @Model
 final class CharacterEquipmentItem {
-    var name: String
-    var encumbrance: Int {
+    var name: String = ""
+    var encumbrance: Int = 0 {
         didSet {
             if encumbrance < 0 {
                 encumbrance = 0
             }
         }
     }
-    var notes: String
-    var isCurrentlyEquipped: Bool
-    var sortOrder: Int
+    var notes: String = ""
+    var isCurrentlyEquipped: Bool = false
+    var sortOrder: Int = 0
     var character: RQCharacter?
 
     init(

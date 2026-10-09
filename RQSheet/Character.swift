@@ -57,16 +57,16 @@ final class RQCharacter {
         case cha
     }
 
-    var name: String
-    var worships: String
+    var name: String = ""
+    var worships: String = ""
 
-    var str: Int
-    var con: Int
-    var siz: Int
-    var dex: Int
-    var int: Int
-    private var powValue: Int
-    var cha: Int
+    var str: Int = 0
+    var con: Int = 0
+    var siz: Int = 0
+    var dex: Int = 0
+    var int: Int = 0
+    private var powValue: Int = 0
+    var cha: Int = 0
 
     var pow: Int {
         get { powValue }
@@ -101,18 +101,18 @@ final class RQCharacter {
         }
     }
 
-    private var currentMagicPointsValue: Int
+    private var currentMagicPointsValue: Int = 0
     var currentMagicPoints: Int {
         get { min(max(0, currentMagicPointsValue), maxMagicPoints) }
         set { currentMagicPointsValue = min(max(0, newValue), maxMagicPoints) }
     }
 
-    private var runePointsValue: Int
+    private var runePointsValue: Int = 3
     var runePoints: Int {
         get { max(0, runePointsValue) }
         set { runePointsValue = max(0, newValue) }
     }
-    var maxHitpoints: Int {
+    var maxHitpoints: Int = 1 {
         didSet {
             if maxHitpoints < 1 {
                 maxHitpoints = 1
@@ -123,7 +123,7 @@ final class RQCharacter {
             syncHitLocationMaximums(preserveDamage: true)
         }
     }
-    var currentHitpoints: Int {
+    var currentHitpoints: Int = 1 {
         didSet {
             if currentHitpoints < 1 {
                 currentHitpoints = 1
@@ -133,7 +133,7 @@ final class RQCharacter {
             }
         }
     }
-    var healingRate: Int {
+    var healingRate: Int = 1 {
         didSet {
             if healingRate < 1 {
                 healingRate = 1
@@ -148,7 +148,7 @@ final class RQCharacter {
         }
     }
     
-    var reputation: Int {
+    var reputation: Int = 0 {
         didSet {
             let clamped = reputation.clampedPercentage
             if reputation != clamped {
@@ -157,38 +157,87 @@ final class RQCharacter {
         }
     }
     var notes: String = ""
-    var occupation: String
-    var sol: String
-    var income: String
-    var ransom: Int
-    var dateOfBirth: String
-    var family: String
-    var patron: String
+    var occupation: String = ""
+    var sol: String = ""
+    var income: String = ""
+    var ransom: Int = 1000
+    var dateOfBirth: String = ""
+    var family: String = ""
+    var patron: String = ""
     var portraitData: Data?
-    var powExperienceCheck: Bool
+    var powExperienceCheck: Bool = false
+    @Relationship(deleteRule: .cascade, inverse: \CharacterHonor.character)
     var honor: CharacterHonor?
-    var passions: [CharacterPassion] = []
-    var equipmentItems: [CharacterEquipmentItem] = []
-    var spells: [CharacterSpell] = []
-    var skills: [CharacterSkill] = []
-    var weapons: [Weapon] = []
-    var hitLocations: [CharacterHitLocation] = []
+    @Relationship(deleteRule: .cascade, originalName: "passions", inverse: \CharacterPassion.character)
+    private var storedPassions: [CharacterPassion]? = []
+    var passions: [CharacterPassion] {
+        get { storedPassions ?? [] }
+        set { storedPassions = newValue }
+    }
+    @Relationship(deleteRule: .cascade, originalName: "equipmentItems", inverse: \CharacterEquipmentItem.character)
+    private var storedEquipmentItems: [CharacterEquipmentItem]? = []
+    var equipmentItems: [CharacterEquipmentItem] {
+        get { storedEquipmentItems ?? [] }
+        set { storedEquipmentItems = newValue }
+    }
+    @Relationship(deleteRule: .cascade, originalName: "spells", inverse: \CharacterSpell.character)
+    private var storedSpells: [CharacterSpell]? = []
+    var spells: [CharacterSpell] {
+        get { storedSpells ?? [] }
+        set { storedSpells = newValue }
+    }
+    @Relationship(deleteRule: .cascade, originalName: "skills", inverse: \CharacterSkill.character)
+    private var storedSkills: [CharacterSkill]? = []
+    var skills: [CharacterSkill] {
+        get { storedSkills ?? [] }
+        set { storedSkills = newValue }
+    }
+    @Relationship(deleteRule: .cascade, originalName: "weapons", inverse: \Weapon.character)
+    private var storedWeapons: [Weapon]? = []
+    var weapons: [Weapon] {
+        get { storedWeapons ?? [] }
+        set { storedWeapons = newValue }
+    }
+    @Relationship(deleteRule: .cascade, originalName: "hitLocations", inverse: \CharacterHitLocation.character)
+    private var storedHitLocations: [CharacterHitLocation]? = []
+    var hitLocations: [CharacterHitLocation] {
+        get { storedHitLocations ?? [] }
+        set { storedHitLocations = newValue }
+    }
     
 
-    var fireAffinity: RuneAffinity = RuneAffinity(name: .fire, percentage: 0)
-    var darknessAffinity = RuneAffinity(name: .darkness, percentage: 0)
-    var earthAffinity = RuneAffinity(name: .earth, percentage: 0)
-    var waterAffinity = RuneAffinity(name: .water, percentage: 0)
-    var airAffinity = RuneAffinity(name: .air, percentage: 0)
-    var moonAffinity = RuneAffinity(name: .moon, percentage: 0)
-    
-    // Related pairs with 50% each and relatedRune set
-    
-    var (manAffinity, beastAffinity) = RuneAffinity.relatedPair(lhName: .man, rhName: .beast)
-    var (fertilityAffinity, deathAffinity) = RuneAffinity.relatedPair(lhName: .fertility, rhName: .death)
-    var (harmonyAffinity, disorderAffinity) = RuneAffinity.relatedPair(lhName: .harmony, rhName: .disorder)
-    var (truthAffinity, IllusionAffinity) = RuneAffinity.relatedPair(lhName: .truth, rhName: .illusion)
-    var (stasisAffinity, movementAffinity) = RuneAffinity.relatedPair(lhName: .stasis, rhName: .movement)
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.fireCharacter)
+    var fireAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.darknessCharacter)
+    var darknessAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.earthCharacter)
+    var earthAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.waterCharacter)
+    var waterAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.airCharacter)
+    var airAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.moonCharacter)
+    var moonAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.manCharacter)
+    var manAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.beastCharacter)
+    var beastAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.fertilityCharacter)
+    var fertilityAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.deathCharacter)
+    var deathAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.harmonyCharacter)
+    var harmonyAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.disorderCharacter)
+    var disorderAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.truthCharacter)
+    var truthAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.IllusionCharacter)
+    var IllusionAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.stasisCharacter)
+    var stasisAffinity: RuneAffinity?
+    @Relationship(deleteRule: .cascade, inverse: \RuneAffinity.movementCharacter)
+    var movementAffinity: RuneAffinity?
     var summaryPlaceholderRuneNames: [RuneName]?
 
     var allRuneAffinities: [RuneAffinity] {
@@ -209,7 +258,36 @@ final class RQCharacter {
             IllusionAffinity,
             stasisAffinity,
             movementAffinity
-        ]
+        ].compactMap { $0 }
+    }
+
+    /// Used only during explicit creation and legacy migration, never during display or cloud import.
+    func initializeMissingPairedRunes() {
+        if manAffinity == nil && beastAffinity == nil {
+            let pair = RuneAffinity.relatedPair(lhName: .man, rhName: .beast)
+            manAffinity = pair.0
+            beastAffinity = pair.1
+        }
+        if fertilityAffinity == nil && deathAffinity == nil {
+            let pair = RuneAffinity.relatedPair(lhName: .fertility, rhName: .death)
+            fertilityAffinity = pair.0
+            deathAffinity = pair.1
+        }
+        if harmonyAffinity == nil && disorderAffinity == nil {
+            let pair = RuneAffinity.relatedPair(lhName: .harmony, rhName: .disorder)
+            harmonyAffinity = pair.0
+            disorderAffinity = pair.1
+        }
+        if truthAffinity == nil && IllusionAffinity == nil {
+            let pair = RuneAffinity.relatedPair(lhName: .truth, rhName: .illusion)
+            truthAffinity = pair.0
+            IllusionAffinity = pair.1
+        }
+        if stasisAffinity == nil && movementAffinity == nil {
+            let pair = RuneAffinity.relatedPair(lhName: .stasis, rhName: .movement)
+            stasisAffinity = pair.0
+            movementAffinity = pair.1
+        }
     }
 
     var displayName: String {
@@ -807,6 +885,15 @@ final class RQCharacter {
             spell.character = self
         }
 
+        // New records receive the full graph; incoming cloud records are never repaired on reads.
+        fireAffinity = RuneAffinity(name: .fire, percentage: 0)
+        darknessAffinity = RuneAffinity(name: .darkness, percentage: 0)
+        earthAffinity = RuneAffinity(name: .earth, percentage: 0)
+        waterAffinity = RuneAffinity(name: .water, percentage: 0)
+        airAffinity = RuneAffinity(name: .air, percentage: 0)
+        moonAffinity = RuneAffinity(name: .moon, percentage: 0)
+        initializeMissingPairedRunes()
+        if self.honor == nil { self.honor = CharacterHonor(character: self) }
         syncHitLocationMaximums(preserveDamage: false)
     }
 

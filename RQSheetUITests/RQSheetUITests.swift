@@ -25,7 +25,7 @@ final class RQSheetUITests: XCTestCase {
     @MainActor
     func testSummaryCharacteristicsRemainVisibleAfterScrollCycle() throws {
         let app = XCUIApplication()
-        app.launch()
+        launchApp(app)
 
         if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
             app.buttons["Create New Character"].tap()
@@ -94,9 +94,9 @@ final class RQSheetUITests: XCTestCase {
 
         app.navigationBars.buttons["Save"].tap()
 
-        let rowButton = app.buttons["Shield"]
-        XCTAssertTrue(rowButton.waitForExistence(timeout: 5))
-        rowButton.tap()
+        let rowName = app.staticTexts["Shield"]
+        XCTAssertTrue(rowName.waitForExistence(timeout: 5))
+        rowName.tap()
 
         XCTAssertTrue(app.navigationBars["Edit Equipment"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.textFields["Name"].waitForExistence(timeout: 5))
@@ -142,8 +142,13 @@ final class RQSheetUITests: XCTestCase {
     @MainActor
     func testCombatWeaponsScrollVerticallyWhenDraggingOnRow() throws {
         let app = XCUIApplication()
-        app.launchArguments += ["-ui-testing-seed-combat-weapons"]
-        openCombatTab(in: app)
+        app.launchArguments = ["-ui-testing", "-ui-testing-seed-combat-weapons"]
+        app.launch()
+        let testCharacter = app.buttons["UI Test Character"]
+        XCTAssertTrue(testCharacter.waitForExistence(timeout: 12), "The simulator UI test app must seed its combat fixture.")
+        testCharacter.tap()
+        XCTAssertTrue(app.tabBars.buttons["Combat"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["Combat"].tap()
 
         let weaponsList = app.scrollViews["combat.weaponsList"]
         XCTAssertTrue(weaponsList.waitForExistence(timeout: 12))
@@ -165,27 +170,37 @@ final class RQSheetUITests: XCTestCase {
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
+        // This measures isolated UI-test startup. The -ui-testing argument selects
+        // an in-memory store and disables CloudKit diagnostics for simulator stability.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
+            launchApp(XCUIApplication())
         }
     }
 
     @MainActor
     private func openEquipmentTab(in app: XCUIApplication) {
-        app.launch()
+        launchApp(app)
 
         if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
             app.buttons["Create New Character"].tap()
         }
 
-        XCTAssertTrue(app.tabBars.buttons["Equipment"].waitForExistence(timeout: 12))
-        app.tabBars.buttons["Equipment"].tap()
+        if app.tabBars.buttons["Equipment"].waitForExistence(timeout: 5) {
+            app.tabBars.buttons["Equipment"].tap()
+            return
+        }
+
+        XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 12))
+        app.tabBars.buttons["More"].tap()
+
+        let equipmentButton = app.buttons["Equipment"]
+        XCTAssertTrue(equipmentButton.waitForExistence(timeout: 5))
+        equipmentButton.tap()
     }
 
     @MainActor
     private func openMagicTab(in app: XCUIApplication) {
-        app.launch()
+        launchApp(app)
 
         if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
             app.buttons["Create New Character"].tap()
@@ -199,20 +214,13 @@ final class RQSheetUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["More"].waitForExistence(timeout: 12))
         app.tabBars.buttons["More"].tap()
 
-        let magicCell = app.tables.cells.staticTexts["Magic"]
-        XCTAssertTrue(magicCell.waitForExistence(timeout: 5))
-        magicCell.tap()
+        let magicButton = app.buttons["Magic"]
+        XCTAssertTrue(magicButton.waitForExistence(timeout: 5))
+        magicButton.tap()
     }
 
-    @MainActor
-    private func openCombatTab(in app: XCUIApplication) {
+    private func launchApp(_ app: XCUIApplication) {
+        app.launchArguments.append("-ui-testing")
         app.launch()
-
-        if app.buttons["Create New Character"].waitForExistence(timeout: 3) {
-            app.buttons["Create New Character"].tap()
-        }
-
-        XCTAssertTrue(app.tabBars.buttons["Combat"].waitForExistence(timeout: 12))
-        app.tabBars.buttons["Combat"].tap()
     }
 }

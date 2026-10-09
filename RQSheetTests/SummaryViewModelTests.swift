@@ -46,7 +46,7 @@ struct SummaryViewModelTests {
         let fallbackViewModel = SummaryViewModel(character: character)
         #expect(fallbackViewModel.topRunes.allSatisfy { $0.isPlaceholder })
 
-        character.fireAffinity.setPercentage(30)
+        character.fireAffinity?.setPercentage(30)
 
         let realViewModel = SummaryViewModel(character: character)
         #expect(realViewModel.topRunes.allSatisfy { $0.isPlaceholder == false })

@@ -1,0 +1,275 @@
+{
+  "ZCHARACTEREQUIPMENTITEM": [
+    {
+      "ZCHARACTER": 1,
+      "ZENCUMBRANCE": 2,
+      "ZISCURRENTLYEQUIPPED": 1,
+      "ZNAME": "Bronze shield",
+      "ZNOTES": "Dented",
+      "ZSORTORDER": 0,
+      "Z_ENT": 1,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZCHARACTERHITLOCATION": [
+    {
+      "ZARMOUR": 4,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 2,
+      "ZLOCATION": "head",
+      "ZMAXHP": 6,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 6,
+      "ZLOCATION": "abdomen",
+      "ZMAXHP": 6,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 2
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 6,
+      "ZLOCATION": "rightLeg",
+      "ZMAXHP": 6,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 3
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 5,
+      "ZLOCATION": "rightArm",
+      "ZMAXHP": 5,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 4
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 7,
+      "ZLOCATION": "chest",
+      "ZMAXHP": 7,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 5
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 5,
+      "ZLOCATION": "leftArm",
+      "ZMAXHP": 5,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 6
+    },
+    {
+      "ZARMOUR": 0,
+      "ZCHARACTER": 1,
+      "ZCURRENTHP": 6,
+      "ZLOCATION": "leftLeg",
+      "ZMAXHP": 6,
+      "Z_ENT": 2,
+      "Z_OPT": 1,
+      "Z_PK": 7
+    }
+  ],
+  "ZCHARACTERHONOR": [
+    {
+      "ZCHARACTER": 1,
+      "ZDESCRIPTIONTEXT": "Oath kept",
+      "ZEXPERIENCECHECK": 1,
+      "ZPERCENTAGE": 61,
+      "Z_ENT": 3,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZCHARACTERPASSION": [
+    {
+      "ZCHARACTER": 1,
+      "ZDESCRIPTIONTEXT": "Loyalty (Clan)",
+      "ZPERCENTAGE": 73,
+      "ZSORTORDER": 0,
+      "Z_ENT": 4,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZCHARACTERSKILL": [
+    {
+      "ZCHARACTER": 1,
+      "ZCUSTOMGROUP": "knowledge",
+      "ZCUSTOMNAME": "Legacy custom",
+      "ZDEFINITION": 1,
+      "ZEXPERIENCECHECK": 1,
+      "ZSUCCESSPERCENTAGE": 57,
+      "Z_ENT": 5,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZCHARACTERSPELL": [
+    {
+      "ZCHARACTER": 1,
+      "ZKINDRAWVALUE": "spiritMagic",
+      "ZNAME": "Heal",
+      "ZPAGE": "RQ 262",
+      "ZPOINTS": 2,
+      "ZSORTORDER": 0,
+      "Z_ENT": 6,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    },
+    {
+      "ZCHARACTER": 1,
+      "ZKINDRAWVALUE": "runeSpell",
+      "ZNAME": "Flight",
+      "ZPAGE": "RQ 330",
+      "ZPOINTS": 3,
+      "ZSORTORDER": 1,
+      "Z_ENT": 6,
+      "Z_OPT": 1,
+      "Z_PK": 2
+    }
+  ],
+  "ZRQCHARACTER": [
+    {
+      "ZAIRAFFINITY": 5,
+      "ZCHA": 11,
+      "ZCON": 14,
+      "ZCURRENTHITPOINTS": 12,
+      "ZCURRENTMAGICPOINTSVALUE": 4,
+      "ZDARKNESSAFFINITY": 4,
+      "ZDATEOFBIRTH": "1598",
+      "ZDEX": 12,
+      "ZEARTHAFFINITY": 1,
+      "ZFAMILY": "House of Arkat",
+      "ZFIREAFFINITY": 2,
+      "ZHEALINGRATE": 3,
+      "ZHONOR": 1,
+      "ZINCOME": "120 L",
+      "ZINT": 16,
+      "ZMAXHITPOINTS": 17,
+      "ZMOONAFFINITY": 6,
+      "ZMOVE": 8,
+      "ZNAME": "Legacy Arkat",
+      "ZNOTES": "Preserved legacy notes",
+      "ZOCCUPATION": "Warrior",
+      "ZPATRON": "Kallyr",
+      "ZPORTRAITDATA": {
+        "base64": "AAF//w=="
+      },
+      "ZPOWEXPERIENCECHECK": 1,
+      "ZPOWVALUE": 17,
+      "ZRANSOM": 1500,
+      "ZREPUTATION": 43,
+      "ZRUNEPOINTSVALUE": 7,
+      "ZSIZ": 13,
+      "ZSOL": "Free",
+      "ZSTR": 15,
+      "ZSUMMARYPLACEHOLDERRUNENAMES": null,
+      "ZWATERAFFINITY": 3,
+      "ZWORSHIPS": "Orlanth",
+      "Z_ENT": 7,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZRUNEAFFINITY": [
+    {
+      "ZEXPERIENCECHECK": 1,
+      "ZNAME": "Earth",
+      "ZPERCENTAGE": 26,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    },
+    {
+      "ZEXPERIENCECHECK": 1,
+      "ZNAME": "Fire",
+      "ZPERCENTAGE": 20,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 2
+    },
+    {
+      "ZEXPERIENCECHECK": 0,
+      "ZNAME": "Water",
+      "ZPERCENTAGE": 29,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 3
+    },
+    {
+      "ZEXPERIENCECHECK": 0,
+      "ZNAME": "Darkness",
+      "ZPERCENTAGE": 23,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 4
+    },
+    {
+      "ZEXPERIENCECHECK": 1,
+      "ZNAME": "Air",
+      "ZPERCENTAGE": 32,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 5
+    },
+    {
+      "ZEXPERIENCECHECK": 0,
+      "ZNAME": "Moon",
+      "ZPERCENTAGE": 35,
+      "ZRELATEDRUNE": null,
+      "Z_ENT": 8,
+      "Z_OPT": 1,
+      "Z_PK": 6
+    }
+  ],
+  "ZSKILLDEFINITION": [
+    {
+      "ZBASERULE": "0",
+      "ZGROUP": "knowledge",
+      "ZKEY": "custom.fe328a68-4317-4ad3-b54b-c4a866a8f896",
+      "ZNAME": "Legacy custom",
+      "Z_ENT": 9,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ],
+  "ZWEAPON": [
+    {
+      "ZBASEPERCENTAGE": 71,
+      "ZCHARACTER": 1,
+      "ZDAMAGE": "1D8+1",
+      "ZENC": 1,
+      "ZEXPERIENCECHECK": 1,
+      "ZHPCURRENT": 9,
+      "ZHPMAX": 12,
+      "ZISEQUIPPED": 1,
+      "ZNAME": "Sword",
+      "ZRANGE": "Melee",
+      "ZSTRIKERANK": "3",
+      "ZTYPE": "slashing",
+      "Z_ENT": 10,
+      "Z_OPT": 1,
+      "Z_PK": 1
+    }
+  ]
+}

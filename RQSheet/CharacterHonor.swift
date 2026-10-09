@@ -3,8 +3,8 @@ import SwiftData
 
 @Model
 final class CharacterHonor {
-    var descriptionText: String
-    var percentage: Int {
+    var descriptionText: String = ""
+    var percentage: Int = 0 {
         didSet {
             let clamped = percentage.clampedPercentage
             if percentage != clamped {
@@ -12,7 +12,7 @@ final class CharacterHonor {
             }
         }
     }
-    var experienceCheck: Bool
+    var experienceCheck: Bool = false
     var character: RQCharacter?
 
     init(descriptionText: String = "", percentage: Int = 0, experienceCheck: Bool = false, character: RQCharacter? = nil) {

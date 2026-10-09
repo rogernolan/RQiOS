@@ -33,7 +33,10 @@ struct CharacterMagicTests {
     @Test
     func reducingPowRecalculatesMagicPointMaximumAndClampsCurrent() {
         let character = RQCharacter()
-        character.currentMagicPoints = character.maxMagicPoints
+        character.pow = 12
+        character.currentMagicPoints = 12
+        #expect(character.maxMagicPoints == 12)
+        #expect(character.currentMagicPoints == 12)
 
         character.pow = 6
 
@@ -42,9 +45,24 @@ struct CharacterMagicTests {
     }
 
     @Test
+    func settingPowToSixPreservesInitiallyLowerCurrentMagicPoints() {
+        let character = RQCharacter()
+        character.pow = 4
+        character.currentMagicPoints = 4
+
+        character.pow = 6
+
+        #expect(character.maxMagicPoints == 6)
+        #expect(character.currentMagicPoints == 4)
+    }
+
+    @Test
     func increasingPowRaisesMaximumWithoutForcingCurrentUpward() {
         let character = RQCharacter()
+        character.pow = 4
         character.currentMagicPoints = 2
+        #expect(character.maxMagicPoints == 4)
+        #expect(character.currentMagicPoints == 2)
 
         character.pow = 10
 

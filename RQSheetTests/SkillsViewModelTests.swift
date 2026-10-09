@@ -19,6 +19,28 @@ struct SkillsViewModelTests {
 
     @Test
     @MainActor
+    func filteredSkillsUseLatestQueryResultsForExperienceChecks() {
+        let character = RQCharacter()
+        let definition = SkillDefinition(key: "agility-boat", name: "Boat", group: .agility, baseRule: "0")
+        let initiallyLoadedSkill = CharacterSkill(character: character, definition: definition, successPercentage: 5)
+        character.skills.append(initiallyLoadedSkill)
+        let viewModel = SkillsViewModel(character: character)
+
+        let refreshedSkill = CharacterSkill(
+            character: character,
+            definition: definition,
+            successPercentage: 5,
+            experienceCheck: true
+        )
+
+        let displayedSkills = viewModel.filteredSkills(for: .agility, in: [refreshedSkill])
+
+        #expect(displayedSkills.count == 1)
+        #expect(displayedSkills[0].experienceCheck)
+    }
+
+    @Test
+    @MainActor
     func addSkillCreatesCustomSkillInRequestedGroup() {
         let character = RQCharacter()
         let viewModel = SkillsViewModel(character: character)

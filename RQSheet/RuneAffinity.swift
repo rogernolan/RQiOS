@@ -28,10 +28,28 @@ enum RuneName: String, Codable, CaseIterable {
 
 @Model
 final class RuneAffinity {
-    var name: RuneName
-    private(set) var percentage: Int  // 0-100
-    var experienceCheck: Bool
+    var name: RuneName = RuneName.fire
+    private(set) var percentage: Int = 0  // 0-100
+    var experienceCheck: Bool = false
+    @Relationship(deleteRule: .nullify, inverse: \RuneAffinity.pairedByRune)
     var relatedRune: RuneAffinity?
+    var pairedByRune: RuneAffinity?
+    var fireCharacter: RQCharacter?
+    var darknessCharacter: RQCharacter?
+    var earthCharacter: RQCharacter?
+    var waterCharacter: RQCharacter?
+    var airCharacter: RQCharacter?
+    var moonCharacter: RQCharacter?
+    var manCharacter: RQCharacter?
+    var beastCharacter: RQCharacter?
+    var fertilityCharacter: RQCharacter?
+    var deathCharacter: RQCharacter?
+    var harmonyCharacter: RQCharacter?
+    var disorderCharacter: RQCharacter?
+    var truthCharacter: RQCharacter?
+    var IllusionCharacter: RQCharacter?
+    var stasisCharacter: RQCharacter?
+    var movementCharacter: RQCharacter?
 
     init(name: RuneName, percentage: Int = 0, experienceCheck: Bool = false) {
         self.name = name

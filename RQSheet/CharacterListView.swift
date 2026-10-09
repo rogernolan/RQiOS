@@ -55,7 +55,7 @@ struct CharacterListView: View {
                 pendingDeleteCharacter = nil
             }
         } message: {
-            Text("This cannot be undone.")
+            Text("This deletes the character from your synced devices and cannot be undone.")
         }
     }
 
@@ -134,19 +134,5 @@ private struct CharacterListRow: View {
     NavigationStack {
         CharacterListView { _ in }
     }
-    .modelContainer(
-        for: [
-            RQCharacter.self,
-            CharacterEquipmentItem.self,
-            CharacterSpell.self,
-            RuneAffinity.self,
-            SkillDefinition.self,
-            CharacterSkill.self,
-            Weapon.self,
-            CharacterHitLocation.self,
-            CharacterHonor.self,
-            CharacterPassion.self,
-        ],
-        inMemory: true
-    )
+    .modelContainer(try! AppPersistence.makeContainer(inMemory: true, cloudKitEnabled: false))
 }

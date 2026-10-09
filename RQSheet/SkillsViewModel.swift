@@ -12,8 +12,8 @@ final class SkillsViewModel {
         self.character = character
     }
 
-    func filteredSkills(for group: SkillGroup) -> [CharacterSkill] {
-        let orderedSkills = character.skills
+    func filteredSkills(for group: SkillGroup, in skills: [CharacterSkill]? = nil) -> [CharacterSkill] {
+        let orderedSkills = (skills ?? character.skills)
             .filter { $0.resolvedGroup == group }
             .sorted { lhs, rhs in
                 lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) == .orderedAscending

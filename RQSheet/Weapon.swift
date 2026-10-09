@@ -18,9 +18,9 @@ enum WeaponType: String, Codable, CaseIterable {
 final class Weapon {
     var character: RQCharacter?
 
-    var name: String
+    var name: String = ""
 
-    var basePercentage: Int {
+    var basePercentage: Int = 0 {
         didSet {
             let clamped = basePercentage.clampedPercentage
             if basePercentage != clamped {
@@ -28,9 +28,9 @@ final class Weapon {
             }
         }
     }
-    var experienceCheck: Bool
+    var experienceCheck: Bool = false
 
-    var damage: String
+    var damage: String = ""
 
     var hpMax: Int? {
         didSet {
@@ -70,10 +70,10 @@ final class Weapon {
         }
     }
 
-    var strikeRank: String
+    var strikeRank: String = ""
     var type: WeaponType?
-    var range: String
-    var isEquipped: Bool
+    var range: String = ""
+    var isEquipped: Bool = false
 
     init(
         character: RQCharacter? = nil,

@@ -3,9 +3,10 @@ import Testing
 
 struct CharacterHonorAndPassionTests {
     @Test
-    func ensureHonorExistsCreatesDefaultHonorOnce() {
+    func ensureHonorExistsCreatesMissingHonorOnce() {
         let character = RQCharacter()
 
+        character.honor = nil
         #expect(character.honor == nil)
 
         let first = character.ensureHonorExists()

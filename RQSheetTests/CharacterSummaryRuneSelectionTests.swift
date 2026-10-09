@@ -5,11 +5,11 @@ struct CharacterSummaryRuneSelectionTests {
     @Test
     func topSummaryRunesReturnsHighestFourWhenNonZeroValuesExist() {
         let character = RQCharacter()
-        character.fireAffinity.setPercentage(72)
-        character.airAffinity.setPercentage(51)
-        character.moonAffinity.setPercentage(49)
-        character.darknessAffinity.setPercentage(61)
-        character.truthAffinity.setPercentage(81)
+        character.fireAffinity?.setPercentage(72)
+        character.airAffinity?.setPercentage(51)
+        character.moonAffinity?.setPercentage(49)
+        character.darknessAffinity?.setPercentage(61)
+        character.truthAffinity?.setPercentage(81)
 
         let runes = character.topSummaryRunes()
 
@@ -36,7 +36,7 @@ struct CharacterSummaryRuneSelectionTests {
 
         let placeholderRunes = character.topSummaryRunes()
 
-        character.fireAffinity.setPercentage(80)
+        character.fireAffinity?.setPercentage(80)
         let realRunes = character.topSummaryRunes()
 
         #expect(placeholderRunes.allSatisfy { $0.isPlaceholder })
