@@ -68,8 +68,9 @@ struct RQSheetApp: App {
     private static func seedTilesIfNeeded(in container: ModelContainer) {
         let context = container.mainContext
         guard (try? context.fetchCount(FetchDescriptor<RQCharacter>())) == 0 else { return }
-        let character = RQCharacter(name: "Tile Test Character", worships: "Lhankor Mhy", notes: "A journey through Nochet.\nKeep the character's notes together.")
+        let character = RQCharacter(name: "Tile Test Character", worships: "Lhankor Mhy, Orlanth", notes: "A journey through Nochet.\nKeep the character's notes together.", family: "House of Test")
         context.insert(character)
+        context.insert(RQCharacter(name: "Tile Test Character Two", worships: "Orlanth", family: "House Two"))
         let counts: [(SkillGroup, Int)] = [(.agility, 9), (.communication, 19), (.knowledge, 39), (.manipulation, 6), (.magic, 4), (.perception, 6), (.stealth, 3)]
         for (group, count) in counts {
             for index in 1...count {

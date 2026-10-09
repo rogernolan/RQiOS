@@ -13,21 +13,15 @@ final class WorkspaceNavigationUITests: XCTestCase {
         XCTAssertTrue(app.scrollViews["workspace.tiles"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.tabBars.firstMatch.isHittable)
         XCTAssertFalse(app.buttons["workspace.sectionMenu"].exists)
-        let portrait = [["summary", "runes"], ["combat", "magic"], ["skills", "knowledge"], ["equipment", "notes"]]
-        let landscape = [["summary", "runes", "magic"], ["combat", "skills", "knowledge"], ["equipment", "notes"]]
-        for (orientation, rows) in [(UIDeviceOrientation.portrait, portrait), (.landscapeLeft, landscape)] {
+        let portraitOrder = ["summary", "runes", "combat", "magic", "skills1", "skills2", "equipment", "notes"]
+        let landscapeOrder = ["summary", "runes", "magic", "combat", "skills1", "skills2", "equipment", "notes"]
+        for (orientation, order) in [(UIDeviceOrientation.portrait, portraitOrder), (.landscapeLeft, landscapeOrder)] {
             XCUIDevice.shared.orientation = orientation
-            for row in rows {
-                let headings = row.map { app.staticTexts["tile.\($0).title"] }
-                for heading in headings {
-                    XCTAssertTrue(heading.waitForExistence(timeout: 3))
-                    XCTAssertGreaterThanOrEqual(heading.frame.minX, 0)
-                    XCTAssertLessThanOrEqual(heading.frame.maxX, app.frame.maxX)
-                }
-                for index in 1..<headings.count {
-                    XCTAssertEqual(headings[index].frame.minY, headings[0].frame.minY, accuracy: 2)
-                    XCTAssertGreaterThan(headings[index].frame.minX, headings[index - 1].frame.minX)
-                }
+            for tile in order {
+                let heading = app.staticTexts["tile.\(tile).title"]
+                XCTAssertTrue(heading.waitForExistence(timeout: 3))
+                XCTAssertGreaterThanOrEqual(heading.frame.minX, 0)
+                XCTAssertLessThanOrEqual(heading.frame.maxX, app.frame.maxX)
             }
             let summaryTile = app.descendants(matching: .any)
                 .matching(identifier: "tile.summary")
@@ -35,6 +29,9 @@ final class WorkspaceNavigationUITests: XCTestCase {
             XCTAssertTrue(summaryTile.exists)
             XCTAssertFalse(summaryTile.staticTexts["Top Rune Affinities"].exists)
             XCTAssertFalse(summaryTile.staticTexts["Skill Bonuses"].exists)
+            XCTAssertTrue(app.staticTexts["tile.skills1.title"].exists)
+            XCTAssertTrue(app.staticTexts["tile.skills2.title"].exists)
+            XCTAssertFalse(app.staticTexts["tile.skills.title"].exists)
             attachScreenshot(app, name: "iPad tiles \(orientation == .portrait ? "portrait" : "landscape")")
         }
         XCUIDevice.shared.orientation = .portrait
@@ -51,6 +48,71 @@ final class WorkspaceNavigationUITests: XCTestCase {
         character.tap()
 
         XCTAssertTrue(app.scrollViews["workspace.tiles"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCharacterCardShowsIdentityAndFourRunesBeforeOpeningDetails() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing-in-memory", "-ui-testing-seed-tiles"]
+        app.launch()
+
+        let card = app.buttons["character.card.Tile Test Character"]
+        XCTAssertTrue(card.waitForExistence(timeout: 10))
+        XCTAssertTrue(card.staticTexts["House of Test"].exists)
+        XCTAssertTrue(card.staticTexts["Family"].exists)
+        XCTAssertTrue(card.staticTexts["Lhankor Mhy"].exists)
+        XCTAssertTrue(card.staticTexts["Main god"].exists)
+        XCTAssertFalse(card.staticTexts["Orlanth"].exists)
+        XCTAssertEqual(card.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'character.rune.'")).count, 4)
+        card.tap()
+
+        XCTAssertTrue(app.scrollViews["workspace.tiles"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCharacterCardDeleteActionKeepsConfirmation() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing-in-memory", "-ui-testing-seed-tiles"]
+        app.launch()
+
+        let actions = app.buttons["Actions for Tile Test Character"]
+        XCTAssertTrue(actions.waitForExistence(timeout: 10))
+        actions.tap()
+        app.buttons["Delete"].tap()
+        let confirmation = app.buttons["Delete"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 3))
+        app.navigationBars["Characters"].staticTexts["Characters"].tap()
+        XCTAssertTrue(app.buttons["character.card.Tile Test Character"].exists)
+    }
+
+    @MainActor
+    func testCharacterPickerUsesTwoColumnsOnIPad() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing-in-memory", "-ui-testing-seed-tiles"]
+        app.launch()
+
+        let first = app.buttons["character.card.Tile Test Character"]
+        let second = app.buttons["character.card.Tile Test Character Two"]
+        XCTAssertTrue(first.waitForExistence(timeout: 10))
+        XCTAssertTrue(second.waitForExistence(timeout: 10))
+        XCTAssertEqual(first.frame.minY, second.frame.minY, accuracy: 3)
+        XCTAssertGreaterThan(second.frame.minX, first.frame.minX)
+    }
+
+    @MainActor
+    func testCharacterPickerUsesOneColumnOnIPhone() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone)
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing-in-memory", "-ui-testing-seed-tiles"]
+        app.launch()
+
+        let first = app.buttons["character.card.Tile Test Character"]
+        let second = app.buttons["character.card.Tile Test Character Two"]
+        XCTAssertTrue(first.waitForExistence(timeout: 10))
+        XCTAssertTrue(second.waitForExistence(timeout: 10))
+        XCTAssertEqual(first.frame.minX, second.frame.minX, accuracy: 3)
+        XCTAssertGreaterThan(second.frame.minY, first.frame.minY)
     }
 
     @MainActor
@@ -77,7 +139,7 @@ final class WorkspaceNavigationUITests: XCTestCase {
     func testIPadKeepsSearchStateAcrossRotationAndCompactLayout() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
         let app = openPopulatedCharacter(resizeTesting: true)
-        let search = app.textFields["knowledge.search"]
+        let search = app.textFields["skills2.search"]
         scrollTo(search, in: app)
         search.tap()
         search.typeText("skill 39")
@@ -132,12 +194,19 @@ final class WorkspaceNavigationUITests: XCTestCase {
         let app = openPopulatedCharacter(resizeTesting: true)
         app.buttons["workspace.testNarrowLandscape"].tap()
         let runes = app.otherElements["tile.runes"]
-        let summaryTitle = app.staticTexts["tile.summary.title"]
-        let runeTitle = app.staticTexts["tile.runes.title"]
-        let magicTitle = app.staticTexts["tile.magic.title"]
-        XCTAssertEqual(summaryTitle.frame.minY, runeTitle.frame.minY, accuracy: 2)
-        XCTAssertEqual(runeTitle.frame.minY, magicTitle.frame.minY, accuracy: 2)
-        XCTAssertGreaterThan(magicTitle.frame.minX, runeTitle.frame.minX)
+        let expectedOrder = ["summary", "runes", "magic", "combat", "skills1", "skills2", "equipment", "notes"]
+        var titleFrames: [(String, CGRect)] = []
+        for tile in expectedOrder {
+            let title = app.staticTexts["tile.\(tile).title"]
+            XCTAssertTrue(title.waitForExistence(timeout: 3))
+            titleFrames.append((tile, title.frame))
+        }
+        let orderedFrames = titleFrames.sorted { lhs, rhs in
+            if abs(lhs.1.minX - rhs.1.minX) > 3 { return lhs.1.minX < rhs.1.minX }
+            return lhs.1.minY < rhs.1.minY
+        }
+        XCTAssertEqual(orderedFrames.map(\.0), expectedOrder)
+        XCTAssertEqual(Set(titleFrames.map { Int($0.1.minX.rounded()) }).count, 3)
         for name in ["Fire", "Darkness", "Earth", "Water", "Air", "Moon", "Truth", "Illusion"] {
             let label = runes.staticTexts[name].firstMatch
             XCTAssertTrue(label.exists)
@@ -151,7 +220,7 @@ final class WorkspaceNavigationUITests: XCTestCase {
     func testIPadSkillEditingChecksAndDeleteRemainAvailable() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
         let app = openPopulatedCharacter()
-        let search = app.textFields["knowledge.search"]
+        let search = app.textFields["skills2.search"]
         scrollTo(search, in: app)
         search.tap()
         search.typeText("skill 39")
@@ -182,8 +251,8 @@ final class WorkspaceNavigationUITests: XCTestCase {
     private func scrollTo(_ element: XCUIElement, in app: XCUIApplication, upwards: Bool = true) {
         let page = app.scrollViews["workspace.tiles"]
         let visibleTop = app.navigationBars.firstMatch.frame.maxY
-        let visibleBottom = app.frame.maxY - 80
-        for _ in 0..<22 {
+        let visibleBottom = app.frame.maxY - 24
+        for _ in 0..<32 {
             let frame = element.frame
             if frame.minY >= visibleTop && frame.maxY <= visibleBottom { return }
             if frame.minY < visibleTop {

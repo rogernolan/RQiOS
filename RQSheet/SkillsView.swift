@@ -4,14 +4,16 @@ import SwiftUI
 struct SkillsView: View {
     let character: RQCharacter
     let groups: [SkillGroup]
+    let searchAccessibilityIdentifier: String?
 
-    init(character: RQCharacter, groups: [SkillGroup] = SkillGroup.allCases) {
+    init(character: RQCharacter, groups: [SkillGroup] = SkillGroup.allCases, searchAccessibilityIdentifier: String? = nil) {
         self.character = character
         self.groups = groups
+        self.searchAccessibilityIdentifier = searchAccessibilityIdentifier
     }
 
     var body: some View {
-        CharacterSkillsContentView(character: character, groups: groups)
+        CharacterSkillsContentView(character: character, groups: groups, searchAccessibilityIdentifier: searchAccessibilityIdentifier)
             .sectionRuneBackground(runeName: "RuneMastery")
     }
 }
@@ -23,14 +25,16 @@ private struct CharacterSkillsContentView: View {
 
     let character: RQCharacter
     let groups: [SkillGroup]
+    let searchAccessibilityIdentifier: String?
 
     @State private var viewModel: SkillsViewModel
     @State private var presentedEditor: SkillEditorSheet?
     @State private var headerHeight: CGFloat = 44
 
-    init(character: RQCharacter, groups: [SkillGroup]) {
+    init(character: RQCharacter, groups: [SkillGroup], searchAccessibilityIdentifier: String?) {
         self.character = character
         self.groups = groups
+        self.searchAccessibilityIdentifier = searchAccessibilityIdentifier
         _viewModel = State(initialValue: SkillsViewModel(character: character))
     }
 
@@ -161,7 +165,7 @@ private struct CharacterSkillsContentView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField(presentation.isTile && groups == [.knowledge] ? "Search knowledge" : "Search skills", text: $viewModel.searchText)
-                .accessibilityIdentifier(groups == [.knowledge] ? "knowledge.search" : "skills.search")
+                .accessibilityIdentifier(searchAccessibilityIdentifier ?? (groups == [.knowledge] ? "knowledge.search" : "skills.search"))
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
         }
