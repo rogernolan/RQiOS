@@ -27,10 +27,10 @@ struct ContentView: View {
                         CharacterWorkspaceView(character: character) { replacement in
                             navigationPath = [replacement.persistentModelID]
                         }
+                        .id(characterID)
                     } else {
                         EmptyView()
                     }
-                    .id(character.persistentModelID)
                 }
         }
         .onChange(of: visibleCharacterIDs) { _, visibleCharacterIDs in

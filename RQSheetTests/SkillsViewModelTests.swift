@@ -71,7 +71,7 @@ struct SkillsViewModelTests {
         #expect(knowledge.first === refreshedSkill)
         #expect(agility.count == 1)
         #expect(agility.first === otherGroupSkill)
-        #expect(viewModel.filteredSkills(for: .knowledge).isEmpty)
+        #expect(viewModel.filteredSkills(for: .knowledge, in: [otherGroupSkill]).isEmpty)
     }
 
     @Test

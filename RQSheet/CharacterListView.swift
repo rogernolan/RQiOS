@@ -71,7 +71,9 @@ struct CharacterListView: View {
     }
 
     private func createCharacter() {
-        onOpenCharacter(SkillSeeder.createCharacter(in: modelContext))
+        let character = SkillSeeder.createCharacter(in: modelContext)
+        try? modelContext.save()
+        onOpenCharacter(character)
     }
 
     private func confirmDelete() {

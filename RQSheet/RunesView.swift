@@ -78,14 +78,16 @@ struct RunicAffinitiesPentagramView: View {
         let width = presentation.tileWidth ?? 360
         let compact = width < 340
         return IntrinsicRuneTileLayout(isCompact: compact) {
-            ForEach(Array((elementalRunes + pairedRunes).enumerated()), id: \.element.id) { index, rune in
-                RunicAffinityNodeView(
+            ForEach(Array((elementalRunes + pairedRunes).enumerated()), id: \.offset) { index, rune in
+                OptionalRunicAffinityNodeView(
                     rune: rune,
                     layoutStyle: index < 6 ? .elemental : .paired,
-                    onBeginEditing: { scrollToEditor(AnyHashable(rune.id)) },
+                    onBeginEditing: {
+                        if let rune { scrollToEditor(AnyHashable(rune.id)) }
+                    },
                     onEndEditing: {}
                 )
-                .id(rune.id)
+                .id(index)
             }
         }
         .background {
@@ -114,12 +116,12 @@ struct RunicAffinitiesPentagramView: View {
         }
     }
 
-    private var elementalRunes: [RuneAffinity] {
+    private var elementalRunes: [RuneAffinity?] {
         [character.fireAffinity, character.darknessAffinity, character.earthAffinity,
          character.waterAffinity, character.airAffinity, character.moonAffinity]
     }
 
-    private var pairedRunes: [RuneAffinity] {
+    private var pairedRunes: [RuneAffinity?] {
         [character.manAffinity, character.fertilityAffinity, character.deathAffinity,
          character.harmonyAffinity, character.disorderAffinity, character.truthAffinity,
          character.IllusionAffinity, character.stasisAffinity, character.movementAffinity,

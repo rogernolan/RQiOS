@@ -29,8 +29,12 @@ final class WorkspaceNavigationUITests: XCTestCase {
                     XCTAssertGreaterThan(headings[index].frame.minX, headings[index - 1].frame.minX)
                 }
             }
-            XCTAssertFalse(app.staticTexts["Top Rune Affinities"].exists)
-            XCTAssertFalse(app.staticTexts["Skill Bonuses"].exists)
+            let summaryTile = app.descendants(matching: .any)
+                .matching(identifier: "tile.summary")
+                .firstMatch
+            XCTAssertTrue(summaryTile.exists)
+            XCTAssertFalse(summaryTile.staticTexts["Top Rune Affinities"].exists)
+            XCTAssertFalse(summaryTile.staticTexts["Skill Bonuses"].exists)
             attachScreenshot(app, name: "iPad tiles \(orientation == .portrait ? "portrait" : "landscape")")
         }
         XCUIDevice.shared.orientation = .portrait
