@@ -21,7 +21,7 @@ struct CharacterListView: View {
                 .listRowSeparator(.hidden)
             } else {
                 ForEach(characters) { character in
-                    NavigationLink(value: character) {
+                    NavigationLink(value: character.persistentModelID) {
                         CharacterListRow(character: character)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {

@@ -41,6 +41,19 @@ final class WorkspaceNavigationUITests: XCTestCase {
     }
 
     @MainActor
+    func testSelectingCharacterFromListOpensDetails() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-ui-testing-in-memory", "-ui-testing-seed-tiles"]
+        app.launch()
+
+        let character = app.buttons.containing(.staticText, identifier: "Tile Test Character").firstMatch
+        XCTAssertTrue(character.waitForExistence(timeout: 10))
+        character.tap()
+
+        XCTAssertTrue(app.scrollViews["workspace.tiles"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testIPadSettingsRetainsImportDraftAndCharacterEditing() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad)
         let app = openNewCharacter()
