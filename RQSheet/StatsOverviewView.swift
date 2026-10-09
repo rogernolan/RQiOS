@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 
 struct StatsOverviewView: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     private struct SummaryProfileLayoutMetrics {
         let cardWidth: CGFloat
         let sectionHeight: CGFloat
@@ -31,13 +32,13 @@ struct StatsOverviewView: View {
 
     var body: some View {
         Group {
-            if UIDevice.current.userInterfaceIdiom == .pad {
-                tabletSummaryContent
+            if presentation.isTile {
+                tileSummaryContent
             } else {
                 summaryContent(for: character)
             }
         }
-            .mainRuneBackground(runeName: "RuneMan")
+            .sectionRuneBackground(runeName: "RuneMan")
             .onChange(of: selectedPhotoItem) { _, newItem in
                 guard let newItem else { return }
 
@@ -55,24 +56,16 @@ struct StatsOverviewView: View {
             }
     }
 
-    private var tabletSummaryContent: some View {
+    private var tileSummaryContent: some View {
         let viewModel = SummaryViewModel(character: character)
-
-        return GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    tabletProfile(viewModel: viewModel, availableWidth: geometry.size.width - 32)
-                    characteristicsCard(character: character, viewModel: viewModel)
-                    derivedStatsCard(viewModel: viewModel)
-                    honorCard(character: character)
-                    passionsCard(character: character)
-                    topRunesCard(viewModel: viewModel)
-                    skillBonusesCard(viewModel: viewModel)
-                }
-                .padding(16)
-            }
-            .scrollIndicators(.hidden)
+        return VStack(alignment: .leading, spacing: 12) {
+            tabletProfile(viewModel: viewModel, availableWidth: presentation.tileWidth ?? 360)
+            characteristicsCard(character: character, viewModel: viewModel)
+            derivedStatsCard(viewModel: viewModel)
+            honorCard(character: character)
+            passionsCard(character: character)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func tabletProfile(viewModel: SummaryViewModel, availableWidth: CGFloat) -> some View {
@@ -305,7 +298,8 @@ struct StatsOverviewView: View {
     }
 
     private func characteristicsCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        let rows = chunked(viewModel.primaryStats, size: 4)
+        let columnCount = presentation.usesCompactTileContent ? 2 : 4
+        let rows = chunked(viewModel.primaryStats, size: columnCount)
 
         return SummaryCard {
             VStack(alignment: .leading, spacing: 8) {
@@ -322,8 +316,8 @@ struct StatsOverviewView: View {
                             }
                         }
 
-                        if rows[rowIndex].count < 4 {
-                            ForEach(rows[rowIndex].count..<4, id: \.self) { _ in
+                        if rows[rowIndex].count < columnCount {
+                            ForEach(rows[rowIndex].count..<columnCount, id: \.self) { _ in
                                 Spacer(minLength: 0)
                                     .frame(maxWidth: .infinity)
                             }
@@ -343,7 +337,8 @@ struct StatsOverviewView: View {
             (label: "RP", value: viewModel.runePointsText, hasAlertBorder: false, usesSecondaryValueStyle: false),
             (label: "ENC", value: viewModel.encumbranceText, hasAlertBorder: viewModel.isEncumbranceOverLimit, usesSecondaryValueStyle: false),
         ]
-        let rows = chunked(derivedStats, size: 3)
+        let columnCount = presentation.usesCompactTileContent ? 2 : 3
+        let rows = chunked(derivedStats, size: columnCount)
 
         return SummaryCard(title: "Derived Stats") {
             VStack(alignment: .leading, spacing: 8) {
@@ -358,8 +353,8 @@ struct StatsOverviewView: View {
                             )
                         }
 
-                        if rows[rowIndex].count < 3 {
-                            ForEach(rows[rowIndex].count..<3, id: \.self) { _ in
+                        if rows[rowIndex].count < columnCount {
+                            ForEach(rows[rowIndex].count..<columnCount, id: \.self) { _ in
                                 Spacer(minLength: 0)
                                     .frame(maxWidth: .infinity)
                             }

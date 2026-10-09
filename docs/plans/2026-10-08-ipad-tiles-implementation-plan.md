@@ -10,7 +10,7 @@
 
 ## Constraints
 
-Use the portrait and landscape row orders in the approved design. Use one column below 680 points. Tiles must contain no scrolling lists or editors. Keep iPhone behaviour and the persistence schema. The skill split is six groups in Skills and Knowledge alone. Retain searches, editing, deletion, checks, equipped controls, and import drafts. Keep Notes editable with natural height and keyboard visibility. Preserve section state across rotation.
+Use the portrait and landscape row orders in the approved design. Use the iPhone tabbed layout below 680 points, as Rog approved during implementation. Tiles must contain no scrolling lists or editors. Keep iPhone behaviour and the persistence schema. The skill split is six groups in Skills and Knowledge alone. Retain searches, editing, deletion, checks, equipped controls, and import drafts. Keep Notes editable with natural height and keyboard visibility. Preserve section state across rotation.
 
 ## Task 1: Section content
 
@@ -34,10 +34,10 @@ SkillsView(character: character, groups: [.knowledge])
 
 Files: create RQSheet/IPadCharacterTilesView.swift and RQSheet/IPadTileLayout.swift; modify CharacterWorkspaceView.swift; create RQSheetTests/IPadTileLayoutTests.swift; modify RQSheetUITests/WorkspaceNavigationUITests.swift.
 
-- [ ] Add behaviour tests for portrait rows, landscape rows, narrow width, and complete skill partition.
-- [ ] Implement IPadCharacterTile enum with stable canonical order; IPadTileArrangement computes rows and column count. IPadTileLayout measures each tile at equal width and starts rows below their tallest tile.
+- [ ] Add behaviour tests for portrait rows, landscape rows, narrow phone fallback, and complete skill partition.
+- [ ] Implement IPadCharacterTile enum with stable canonical order; IPadTileArrangement computes rows, phone fallback, and column count. IPadTileLayout measures each tile at equal width and starts rows below their tallest tile.
 - [ ] Use one ForEach over canonical tile order inside the custom Layout, so rotation changes placement without reparenting sections. Render titled rune tiles and one outer ScrollViewReader/ScrollView, including editor anchors and a keyboard-safe Notes editor.
-- [ ] Replace the iPad hidden TabView with the tile page. Keep phone navigation. Add retained Settings overlay and toolbar close control; the settings view stays mounted across dismissal so import drafts survive. Character edit remains in the toolbar.
+- [ ] Replace the iPad hidden TabView with the tile page. Retain both the compact phone and tile hosts across width changes; hide the inactive host from interaction and accessibility. Keep phone navigation. Add retained Settings overlay and toolbar close control; the settings view stays mounted across dismissal so import drafts survive. Character edit remains in the toolbar.
 - [ ] Run unit layout tests and iPad navigation/editing UI tests. Inspect screenshots with populated fixture characters in both orientations.
 
 Expected orders:

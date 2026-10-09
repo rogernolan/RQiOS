@@ -9,9 +9,14 @@ struct CharacterWorkspaceView: View {
 
     @State private var navigation = WorkspaceNavigation()
     @State private var isShowingExtrasMenu = false
-    @State private var isShowingSectionMenu = false
+    @State private var isShowingTabletSettings = false
+    @StateObject private var keyboard = KeyboardOverlapObserver()
+    @State private var workspaceWidth: CGFloat = 1024
+    @State private var testViewportWidth: CGFloat?
+    @State private var testViewportHeight: CGFloat?
 
     private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+    private var showsTiles: Bool { isPad && workspaceWidth >= 680 }
 
     var body: some View {
         Group {
@@ -32,9 +37,24 @@ struct CharacterWorkspaceView: View {
                 }
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if isPad {
-                        sectionMenuButton
+                        if ProcessInfo.processInfo.arguments.contains("-ui-testing-in-memory") && ProcessInfo.processInfo.arguments.contains("-ui-testing-enable-resize") {
+                            Button("Resize") {
+                                testViewportWidth = testViewportWidth == nil ? 500 : nil
+                                testViewportHeight = nil
+                            }
+                            .accessibilityIdentifier("workspace.testResize")
+                            Button("Narrow landscape") {
+                                testViewportWidth = 700
+                                testViewportHeight = 400
+                            }
+                            .accessibilityIdentifier("workspace.testNarrowLandscape")
+                        }
+                        Button { dismissKeyboard(); isShowingTabletSettings = true } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
+                        .accessibilityIdentifier("workspace.settings")
                     }
-                    if navigation.section == .summary {
+                    if isPad || navigation.section == .summary {
                         NavigationLink {
                             CharacterEditorView(character: character)
                                 .navigationBarTitleDisplayMode(.inline)
@@ -53,73 +73,56 @@ struct CharacterWorkspaceView: View {
 
     private var tabletWorkspace: some View {
         GeometryReader { geometry in
-            // The hidden tab host retains each section's draft and scroll state.
-            TabView(selection: sectionSelection) {
-                ForEach(WorkspaceSection.allCases, id: \.self) { section in
-                    Tab(value: section) {
-                        sectionView(section)
-                            .frame(width: WorkspaceLayout.contentWidth(availableWidth: geometry.size.width, isPad: true))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                            .toolbar(.hidden, for: .tabBar)
-                    } label: {
-                        Text(section.title)
-                    }
+            let size = CGSize(width: testViewportWidth ?? geometry.size.width, height: testViewportHeight ?? geometry.size.height)
+            let compact = size.width < 680
+            let keyboardInset = keyboard.bottomInset(in: geometry.frame(in: .global))
+            ZStack(alignment: .top) {
+                IPadCharacterTilesView(character: character, windowSize: size, keyboardInset: keyboardInset)
+                    .opacity(compact || isShowingTabletSettings ? 0 : 1)
+                    .allowsHitTesting(!compact && !isShowingTabletSettings)
+                    .accessibilityHidden(compact || isShowingTabletSettings)
+                phoneWorkspace
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: keyboardInset) }
+                    .environment(\.horizontalSizeClass, .compact)
+                    .opacity(compact && !isShowingTabletSettings ? 1 : 0)
+                    .allowsHitTesting(compact && !isShowingTabletSettings)
+                    .accessibilityHidden(!compact || isShowingTabletSettings)
+                    .toolbar(compact && !isShowingTabletSettings ? .visible : .hidden, for: .tabBar)
+                SettingsView(character: character, onOpenCharacter: onOpenCharacter)
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: keyboardInset) }
+                    .opacity(isShowingTabletSettings ? 1 : 0)
+                    .allowsHitTesting(isShowingTabletSettings)
+                    .accessibilityHidden(!isShowingTabletSettings)
+                    .background(isShowingTabletSettings ? Color(.systemBackground) : Color.clear)
+            }
+            .frame(width: size.width, height: size.height, alignment: .top)
+            .frame(maxWidth: .infinity)
+            .onChange(of: size.width, initial: true) { _, width in workspaceWidth = width }
+            .onChange(of: compact) { _, _ in dismissKeyboard() }
+            .onChange(of: navigation.section) { _, section in
+                if section == .settings {
+                    dismissKeyboard()
+                    isShowingTabletSettings = true
                 }
             }
-            .toolbar(.hidden, for: .tabBar)
+        }
+        .ignoresSafeArea(.keyboard)
+        .toolbar {
+            if isShowingTabletSettings {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") {
+                        dismissKeyboard()
+                        isShowingTabletSettings = false
+                        if navigation.section == .settings { navigation.select(.summary) }
+                    }
+                    .accessibilityIdentifier("workspace.closeSettings")
+                }
+            }
         }
     }
 
-    private var sectionSelection: Binding<WorkspaceSection> {
-        Binding(get: { navigation.section }, set: { navigation.select($0) })
-    }
-
-    private var sectionMenuButton: some View {
-        Button {
-            isShowingSectionMenu = true
-        } label: {
-            Label("Sections", systemImage: "line.3.horizontal")
-        }
-        .accessibilityLabel("Choose section")
-        .accessibilityValue(navigation.section.title)
-        .accessibilityIdentifier("workspace.sectionMenu")
-        .popover(isPresented: $isShowingSectionMenu, arrowEdge: .top) {
-            ScrollView {
-                VStack(spacing: 2) {
-                    ForEach(WorkspaceSection.allCases, id: \.self) { section in
-                        Button {
-                            navigation.select(section)
-                            isShowingSectionMenu = false
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(section.runeName)
-                                    .resizable()
-                                    .renderingMode(.template)
-                                    .scaledToFit()
-                                    .frame(width: 22, height: 22)
-                                Text(section.title)
-                                Spacer(minLength: 0)
-                                if section == navigation.section {
-                                    Image(systemName: "checkmark")
-                                        .font(.body.weight(.semibold))
-                                }
-                            }
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("workspace.section.\(section.rawValue)")
-                        .accessibilityAddTraits(section == navigation.section ? .isSelected : [])
-                    }
-                }
-                .padding(8)
-            }
-            .frame(width: 280, height: 410)
-            .presentationCompactAdaptation(.popover)
-        }
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private var phoneWorkspace: some View {
@@ -201,6 +204,11 @@ struct CharacterWorkspaceView: View {
     }
 
     private var currentTitle: String {
+        if isPad && isShowingTabletSettings { return "Settings" }
+        if showsTiles {
+            let name = character.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return name.isEmpty ? "New character" : name
+        }
         switch navigation.section {
         case .summary:
             let name = character.name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -213,11 +221,17 @@ struct CharacterWorkspaceView: View {
     }
 
     private var isPlaceholderTitle: Bool {
-        navigation.section == .summary && character.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        (showsTiles || navigation.section == .summary) && character.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private func sectionView(_ section: WorkspaceSection) -> some View {
-        WorkspaceSectionView(character: character, section: section, onOpenCharacter: onOpenCharacter)
+        Group {
+            if isPad && section == .settings {
+                Color.clear
+            } else {
+                WorkspaceSectionView(character: character, section: section, onOpenCharacter: onOpenCharacter)
+            }
+        }
     }
 
     @ViewBuilder

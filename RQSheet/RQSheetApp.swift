@@ -50,6 +50,9 @@ struct RQSheetApp: App {
                 || ProcessInfo.processInfo.arguments.contains("-ui-testing")
                 || ProcessInfo.processInfo.environment["RQ_SHEET_UI_TESTING"] == "1"
             let container = try AppPersistence.makeContainer(inMemory: isRunningUnderTests, diagnostics: isRunningUnderTests ? .none : .shared)
+            if ProcessInfo.processInfo.arguments.contains("-ui-testing-seed-tiles") {
+                Self.seedTilesIfNeeded(in: container)
+            }
             if ProcessInfo.processInfo.arguments.contains("-ui-testing-seed-combat-weapons") {
                 Self.seedCombatWeaponsIfNeeded(in: container)
             }
@@ -58,6 +61,29 @@ struct RQSheetApp: App {
         } catch {
             startupError = error.localizedDescription
         }
+    }
+
+    private static func seedTilesIfNeeded(in container: ModelContainer) {
+        let context = container.mainContext
+        guard (try? context.fetchCount(FetchDescriptor<RQCharacter>())) == 0 else { return }
+        let character = RQCharacter(name: "Tile Test Character", worships: "Lhankor Mhy", notes: "A journey through Nochet.\nKeep the character's notes together.")
+        context.insert(character)
+        let counts: [(SkillGroup, Int)] = [(.agility, 9), (.communication, 19), (.knowledge, 39), (.manipulation, 6), (.magic, 4), (.perception, 6), (.stealth, 3)]
+        for (group, count) in counts {
+            for index in 1...count {
+                character.addSkill(name: "\(group.rawValue.capitalized) skill \(String(format: "%02d", index))", percentage: 40 + index, group: group)
+            }
+        }
+        for index in 1...8 {
+            character.weapons.append(Weapon(character: character, name: "Weapon \(index)", basePercentage: 50, damage: "1d6+1", hpMax: 8, hpCurrent: 8, enc: 1, strikeRank: "2", type: .impaling, isEquipped: index == 1))
+            character.addEquipmentItem(name: "Equipment \(index)", encumbrance: 1, isCurrentlyEquipped: index == 1)
+        }
+        for index in 1...6 {
+            character.addSpell(name: "Spirit spell \(index)", points: 1, page: "250", kind: .spiritMagic)
+            character.addSpell(name: "Rune spell \(index)", points: 2, page: "320", kind: .runeSpell)
+        }
+        character.addPassion(description: "Loyalty (Nochet)", percentage: 65)
+        try? context.save()
     }
 
     private static func seedCombatWeaponsIfNeeded(in container: ModelContainer) {

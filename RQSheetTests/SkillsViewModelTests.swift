@@ -25,7 +25,6 @@ struct SkillsViewModelTests {
         let initiallyLoadedSkill = CharacterSkill(character: character, definition: definition, successPercentage: 5)
         character.skills.append(initiallyLoadedSkill)
         let viewModel = SkillsViewModel(character: character)
-
         let refreshedSkill = CharacterSkill(
             character: character,
             definition: definition,
@@ -36,7 +35,43 @@ struct SkillsViewModelTests {
         let displayedSkills = viewModel.filteredSkills(for: .agility, in: [refreshedSkill])
 
         #expect(displayedSkills.count == 1)
+        #expect(displayedSkills[0] === refreshedSkill)
         #expect(displayedSkills[0].experienceCheck)
+    }
+
+    @Test
+    @MainActor
+    func anEmptyQueryResultDoesNotRestoreStaleRelationshipSkills() {
+        let character = RQCharacter()
+        let definition = SkillDefinition(key: "jump", name: "Jump", group: .agility, baseRule: "0")
+        let staleSkill = CharacterSkill(character: character, definition: definition, successPercentage: 15)
+        character.skills.append(staleSkill)
+        let viewModel = SkillsViewModel(character: character)
+
+        #expect(viewModel.filteredSkills(for: .agility).count == 1)
+        #expect(viewModel.filteredSkills(for: .agility, in: []).isEmpty)
+    }
+
+    @Test
+    @MainActor
+    func queryResultsUseCurrentGroupsAndSearchNames() {
+        let character = RQCharacter()
+        let definition = SkillDefinition(key: "battle-lore", name: "Battle Lore", group: .knowledge, baseRule: "0")
+        let refreshedSkill = CharacterSkill(character: character, definition: definition, successPercentage: 20)
+        refreshedSkill.customName = "Ship Lore"
+        let otherGroupDefinition = SkillDefinition(key: "ship-sailing", name: "Ship Sailing", group: .agility, baseRule: "0")
+        let otherGroupSkill = CharacterSkill(character: character, definition: otherGroupDefinition, successPercentage: 35)
+        let viewModel = SkillsViewModel(character: character)
+        viewModel.searchText = " ship "
+
+        let knowledge = viewModel.filteredSkills(for: .knowledge, in: [otherGroupSkill, refreshedSkill])
+        let agility = viewModel.filteredSkills(for: .agility, in: [refreshedSkill, otherGroupSkill])
+
+        #expect(knowledge.count == 1)
+        #expect(knowledge.first === refreshedSkill)
+        #expect(agility.count == 1)
+        #expect(agility.first === otherGroupSkill)
+        #expect(viewModel.filteredSkills(for: .knowledge).isEmpty)
     }
 
     @Test

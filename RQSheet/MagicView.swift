@@ -20,12 +20,14 @@ struct MagicView: View {
 
     var body: some View {
         CharacterMagicContentView(character: character)
-            .mainRuneBackground(runeName: "RuneMagic")
+            .sectionRuneBackground(runeName: "RuneMagic")
     }
 }
 
 private struct CharacterMagicContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.characterSectionPresentation) private var presentation
+    @Environment(\.characterSectionScrollToEditor) private var scrollToEditor
     private let editorScrollAnchor = MagicViewConfiguration.editorScrollAnchor
 
     let character: RQCharacter
@@ -42,15 +44,24 @@ private struct CharacterMagicContentView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ZStack(alignment: .top) {
-                spellList
-                headerOverlay
-            }
-            .onChange(of: activeEditorAnchor) { _, newAnchor in
-                guard let newAnchor else { return }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    proxy.scrollTo(newAnchor, anchor: editorScrollAnchor)
+        Group {
+            if presentation.isTile {
+                tileContent
+                    .onChange(of: activeEditorAnchor) { _, anchor in
+                        if let anchor { scrollToEditor(AnyHashable(anchor)) }
+                    }
+            } else {
+                ScrollViewReader { proxy in
+                    ZStack(alignment: .top) {
+                        spellList
+                        headerOverlay
+                    }
+                    .onChange(of: activeEditorAnchor) { _, newAnchor in
+                        guard let newAnchor else { return }
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            proxy.scrollTo(newAnchor, anchor: editorScrollAnchor)
+                        }
+                    }
                 }
             }
         }
@@ -80,6 +91,46 @@ private struct CharacterMagicContentView: View {
             }
         } message: {
             Text("Delete this spell?")
+        }
+    }
+
+    private var tileContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            headerOverlay
+            spiritSectionHeaderRow
+            if viewModel.visibleSpiritSpells.isEmpty {
+                emptyStateRow(text: viewModel.searchText.isEmpty ? "No spirit magic yet" : "No spirit magic matches")
+            }
+            ForEach(viewModel.visibleSpiritSpells) { spell in tileSpellRow(spell) }
+            spiritAddButtonRow
+            runeSectionHeaderRow
+            if viewModel.visibleRuneSpells.isEmpty {
+                emptyStateRow(text: viewModel.searchText.isEmpty ? "No rune spells yet" : "No rune spell matches")
+            }
+            ForEach(viewModel.visibleRuneSpells) { spell in tileSpellRow(spell) }
+            runeAddButtonRow
+            commonSectionHeaderRow
+            if viewModel.visibleCommonRuneSpells.isEmpty {
+                emptyStateRow(text: "No common rune spell matches")
+            }
+            ForEach(viewModel.visibleCommonRuneSpells) { spell in commonSpellRow(spell) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func tileSpellRow(_ spell: CharacterSpell) -> some View {
+        HStack(alignment: .center, spacing: 4) {
+            SpellRowCard(name: spell.name, pointsText: "\(spell.points)", page: spell.page) {
+                presentedEditor = .edit(spell)
+            }
+            Menu {
+                Button("Delete", systemImage: "trash", role: .destructive) {
+                    viewModel.requestDelete(spell)
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle").padding(6)
+            }
+            .accessibilityLabel("Actions for \(spell.name)")
         }
     }
 
@@ -148,6 +199,7 @@ private struct CharacterMagicContentView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField(MagicViewConfiguration.searchPlaceholder, text: $viewModel.searchText)
+                .accessibilityIdentifier("magic.search")
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
         }
@@ -160,8 +212,8 @@ private struct CharacterMagicContentView: View {
         }
         .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, presentation.isTile ? 0 : 16)
+        .padding(.top, presentation.isTile ? 0 : 8)
         .onGeometryChange(for: CGFloat.self) { geometry in
             geometry.size.height
         } action: { _, newHeight in
@@ -307,7 +359,7 @@ private struct CharacterMagicContentView: View {
     }
 }
 
-private enum MagicEditorAnchor: String, Hashable {
+enum MagicEditorAnchor: String, Hashable {
     case spiritMagic
     case runeSpells
 }
@@ -347,6 +399,7 @@ private struct SpellEditorSheet: Identifiable {
 }
 
 private struct SpellSectionHeader<TrailingControl: View>: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     let title: String
     let subtitle: String?
     let trailingControl: TrailingControl
@@ -362,10 +415,18 @@ private struct SpellSectionHeader<TrailingControl: View>: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
-            titleGroup
-            Spacer(minLength: 8)
-            trailingControl
+        if presentation.isTile {
+            VStack(alignment: .leading, spacing: 8) {
+                titleGroup
+                trailingControl.frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.top, 8)
+        } else {
+            HStack(alignment: .center, spacing: 10) {
+                titleGroup
+                Spacer(minLength: 8)
+                trailingControl
+            }
         }
     }
 
@@ -407,6 +468,7 @@ private struct MagicPointsEditor: View {
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
+            .accessibilityIdentifier("magic.points")
             .frame(minWidth: MagicViewConfiguration.magicPointsMinWidth, alignment: .leading)
         }
         .padding(.horizontal, 10)
@@ -444,6 +506,7 @@ private struct RunePointsEditor: View {
                 onBeginEditing: onBeginEditing,
                 onEndEditing: onEndEditing
             )
+            .accessibilityIdentifier("magic.runePoints")
             .frame(minWidth: MagicViewConfiguration.runePointsMinWidth, alignment: .leading)
         }
         .padding(.horizontal, 10)
@@ -461,6 +524,7 @@ private struct RunePointsEditor: View {
 }
 
 private struct SpellRowCard: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     let name: String
     let pointsText: String
     let page: String
@@ -477,23 +541,40 @@ private struct SpellRowCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(displayName)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
+            Group {
+                if presentation.usesCompactTileContent {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(displayName)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack {
+                            Text(pointsText).foregroundStyle(.primary)
+                            Spacer(minLength: 0)
+                            Text(displayPage).foregroundStyle(.secondary)
+                        }
+                        .font(.subheadline)
+                    }
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(displayName)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .lineLimit(presentation.isTile ? nil : 1)
 
-                Spacer(minLength: 8)
+                        Spacer(minLength: 8)
 
-                Text(pointsText)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .frame(minWidth: 24, alignment: .trailing)
+                        Text(pointsText)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .frame(minWidth: 24, alignment: .trailing)
 
-                Text(displayPage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 44, alignment: .trailing)
+                        Text(displayPage)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 44, alignment: .trailing)
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
@@ -510,28 +591,46 @@ private struct SpellRowCard: View {
 }
 
 private struct ReadOnlySpellRowCard: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     let name: String
     let pointsText: String
     let page: String
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Text(name)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+        Group {
+            if presentation.usesCompactTileContent {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(name)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack {
+                        Text(pointsText).foregroundStyle(.primary)
+                        Spacer(minLength: 0)
+                        Text("p\(page)").foregroundStyle(.secondary)
+                    }
+                    .font(.subheadline)
+                }
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(name)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(presentation.isTile ? nil : 1)
 
-            Spacer(minLength: 8)
+                    Spacer(minLength: 8)
 
-            Text(pointsText)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .frame(minWidth: 24, alignment: .trailing)
+                    Text(pointsText)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .frame(minWidth: 24, alignment: .trailing)
 
-            Text("p\(page)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 44, alignment: .trailing)
+                    Text("p\(page)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 44, alignment: .trailing)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)

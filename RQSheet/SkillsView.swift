@@ -3,32 +3,47 @@ import SwiftUI
 
 struct SkillsView: View {
     let character: RQCharacter
+    let groups: [SkillGroup]
+
+    init(character: RQCharacter, groups: [SkillGroup] = SkillGroup.allCases) {
+        self.character = character
+        self.groups = groups
+    }
 
     var body: some View {
-        CharacterSkillsContentView(character: character)
-            .mainRuneBackground(runeName: "RuneMastery")
+        CharacterSkillsContentView(character: character, groups: groups)
+            .sectionRuneBackground(runeName: "RuneMastery")
     }
 }
 
 private struct CharacterSkillsContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var storedSkills: [CharacterSkill]
+    @Environment(\.characterSectionPresentation) private var presentation
 
     let character: RQCharacter
+    let groups: [SkillGroup]
 
     @State private var viewModel: SkillsViewModel
     @State private var presentedEditor: SkillEditorSheet?
     @State private var headerHeight: CGFloat = 44
 
-    init(character: RQCharacter) {
+    init(character: RQCharacter, groups: [SkillGroup]) {
         self.character = character
+        self.groups = groups
         _viewModel = State(initialValue: SkillsViewModel(character: character))
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            skillsList
-            headerOverlay
+        Group {
+            if presentation.isTile {
+                tileContent
+            } else {
+                ZStack(alignment: .top) {
+                    skillsList
+                    headerOverlay
+                }
+            }
         }
         .sheet(item: $presentedEditor) { editor in
             SkillEditorView(
@@ -53,6 +68,36 @@ private struct CharacterSkillsContentView: View {
         } message: {
             Text("Delete this skill?")
         }
+    }
+
+    private var tileContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            headerOverlay
+            ForEach(groups, id: \.rawValue) { group in
+                let groupSkills = viewModel.filteredSkills(for: group, in: currentCharacterSkills)
+                groupHeader(for: group)
+                if !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && groupSkills.isEmpty {
+                    Text("No matches").foregroundStyle(.secondary)
+                }
+                ForEach(groupSkills) { skill in
+                    HStack(alignment: .center, spacing: 4) {
+                        SkillRowCard(skill: skill) {
+                            presentedEditor = .edit(skill, group: group)
+                        }
+                        Menu {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                viewModel.requestDelete(skill)
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle").padding(6)
+                        }
+                        .accessibilityLabel("Actions for \(skill.displayName)")
+                    }
+                }
+                addSkillRow(for: group)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var skillsList: some View {
@@ -115,7 +160,8 @@ private struct CharacterSkillsContentView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Search skills", text: $viewModel.searchText)
+            TextField(presentation.isTile && groups == [.knowledge] ? "Search knowledge" : "Search skills", text: $viewModel.searchText)
+                .accessibilityIdentifier(groups == [.knowledge] ? "knowledge.search" : "skills.search")
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
         }
@@ -128,8 +174,8 @@ private struct CharacterSkillsContentView: View {
         }
         .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, presentation.isTile ? 0 : 16)
+        .padding(.top, presentation.isTile ? 0 : 8)
         .onGeometryChange(for: CGFloat.self) { geometry in
             geometry.size.height
         } action: { _, newHeight in
@@ -296,6 +342,8 @@ private struct SkillRowCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Toggle experience check")
+            .accessibilityValue(skill.experienceCheck ? "Checked" : "Unchecked")
+            .accessibilityIdentifier("skills.check.\(skill.displayName)")
         }
         .padding(12)
         .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 12))
