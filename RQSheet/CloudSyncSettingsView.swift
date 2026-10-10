@@ -11,9 +11,14 @@ struct CloudSyncSettingsView: View {
     init(diagnostics: SyncDiagnostics? = nil) {
         let isPreviewOrTest = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
             || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || ProcessInfo.processInfo.arguments.contains("-ui-testing")
+            || ProcessInfo.processInfo.arguments.contains("-ui-testing-in-memory")
         let recorder = diagnostics ?? (isPreviewOrTest ? SyncDiagnostics.none : .shared)
+        let accountStatus: () async throws -> CKAccountStatus = isPreviewOrTest
+            ? { .couldNotDetermine }
+            : { try await CKContainer(identifier: AppPersistence.cloudKitContainerIdentifier).accountStatus() }
         self.diagnostics = recorder
-        _status = State(initialValue: CloudSyncStatus(diagnostics: recorder))
+        _status = State(initialValue: CloudSyncStatus(diagnostics: recorder, accountStatus: accountStatus))
     }
 
     private struct ShareSnapshot: Identifiable {

@@ -59,6 +59,8 @@ enum CombatViewFormatting {
 
 struct CombatView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.characterSectionPresentation) private var presentation
+    @Environment(\.characterSectionScrollToEditor) private var scrollToEditor
     let character: RQCharacter
     @StateObject private var keyboard = KeyboardHeightObserver()
     @State private var presentedEditor: WeaponEditorSheet?
@@ -66,46 +68,20 @@ struct CombatView: View {
     @State private var expandedWeaponIDs: Set<ObjectIdentifier> = []
     @State private var swipedWeaponID: ObjectIdentifier?
     @State private var isEditingHitPoints = false
+    @FocusState private var activeHitLocationEditor: String?
 
     var body: some View {
-        GeometryReader { geometry in
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        let panelHeight = max(
-                            CombatViewConfiguration.minimumPanelHeight,
-                            geometry.size.width * CombatViewConfiguration.panelHeightMultiplier
-                        )
-
-                        ZStack(alignment: .top) {
-                            Image("RuneMan")
-                                .resizable()
-                                .renderingMode(.template)
-                                .scaledToFit()
-                                .foregroundStyle(Color(.systemGray3))
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-
-                            hitLocationOverlay(for: character)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: panelHeight)
-
-                        combatHeader(for: character)
-
-                        weaponsSection(for: character)
+        Group {
+            if presentation.isTile {
+                tileContent
+                    .onChange(of: isEditingHitPoints) { _, editing in
+                        if editing { scrollToEditor(AnyHashable(CombatEditorAnchor.hitPoints)) }
                     }
-                    .padding(.top, CombatViewConfiguration.topPadding)
-                    .padding(.horizontal, CombatViewConfiguration.horizontalPadding)
-                    .padding(.bottom, max(CombatViewConfiguration.minimumBottomPadding, keyboard.contentInset))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                }
-                .scrollDismissesKeyboard(.interactively)
-                .onChange(of: isEditingHitPoints) { _, isEditing in
-                    guard isEditing else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        proxy.scrollTo(CombatEditorAnchor.hitPoints, anchor: .center)
+                    .onChange(of: activeHitLocationEditor) { _, anchor in
+                        if let anchor { scrollToEditor(AnyHashable(anchor)) }
                     }
-                }
+            } else {
+                pageContent
             }
         }
         .sheet(item: $presentedEditor) { editor in
@@ -166,7 +142,99 @@ struct CombatView: View {
         } message: {
             Text("This cannot be undone")
         }
-        .mainRuneBackground(runeName: "RuneDeath")
+        .sectionRuneBackground(runeName: "RuneDeath")
+    }
+
+    private var pageContent: some View {
+        GeometryReader { geometry in
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        let panelHeight = max(
+                            CombatViewConfiguration.minimumPanelHeight,
+                            geometry.size.width * CombatViewConfiguration.panelHeightMultiplier
+                        )
+
+                        ZStack(alignment: .top) {
+                            Image("RuneMan")
+                                .resizable()
+                                .renderingMode(.template)
+                                .scaledToFit()
+                                .foregroundStyle(Color(.systemGray3))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                            hitLocationOverlay(for: character)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: panelHeight)
+
+                        combatHeader(for: character)
+
+                        weaponsSection(for: character)
+                    }
+                    .padding(.top, CombatViewConfiguration.topPadding)
+                    .padding(.horizontal, CombatViewConfiguration.horizontalPadding)
+                    .padding(.bottom, max(CombatViewConfiguration.minimumBottomPadding, keyboard.contentInset))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: isEditingHitPoints) { _, isEditing in
+                    guard isEditing else { return }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(CombatEditorAnchor.hitPoints, anchor: .center)
+                    }
+                }
+            }
+        }
+    }
+
+    private var tileContent: some View {
+        return VStack(alignment: .leading, spacing: 12) {
+            CombatHitLocationTileLayout(isCompact: presentation.usesCompactTileContent) {
+                ForEach(HitLocation.allCases, id: \.self) { location in
+                    hitLocationCard(character.hitLocations.first { $0.location == location })
+                }
+            }
+            .background(alignment: .top) {
+                Image("RuneMan")
+                    .resizable()
+                    .renderingMode(.template)
+                    .scaledToFit()
+                    .foregroundStyle(Color(.systemGray3))
+                    .opacity(presentation.usesCompactTileContent ? 0 : 1)
+                    .allowsHitTesting(false)
+            }
+            combatHeader(for: character)
+            VStack(alignment: .leading, spacing: 8) {
+                if character.weapons.isEmpty {
+                    Text("No weapons yet").foregroundStyle(.secondary)
+                }
+                ForEach(character.weapons) { weapon in
+                    HStack(alignment: .top, spacing: 4) {
+                        WeaponRowCard(
+                            weapon: weapon,
+                            isExpanded: isExpanded(weapon),
+                            isActionInteractionEnabled: true,
+                            onSelect: { presentedEditor = .edit(weapon) },
+                            onToggleExperience: { weapon.experienceCheck.toggle() },
+                            onToggleExpanded: { withAnimation { toggleExpanded(weapon) } },
+                            onToggleEquipped: { weapon.isEquipped.toggle() }
+                        )
+                        Menu {
+                            Button("Delete", systemImage: "trash", role: .destructive) {
+                                pendingDeleteWeapon = weapon
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle").padding(6)
+                        }
+                        .accessibilityLabel("Actions for \(weapon.name)")
+                    }
+                }
+                addWeaponButton.padding(.top, 8)
+            }
+            .accessibilityIdentifier("combat.weaponsList")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func weaponsSection(for character: RQCharacter) -> some View {
@@ -187,7 +255,10 @@ struct CombatView: View {
     }
 
     private func combatHeader(for character: RQCharacter) -> some View {
-        HStack(alignment: .center, spacing: 12) {
+        let layout = presentation.usesCompactTileContent
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+        return layout {
             HitPointsCombatChip(
                 character: character,
                 onBeginEditing: { isEditingHitPoints = true },
@@ -195,7 +266,7 @@ struct CombatView: View {
             )
             .id(CombatEditorAnchor.hitPoints)
 
-            Spacer(minLength: 0)
+            if !presentation.usesCompactTileContent { Spacer(minLength: 0) }
 
             CombatHeaderChip(label: "Damage Bonus") {
                 Text(character.damageBonusText)
@@ -358,6 +429,8 @@ struct CombatView: View {
                         }
                     )
                 )
+                .focused($activeHitLocationEditor, equals: "combat.location.\(shortName(for: location?.location)).ap")
+                .id("combat.location.\(shortName(for: location?.location)).ap")
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(.footnote.monospacedDigit())
@@ -386,6 +459,8 @@ struct CombatView: View {
                         }
                     )
                 )
+                .focused($activeHitLocationEditor, equals: "combat.location.\(shortName(for: location?.location)).hp")
+                .id("combat.location.\(shortName(for: location?.location)).hp")
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(.footnote.monospacedDigit())
@@ -513,11 +588,12 @@ struct CombatView: View {
     }
 }
 
-private enum CombatEditorAnchor: String, Hashable {
+enum CombatEditorAnchor: String, Hashable {
     case hitPoints
 }
 
-private struct WeaponRowCard: View {
+struct WeaponRowCard: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     private let weaponDetailRowHeight: CGFloat = 34
     private let weaponDetailVerticalSpacing: CGFloat = 8
     private let weaponDetailDividerHeight: CGFloat = 17
@@ -584,16 +660,22 @@ private struct WeaponRowCard: View {
     }
 
     private var detailPrimaryRow: some View {
-        HStack(spacing: 12) {
+        let layout = presentation.usesCompactTileContent
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+        return layout {
             WeaponDetailSlot(label: "HP", value: displayHP)
             WeaponDetailSlot(label: "ENC", value: displayENC)
             WeaponDetailSlot(label: "Type", value: displayType)
         }
-        .frame(height: weaponDetailRowHeight)
+        .frame(height: presentation.isTile ? nil : weaponDetailRowHeight)
     }
 
     private var detailSecondaryRow: some View {
-        HStack(spacing: 12) {
+        let layout = presentation.usesCompactTileContent
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+        return layout {
             Button(action: onToggleEquipped) {
                 WeaponDetailSlot(label: "Equipped", value: weapon.isEquipped ? "Yes" : "No")
             }
@@ -602,72 +684,114 @@ private struct WeaponRowCard: View {
             WeaponDetailSlot(label: "", value: "", isVisible: false)
             WeaponDetailSlot(label: "Range", value: displayRange ?? "", isVisible: displayRange != nil)
         }
-        .frame(height: weaponDetailRowHeight)
+        .frame(height: presentation.isTile ? nil : weaponDetailRowHeight)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: CombatWeaponRowConfiguration.rowSpacing) {
-                Text(displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text("\(weapon.basePercentage)%")
+            if presentation.isTile {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    let controlsLayout = presentation.usesCompactTileContent
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                        : AnyLayout(HStackLayout(alignment: .center, spacing: 8))
+                    controlsLayout {
+                        HStack(spacing: 8) {
+                            Text("\(weapon.basePercentage)%").monospacedDigit()
+                            Button(action: onToggleExperience) {
+                                Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Toggle \(displayName) experience check")
+                            Spacer(minLength: 0)
+                        }
+                        HStack(spacing: 8) {
+                            Text("SR \(displayStrikeRank)").foregroundStyle(.secondary)
+                            Text(weapon.damage).foregroundStyle(.secondary)
+                            Button(action: onToggleExpanded) {
+                                DisclosureTriangle(isFilled: isExpanded)
+                                    .frame(width: CombatWeaponRowConfiguration.disclosureSize, height: CombatWeaponRowConfiguration.disclosureSize)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(isExpanded ? "Collapse \(displayName)" : "Expand \(displayName)")
+                        }
+                    }
                     .font(.subheadline)
-                    .monospacedDigit()
-                    .frame(width: CombatWeaponRowConfiguration.basePercentageWidth, alignment: .trailing)
-
-                Button(action: {
-                    guard isActionInteractionEnabled else { return }
-                    onToggleExperience()
-                }) {
-                    Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
-                        .font(.body)
-                        .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
                 }
-                .buttonStyle(.plain)
-                .frame(width: CombatWeaponRowConfiguration.experienceCheckWidth, alignment: .center)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onSelect)
+            } else {
+                HStack(spacing: CombatWeaponRowConfiguration.rowSpacing) {
+                    Text(displayName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack(spacing: 2) {
-                    Text("SR")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Text(displayStrikeRank)
+                    Text("\(weapon.basePercentage)%")
                         .font(.subheadline)
                         .monospacedDigit()
+                        .frame(width: CombatWeaponRowConfiguration.basePercentageWidth, alignment: .trailing)
+
+                    Button(action: {
+                        guard isActionInteractionEnabled else { return }
+                        onToggleExperience()
+                    }) {
+                        Image(systemName: weapon.experienceCheck ? "checkmark.square.fill" : "square")
+                            .font(.body)
+                            .foregroundStyle(weapon.experienceCheck ? .primary : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: CombatWeaponRowConfiguration.experienceCheckWidth, alignment: .center)
+
+                    HStack(spacing: 2) {
+                        Text("SR")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text(displayStrikeRank)
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    .frame(width: CombatWeaponRowConfiguration.strikeRankWidth, alignment: .leading)
+
+                    Text(weapon.damage)
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .frame(width: CombatWeaponRowConfiguration.damageWidth, alignment: .trailing)
+
+                    Button(action: {
+                        guard isActionInteractionEnabled else { return }
+                        onToggleExpanded()
+                    }) {
+                        DisclosureTriangle(isFilled: isExpanded)
+                            .frame(width: CombatWeaponRowConfiguration.disclosureSize, height: CombatWeaponRowConfiguration.disclosureSize)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(width: CombatWeaponRowConfiguration.strikeRankWidth, alignment: .leading)
-
-                Text(weapon.damage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .frame(width: CombatWeaponRowConfiguration.damageWidth, alignment: .trailing)
-
-                Button(action: {
+                .contentShape(Rectangle())
+                .onTapGesture {
                     guard isActionInteractionEnabled else { return }
-                    onToggleExpanded()
-                }) {
-                    DisclosureTriangle(isFilled: isExpanded)
-                        .frame(width: CombatWeaponRowConfiguration.disclosureSize, height: CombatWeaponRowConfiguration.disclosureSize)
+                    onSelect()
                 }
-                .buttonStyle(.plain)
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard isActionInteractionEnabled else { return }
-                onSelect()
+
             }
 
-            detailContent
-                .opacity(detailOpacity)
-                .frame(height: isExpanded ? expandedDetailHeight : 0, alignment: .top)
-                .clipped()
+            if presentation.isTile {
+                if isExpanded {
+                    detailContent.opacity(detailOpacity)
+                }
+            } else {
+                detailContent
+                    .opacity(detailOpacity)
+                    .frame(height: isExpanded ? expandedDetailHeight : 0, alignment: .top)
+                    .clipped()
+            }
         }
         .padding(10)
         .onAppear {
@@ -952,6 +1076,7 @@ enum SwipeDirectionLock {
 }
 
 private struct WeaponDetailSlot: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     let label: String
     let value: String
     var isVisible = true
@@ -965,6 +1090,7 @@ private struct WeaponDetailSlot: View {
                     Text(value)
                         .foregroundStyle(.primary)
                         .monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: presentation.isTile)
                 }
                 .font(.subheadline)
             } else {
@@ -1037,6 +1163,63 @@ private struct WeaponEditorSheet: Identifiable {
             type: weapon.type,
             range: weapon.range,
             isEquipped: weapon.isEquipped
+        )
+    }
+}
+
+/// A single collection of cards keeps TextField identity while placement changes.
+private struct CombatHitLocationTileLayout: Layout {
+    let isCompact: Bool
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 360
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let geometry = CombatHitLocationTileGeometry(width: width, isCompact: isCompact, cardSizes: sizes)
+        return CGSize(width: width, height: geometry.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let geometry = CombatHitLocationTileGeometry(width: bounds.width, isCompact: isCompact, cardSizes: sizes)
+        for (index, subview) in subviews.enumerated() {
+            let position = geometry.position(of: index)
+            subview.place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), anchor: .center, proposal: .unspecified)
+        }
+    }
+}
+
+struct CombatHitLocationTileGeometry {
+    let width: CGFloat
+    let isCompact: Bool
+    let cardSizes: [CGSize]
+
+    var height: CGFloat {
+        if isCompact { return cardSizes.reduce(0) { $0 + $1.height } + CGFloat(max(0, cardSizes.count - 1)) * 8 }
+        let tallestCard = cardSizes.map(\.height).max() ?? 0
+        return max(CombatViewConfiguration.minimumPanelHeight,
+                   width * CombatViewConfiguration.panelHeightMultiplier,
+                   4 * tallestCard + 60)
+    }
+
+    func position(of index: Int) -> CGPoint {
+        let size = cardSizes[index]
+        if isCompact {
+            let precedingHeight = cardSizes.prefix(index).reduce(0) { $0 + $1.height }
+            return CGPoint(x: width / 2, y: precedingHeight + CGFloat(index) * 8 + size.height / 2)
+        }
+        let fractions: CGPoint
+        switch HitLocation.allCases[index] {
+        case .head: fractions = CGPoint(x: 0.50, y: 0.15)
+        case .chest: fractions = CGPoint(x: 0.50, y: 0.40)
+        case .abdomen: fractions = CGPoint(x: 0.50, y: 0.65)
+        case .leftArm: fractions = CGPoint(x: 0.20, y: 0.40)
+        case .rightArm: fractions = CGPoint(x: 0.80, y: 0.40)
+        case .leftLeg: fractions = CGPoint(x: 0.25, y: 0.80)
+        case .rightLeg: fractions = CGPoint(x: 0.75, y: 0.80)
+        }
+        return CGPoint(
+            x: min(width - size.width / 2, max(size.width / 2, width * fractions.x)),
+            y: min(height - size.height / 2, max(size.height / 2, height * fractions.y + CombatViewConfiguration.hitLocationVerticalOffset))
         )
     }
 }

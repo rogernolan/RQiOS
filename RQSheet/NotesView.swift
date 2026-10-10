@@ -6,11 +6,12 @@ struct NotesView: View {
 
     var body: some View {
         CharacterNotesContentView(character: character)
-            .mainRuneBackground(runeName: "RuneTruth")
+            .sectionRuneBackground(runeName: "RuneTruth")
     }
 }
 
 private struct CharacterNotesContentView: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     @Bindable var character: RQCharacter
 
     private var isShowingPlaceholder: Bool {
@@ -18,6 +19,20 @@ private struct CharacterNotesContentView: View {
     }
 
     var body: some View {
+        Group {
+            if presentation.isTile {
+                GrowingNotesEditor(text: $character.notes)
+                    .background(Color(.systemBackground).opacity(0.52), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16).stroke(.quaternary.opacity(0.75), lineWidth: 1)
+                    }
+            } else {
+                pageContent
+            }
+        }
+    }
+
+    private var pageContent: some View {
         ZStack(alignment: .topLeading) {
             if isShowingPlaceholder {
                 Text("Add notes")

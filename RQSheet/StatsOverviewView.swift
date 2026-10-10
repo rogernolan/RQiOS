@@ -6,8 +6,10 @@
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct StatsOverviewView: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     private struct SummaryProfileLayoutMetrics {
         let cardWidth: CGFloat
         let sectionHeight: CGFloat
@@ -29,8 +31,14 @@ struct StatsOverviewView: View {
     private let summaryProfileCollapseDistance: CGFloat = 140
 
     var body: some View {
-        summaryContent(for: character)
-            .mainRuneBackground(runeName: "RuneMan")
+        Group {
+            if presentation.isTile {
+                tileSummaryContent
+            } else {
+                summaryContent(for: character)
+            }
+        }
+            .sectionRuneBackground(runeName: "RuneMan")
             .onChange(of: selectedPhotoItem) { _, newItem in
                 guard let newItem else { return }
 
@@ -46,6 +54,61 @@ struct StatsOverviewView: View {
                     character.addPassion(description: description, percentage: percentage)
                 }
             }
+    }
+
+    private var tileSummaryContent: some View {
+        let viewModel = SummaryViewModel(character: character)
+        return VStack(alignment: .leading, spacing: 12) {
+            tabletProfile(viewModel: viewModel, availableWidth: presentation.tileWidth ?? 360)
+            characteristicsCard(character: character, viewModel: viewModel)
+            derivedStatsCard(viewModel: viewModel)
+            honorCard(character: character)
+            passionsCard(character: character)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func tabletProfile(viewModel: SummaryViewModel, availableWidth: CGFloat) -> some View {
+        let layout = IPadSummaryProfileLayout(availableWidth: availableWidth)
+        let container = layout.usesHorizontalLayout
+            ? AnyLayout(HStackLayout(alignment: .center, spacing: 20))
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+
+        return container {
+            SummaryPortraitView(
+                portraitData: character.portraitData,
+                width: layout.portraitSize,
+                height: layout.portraitSize,
+                cornerRadius: 16,
+                fallbackPadding: 18
+            )
+            .overlay(alignment: .topTrailing) {
+                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                    Image(systemName: "camera.fill")
+                        .font(.footnote)
+                        .padding(8)
+                        .background(.thinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Change portrait")
+                .padding(8)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                SummaryValueRow(label: "Family", value: viewModel.familyText)
+                SummaryValueRow(label: "Patron", value: viewModel.patronText)
+                SummaryValueRow(label: "Date of Birth", value: viewModel.dateOfBirthText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground).opacity(0.52), in: .rect(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12).stroke(.quaternary, lineWidth: 1)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("summary.ipadProfile")
     }
 
     private func summaryContent(for character: RQCharacter) -> some View {
@@ -235,7 +298,8 @@ struct StatsOverviewView: View {
     }
 
     private func characteristicsCard(character: RQCharacter, viewModel: SummaryViewModel) -> some View {
-        let rows = chunked(viewModel.primaryStats, size: 4)
+        let columnCount = presentation.usesCompactTileContent ? 2 : 4
+        let rows = chunked(viewModel.primaryStats, size: columnCount)
 
         return SummaryCard {
             VStack(alignment: .leading, spacing: 8) {
@@ -252,8 +316,8 @@ struct StatsOverviewView: View {
                             }
                         }
 
-                        if rows[rowIndex].count < 4 {
-                            ForEach(rows[rowIndex].count..<4, id: \.self) { _ in
+                        if rows[rowIndex].count < columnCount {
+                            ForEach(rows[rowIndex].count..<columnCount, id: \.self) { _ in
                                 Spacer(minLength: 0)
                                     .frame(maxWidth: .infinity)
                             }
@@ -273,7 +337,8 @@ struct StatsOverviewView: View {
             (label: "RP", value: viewModel.runePointsText, hasAlertBorder: false, usesSecondaryValueStyle: false),
             (label: "ENC", value: viewModel.encumbranceText, hasAlertBorder: viewModel.isEncumbranceOverLimit, usesSecondaryValueStyle: false),
         ]
-        let rows = chunked(derivedStats, size: 3)
+        let columnCount = presentation.usesCompactTileContent ? 2 : 3
+        let rows = chunked(derivedStats, size: columnCount)
 
         return SummaryCard(title: "Derived Stats") {
             VStack(alignment: .leading, spacing: 8) {
@@ -288,8 +353,8 @@ struct StatsOverviewView: View {
                             )
                         }
 
-                        if rows[rowIndex].count < 3 {
-                            ForEach(rows[rowIndex].count..<3, id: \.self) { _ in
+                        if rows[rowIndex].count < columnCount {
+                            ForEach(rows[rowIndex].count..<columnCount, id: \.self) { _ in
                                 Spacer(minLength: 0)
                                     .frame(maxWidth: .infinity)
                             }

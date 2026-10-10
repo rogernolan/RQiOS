@@ -6,12 +6,13 @@ struct EquipmentView: View {
 
     var body: some View {
         CharacterEquipmentContentView(character: character)
-            .mainRuneBackground(runeName: "RuneTrade")
+            .sectionRuneBackground(runeName: "RuneTrade")
     }
 }
 
 private struct CharacterEquipmentContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.characterSectionPresentation) private var presentation
 
     let character: RQCharacter
 
@@ -25,9 +26,15 @@ private struct CharacterEquipmentContentView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            equipmentList
-            headerOverlay
+        Group {
+            if presentation.isTile {
+                tileContent
+            } else {
+                ZStack(alignment: .top) {
+                    equipmentList
+                    headerOverlay
+                }
+            }
         }
         .sheet(item: $presentedEditor) { editor in
             EquipmentEditorView(
@@ -56,6 +63,35 @@ private struct CharacterEquipmentContentView: View {
         } message: {
             Text("Delete this equipment item?")
         }
+    }
+
+    private var tileContent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            headerOverlay
+            if viewModel.visibleItems.isEmpty {
+                Text(viewModel.searchText.isEmpty ? "No equipment yet" : "No matches")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(viewModel.visibleItems) { item in
+                HStack(alignment: .top, spacing: 4) {
+                    EquipmentRowCard(
+                        item: item,
+                        onSelect: { presentEditSheet(for: item) },
+                        onToggleEquipped: { item.isCurrentlyEquipped.toggle() }
+                    )
+                    Menu {
+                        Button("Delete", systemImage: "trash", role: .destructive) {
+                            viewModel.requestDelete(item)
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle").padding(6)
+                    }
+                    .accessibilityLabel("Actions for \(item.name)")
+                }
+            }
+            addButtonRow
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var equipmentList: some View {
@@ -128,6 +164,7 @@ private struct CharacterEquipmentContentView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Search equipment", text: $viewModel.searchText)
+                    .accessibilityIdentifier("equipment.search")
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
             }
@@ -141,8 +178,8 @@ private struct CharacterEquipmentContentView: View {
             .shadow(color: .white.opacity(0.25), radius: 1, x: 0, y: -0.5)
             .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
+        .padding(.horizontal, presentation.isTile ? 0 : 16)
+        .padding(.top, presentation.isTile ? 0 : 8)
         .onGeometryChange(for: CGFloat.self) { geometry in
             geometry.size.height
         } action: { _, newHeight in
@@ -173,7 +210,7 @@ private struct CharacterEquipmentContentView: View {
             Spacer()
         }
         .padding(.top, 8)
-        .padding(.bottom, 96)
+        .padding(.bottom, presentation.isTile ? 8 : 96)
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
@@ -227,6 +264,7 @@ private struct EquipmentEditorSheet: Identifiable {
 }
 
 private struct EquipmentRowCard: View {
+    @Environment(\.characterSectionPresentation) private var presentation
     let item: CharacterEquipmentItem
     let onSelect: () -> Void
     let onToggleEquipped: () -> Void
@@ -244,13 +282,16 @@ private struct EquipmentRowCard: View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: onSelect) {
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    let nameLayout = presentation.usesCompactTileContent
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                        : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 8))
+                    nameLayout {
                         Text(displayName)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.leading)
 
-                        Spacer(minLength: 8)
+                        if !presentation.usesCompactTileContent { Spacer(minLength: 8) }
 
                         Text("ENC \(item.encumbrance)")
                             .font(.subheadline)

@@ -13,11 +13,24 @@ enum RuneViewConfiguration {
 }
 
 struct RunesView: View {
+    @Environment(\.characterSectionPresentation) private var presentation
+    @Environment(\.characterSectionScrollToEditor) private var scrollToEditor
     let character: RQCharacter
     @StateObject private var keyboard = KeyboardHeightObserver()
     @State private var activeEditorAnchor: RuneEditorAnchor?
 
     var body: some View {
+        Group {
+            if presentation.isTile {
+                RunicAffinitiesPentagramView(character: character, activeEditorAnchor: $activeEditorAnchor)
+            } else {
+                pageContent
+            }
+        }
+        .sectionRuneBackground(runeName: "RuneInfinity", fixedRotation: 50)
+    }
+
+    private var pageContent: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -39,7 +52,6 @@ struct RunesView: View {
                 }
             }
         }
-        .mainRuneBackground(runeName: "RuneInfinity", fixedRotation: 50)
     }
 }
 
@@ -49,16 +61,82 @@ enum RuneEditorAnchor: String, Hashable {
 }
 
 struct RunicAffinitiesPentagramView: View {
+    @Environment(\.characterSectionPresentation) private var presentation
+    @Environment(\.characterSectionScrollToEditor) private var scrollToEditor
     @Bindable var character: RQCharacter
     @Binding var activeEditorAnchor: RuneEditorAnchor?
 
     var body: some View {
+        if presentation.isTile {
+            tileContent
+        } else {
+            diagramContent
+        }
+    }
+
+    private var tileContent: some View {
+        let width = presentation.tileWidth ?? 360
+        let compact = width < 340
+        return IntrinsicRuneTileLayout(isCompact: compact) {
+            ForEach(Array((elementalRunes + pairedRunes).enumerated()), id: \.offset) { index, rune in
+                let scrollID = rune.map { AnyHashable($0.id) } ?? AnyHashable(index)
+                OptionalRunicAffinityNodeView(
+                    rune: rune,
+                    layoutStyle: index < 6 ? .elemental : .paired,
+                    onBeginEditing: { scrollToEditor(scrollID) },
+                    onEndEditing: {}
+                )
+                .id(scrollID)
+            }
+        }
+        .background {
+            if !compact {
+                GeometryReader { geometry in
+                    let metrics = RuneTileGeometry(width: geometry.size.width, isCompact: false)
+                    Path { path in
+                        path.addEllipse(in: CGRect(
+                            x: geometry.size.width / 2 - metrics.elementalRadius,
+                            y: metrics.elementalHeight / 2 - metrics.elementalRadius,
+                            width: metrics.elementalRadius * 2,
+                            height: metrics.elementalRadius * 2
+                        ))
+                        path.move(to: CGPoint(x: geometry.size.width / 2, y: metrics.elementalHeight + 6 + 29))
+                        path.addLine(to: CGPoint(x: geometry.size.width / 2, y: metrics.height - 29))
+                        for row in 1...4 {
+                            let y = metrics.elementalHeight + 6 + 29 + CGFloat(row) * 66
+                            path.move(to: CGPoint(x: 62, y: y))
+                            path.addLine(to: CGPoint(x: geometry.size.width - 62, y: y))
+                        }
+                    }
+                    .stroke(Color.secondary.opacity(0.25), lineWidth: 3)
+                }
+                .allowsHitTesting(false)
+            }
+        }
+    }
+
+    private var elementalRunes: [RuneAffinity?] {
+        [character.fireAffinity, character.darknessAffinity, character.earthAffinity,
+         character.waterAffinity, character.airAffinity, character.moonAffinity]
+    }
+
+    private var pairedRunes: [RuneAffinity?] {
+        [character.manAffinity, character.fertilityAffinity, character.deathAffinity,
+         character.harmonyAffinity, character.disorderAffinity, character.truthAffinity,
+         character.IllusionAffinity, character.stasisAffinity, character.movementAffinity,
+         character.beastAffinity]
+    }
+
+    private var diagramContent: some View {
         VStack(alignment: .leading, spacing: 6) {
             GeometryReader { geometry in
                 let width = geometry.size.width
                 let height = geometry.size.height
                 let center = CGPoint(x: width / 2, y: height / 2)
-                let radius = min(width, height) * RuneChipLayoutMetrics.elementalRadiusMultiplier
+                let defaultRadius = min(width, height) * RuneChipLayoutMetrics.elementalRadiusMultiplier
+                let radius = presentation.isTile
+                    ? min(defaultRadius, max(0, (width - RuneChipLayoutMetrics.chipWidth) / 1.91))
+                    : defaultRadius
 
                 let top = point(center: center, radius: radius, angleDegrees: -90)
                 let upperRight = point(center: center, radius: radius, angleDegrees: -18)
@@ -139,7 +217,7 @@ struct RunicAffinitiesPentagramView: View {
                         .position(center)
                 }
             }
-            .frame(height: 280)
+            .frame(height: presentation.isTile ? max(280, (presentation.tileWidth ?? 360) * 0.78) : 280)
             .id(RuneEditorAnchor.elemental)
 
             PairedRunesSectionView(
@@ -394,5 +472,51 @@ struct OptionalRunicAffinityNodeView: View {
             RunicAffinityNodeView(rune: rune, layoutStyle: layoutStyle,
                                   onBeginEditing: onBeginEditing, onEndEditing: onEndEditing)
         }
+    }
+}
+
+/// Canonical nodes remain mounted while their placement changes with the tile width.
+private struct IntrinsicRuneTileLayout: Layout {
+    let isCompact: Bool
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 360
+        return CGSize(width: width, height: RuneTileGeometry(width: width, isCompact: isCompact).height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let metrics = RuneTileGeometry(width: bounds.width, isCompact: isCompact)
+        for (index, subview) in subviews.enumerated() {
+            let point = metrics.position(of: index)
+            subview.place(at: CGPoint(x: bounds.minX + point.x, y: bounds.minY + point.y), anchor: .center, proposal: .unspecified)
+        }
+    }
+}
+
+struct RuneTileGeometry {
+    let width: CGFloat
+    let isCompact: Bool
+    var elementalHeight: CGFloat { max(320, width * 0.78) }
+    var elementalRadius: CGFloat {
+        min(min(width, elementalHeight) * RuneChipLayoutMetrics.elementalRadiusMultiplier,
+            max(0, (width - RuneChipLayoutMetrics.chipWidth) / 1.91))
+    }
+    var height: CGFloat { isCompact ? 16 * 58 + 15 * 8 : elementalHeight + 6 + 6 * 58 + 5 * 8 }
+
+    func position(of index: Int) -> CGPoint {
+        if isCompact { return CGPoint(x: width / 2, y: 29 + CGFloat(index) * 66) }
+        if index < 6 {
+            let center = CGPoint(x: width / 2, y: elementalHeight / 2)
+            guard index < 5 else { return center }
+            let angles: [Double] = [-90, -18, 54, 126, 198]
+            let angle = angles[index] * .pi / 180
+            let offset = index == 1 || index == 4 ? RuneChipLayoutMetrics.upperSideNodeVerticalOffset : 0
+            return CGPoint(x: center.x + CGFloat(cos(angle)) * elementalRadius,
+                           y: center.y + CGFloat(sin(angle)) * elementalRadius + offset)
+        }
+        let pairedIndex = index - 6
+        let row = pairedIndex == 0 ? 0 : pairedIndex == 9 ? 5 : (pairedIndex + 1) / 2
+        let x: CGFloat = pairedIndex == 0 || pairedIndex == 9 ? width / 2 : pairedIndex.isMultiple(of: 2) ? width - 62 : 62
+        return CGPoint(x: x, y: elementalHeight + 6 + 29 + CGFloat(row) * 66)
     }
 }
